@@ -1,0 +1,426 @@
+/* Main App Layout */
+.app-container {
+  display: grid;
+  grid-template-rows: var(--header-height) 1fr;
+  grid-template-columns: var(--tools-width) var(--sidebar-width) var(--chat-width) 1fr;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-solid);
+  color: var(--text-white);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Header */
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--document-code-bg, #161616);
+  border-bottom: 1px solid var(--neutral-chrome-border, rgba(255, 255, 255, 0.12));
+  box-shadow: 0 0 10px rgba(var(--theme-primary-rgb), 0.1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.menu-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.menu-btn:hover {
+  color: var(--theme-primary);
+  background: rgba(var(--theme-primary-rgb), 0.05);
+}
+
+.project-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--theme-primary);
+  letter-spacing: 0.5px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Context usage chip: views.css */
+
+.connection-status {
+  font-size: 12px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.connection-status.connected {
+  color: var(--theme-primary);
+}
+
+.connection-status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+}
+
+.connection-status.connected::before {
+  background: var(--theme-primary);
+}
+
+/* Tools Panel */
+.tools-panel {
+  background: var(--document-code-bg, #161616);
+  border-right: 1px solid var(--neutral-chrome-border, rgba(255, 255, 255, 0.12));
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  gap: 4px;
+}
+
+.tool-btn {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  position: relative;
+}
+
+.tool-btn:hover {
+  color: var(--theme-primary);
+  background: rgba(var(--theme-primary-rgb), 0.05);
+}
+
+.tool-btn.active {
+  color: var(--theme-primary);
+}
+
+.tool-btn.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 24px;
+  background: var(--theme-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Panel Container */
+.panel-container {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  position: relative;
+  overflow: hidden;
+}
+
+.panel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) var(--chat-width) 1fr;
+  /* One row fills the panel so content-area / chat / sidebar get a definite height */
+  grid-template-rows: minmax(0, 1fr);
+  opacity: 0;
+  visibility: hidden;
+  min-height: 0; /* children must not blow out the grid */
+}
+
+.panel.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Sidebar + chat column: ai/views/settings/styles/views.css */
+
+/* Content Area — flex column so the active panel (file explorer, wiki, etc.) can fill height */
+.content-area {
+  background: var(--bg-solid);
+  padding: 24px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content-area > * {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Content area in full layout gets no padding (explorer/viewer fills it) */
+
+/* Layout classes — driven by index.json "layout" field */
+.layout-full {
+  grid-template-columns: 1fr;
+}
+
+.layout-full .content-area {
+  padding: 0;
+}
+
+.layout-chat-content {
+  grid-template-columns: var(--chat-width) 1fr;
+}
+
+.layout-chat-content .content-area {
+  padding: 0;
+}
+
+.layout-sidebar-chat-content {
+  /* default grid already has 3 columns */
+}
+
+.layout-sidebar-chat-content .content-area {
+  padding: 0;
+}
+
+/* Chat input - reduce gap to icons */
+.chat-input-container {
+  margin-bottom: -15px;
+}
+
+/* Chat footer layout - icons and button on one row */
+.chat-composer-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 4px;
+}
+
+/* Icons container */
+.chat-composer-meta-row > div:first-child {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Send/Stop button */
+.chat-composer-meta-row .chat-footer-btn {
+  flex-shrink: 0;
+}
+
+/* Send button group - unified container with divider */
+.send-button-group {
+  display: flex;
+  align-items: center;
+  background: var(--neutral-chrome-bg);
+  border: 1px solid var(--neutral-chrome-border);
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.send-btn-main {
+  padding: 0 12px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send-btn-main:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.send-btn-divider {
+  width: 1px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.send-btn-secondary {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Send dropdown modal content */
+.send-dropdown-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+}
+
+.send-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.send-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.send-dropdown-item .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Context usage container - below buttons, aligned left, pushed to bottom */
+.context-usage-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0 0 0;
+  margin-bottom: -4px;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Standalone context usage bar */
+.context-usage-bar-standalone {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 100px;
+}
+
+.context-usage-bar-standalone .context-usage-fill {
+  height: 100%;
+  background: var(--theme-primary, #00d4ff);
+  border-radius: 1px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 6px rgba(var(--theme-primary-rgb, 0, 212, 255), 0.5);
+}
+
+/* Context usage percentage text */
+.context-usage-text {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  min-width: 30px;
+  flex-shrink: 0;
+}
+
+.chat-composer-meta-row .chat-footer-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--neutral-chrome-bg);
+  border: 1px solid var(--neutral-chrome-border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chat-composer-meta-row .chat-footer-btn:hover {
+  background: var(--hover-modal-row-hover-bg);
+  color: var(--text-primary);
+}
+
+.chat-composer-meta-row .chat-footer-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Chat footer disabled state — when no thread is active */
+.chat-footer--disabled {
+  pointer-events: none;
+  opacity: 0.3;
+  user-select: none;
+}
+
+/* Floating chat: ai/views/settings/styles/views.css */
+
+/* Send dropdown - narrower than standard hover modals */
+.send-dropdown-modal {
+  width: 200px !important;
+  min-height: auto !important;
+  max-height: none !important;
+}
+
+.send-dropdown-modal .hover-icon-modal-list {
+  max-height: none;
+}
+
+.send-dropdown-content {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.send-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.send-dropdown-item:hover {
+  background: var(--neutral-chrome-bg);
+  color: var(--text-primary);
+}
+
+.send-dropdown-item .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--text-dim);
+}
+
+.send-dropdown-item:hover .material-symbols-outlined {
+  color: var(--text-primary);
+}

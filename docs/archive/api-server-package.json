@@ -1,0 +1,17 @@
+{
+  "name": "kimi-ide-server",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Kimi IDE backend - Claude API with agentic tool loop",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "express": "^4.21.0",
+    "ws": "^8.18.0",
+    "glob": "^11.0.0"
+  }
+}

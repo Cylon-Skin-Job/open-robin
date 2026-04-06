@@ -1,0 +1,196 @@
+/* Workflow Card View — step cards (left) + detail (right) */
+
+.wf-container {
+  color: #e0e0e0;
+}
+
+.wf-heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--tile-color, var(--ws-primary, #ef4444));
+  margin-bottom: 4px;
+}
+
+.wf-description {
+  font-size: 0.8125rem;
+  color: #bbb;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+/* --- Two-panel layout --- */
+
+.wf-panels {
+  display: grid;
+  grid-template-columns: 220px 24px 1fr;
+  gap: 0;
+  align-items: start;
+}
+
+/* --- Left: Step cards --- */
+
+.wf-step-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.wf-connector {
+  width: 2px;
+  height: 10px;
+  background: var(--ws-panel-border, #333);
+  margin-left: 18px;
+}
+
+.wf-step-card {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--ws-sidebar-bg, #111);
+  border: 1px solid var(--ws-panel-border, #333);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 150ms;
+}
+
+.wf-step-card:hover {
+  border-color: var(--tile-color, var(--ws-primary, #ef4444));
+}
+
+.wf-step-card.active {
+  border-color: var(--tile-color, var(--ws-primary, #ef4444));
+  background: rgba(var(--theme-primary-rgb, 239, 68, 68), 0.06);
+}
+
+.wf-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--tile-color, var(--ws-primary, #ef4444));
+  background: rgba(var(--theme-primary-rgb, 239, 68, 68), 0.1);
+  border: 1px solid rgba(var(--theme-primary-rgb, 239, 68, 68), 0.25);
+  flex-shrink: 0;
+}
+
+.wf-step-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.wf-step-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary, #e0e0e0);
+  margin-bottom: 2px;
+}
+
+.wf-step-summary {
+  font-size: 0.75rem;
+  color: #999;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- Bridge connector --- */
+
+.wf-bridge {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 18px;
+}
+
+.wf-bridge-line {
+  width: 100%;
+  height: 2px;
+  background: var(--tile-color, var(--ws-primary, #ef4444));
+  opacity: 0.4;
+}
+
+/* --- Right: Detail --- */
+
+.wf-detail {
+  background: var(--ws-sidebar-bg, #111);
+  border: 1px solid var(--ws-panel-border, #333);
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+
+.wf-detail-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #e0e0e0);
+  margin-bottom: 12px;
+}
+
+.wf-detail-num {
+  color: var(--tile-color, var(--ws-primary, #ef4444));
+  margin-right: 6px;
+}
+
+.wf-detail-body {
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: #ccc;
+}
+
+/* --- Detail content elements --- */
+
+.wf-text-line {
+  margin-bottom: 2px;
+}
+
+.wf-instruct-label {
+  font-weight: 600;
+  color: var(--tile-color, var(--ws-primary, #ef4444));
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.wf-bullet {
+  padding-left: 18px;
+  position: relative;
+  margin-bottom: 2px;
+}
+
+.wf-bullet-dot {
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--tile-color, var(--ws-primary, #ef4444));
+}
+
+.wf-evaluate {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(74, 222, 128, 0.04);
+  border: 1px solid rgba(74, 222, 128, 0.12);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: #ccc;
+}
+
+.wf-evaluate .material-symbols-outlined {
+  color: #4ade80;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.wf-evaluate-label {
+  font-weight: 600;
+  color: #4ade80;
+  flex-shrink: 0;
+}

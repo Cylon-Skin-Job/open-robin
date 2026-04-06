@@ -1,0 +1,30 @@
+{
+  "name": "open-robin-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "setup-transcription": "node lib/transcription/setup.js",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.66",
+    "@ai-sdk/openai": "^3.0.50",
+    "ai": "^6.0.146",
+    "better-sqlite3": "^12.8.0",
+    "express": "^5.2.1",
+    "gpt-tokenizer": "^3.4.0",
+    "knex": "^3.2.7",
+    "multer": "^1.4.5-lts.1",
+    "nodejs-whisper": "^0.2.9",
+    "uuid": "^13.0.0",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0"
+  }
+}

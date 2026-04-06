@@ -1,0 +1,2410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kimi IDE</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <!-- Markdown Parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <style>
+    /* CSS Variables - Cyan Tron-inspired palette from Raven OS */
+    :root {
+      --bg-solid: #000000;
+      --color-primary: #00d4ff;
+      --color-secondary: #00a8cc;
+      --border-primary: rgba(0, 212, 255, 0.3);
+      --border-glow: rgba(0, 212, 255, 0.6);
+      --glass-bg: rgba(0, 212, 255, 0.05);
+      --text-white: #ffffff;
+      --text-dim: rgba(255, 255, 255, 0.6);
+      
+      /* Layout */
+      --header-height: 60px;
+      --tools-width: 60px;
+      --sidebar-width: 250px;
+      --chat-width: 400px;
+    }
+
+    /* ============================================
+     * SINGLE THEME VARIABLE SYSTEM
+     * ============================================
+     * 
+     * THREE VARIABLES control ALL colors:
+     *   --theme-primary: Solid color for buttons, text, accents
+     *   --theme-primary-rgb: RGB version for opacity calculations
+     *   --theme-border: 30% opacity for subtle borders (as documented!)
+     *   --theme-border-glow: 60% opacity for hover/active states
+     *
+     * How it works:
+     *   1. JavaScript sets all four on .app-container when workspace switches
+     *   2. CSS uses --theme-border (30%) for borders, dividers, subtle lines
+     *   3. CSS uses --theme-primary (solid) for buttons, text, strong accents
+     *   4. Everything changes together with proper opacity per our documented pattern
+     *
+     * Fallback: var(--theme-border, var(--border-primary)) falls back to cyan default
+     *
+     * Workspace Colors (defined in JS):
+     *   code:      #00d4ff (Cyan)
+     *   rocket:    #f97316 (Orange)
+     *   issues:    #facc15 (Yellow)
+     *   scheduler: #22c55e (Green)
+     *   skills:    #a855f7 (Purple)
+     *   wiki:      #ec4899 (Pink)
+     *   claw:      #ef4444 (Red)
+     *
+     * ============================================ */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-solid);
+      color: var(--text-white);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Main Layout Grid - Theme border at 30% opacity */
+    .app-container {
+      display: grid;
+      grid-template-rows: var(--header-height) 1fr;
+      grid-template-columns: var(--tools-width) var(--sidebar-width) var(--chat-width) 1fr;
+      width: 100%;
+      height: 100%;
+      border: 1px solid var(--theme-border, var(--border-primary));
+      box-sizing: border-box;
+    }
+
+    /* Header - spans all columns - Uses theme color */
+    .header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: var(--bg-solid);
+      border-bottom: 1px solid var(--theme-border, var(--border-primary));
+      box-shadow: 0 0 10px rgba(var(--theme-primary-rgb, 0, 212, 255), 0.1);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .menu-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid var(--theme-border, var(--border-primary));
+      border-radius: 8px;
+      color: var(--theme-primary, var(--color-primary));
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .menu-btn:hover {
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.05);
+      border-color: var(--theme-border-glow, var(--border-glow));
+      box-shadow: 0 0 8px rgba(var(--theme-primary-rgb, 0, 212, 255), 0.3);
+    }
+
+    .project-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--theme-primary, var(--color-primary));
+      letter-spacing: 0.5px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Connection status - Uses theme color when connected */
+    .connection-status {
+      font-size: 12px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .connection-status.connected {
+      color: var(--theme-primary, #0f0);
+    }
+    .connection-status::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+    .connection-status.connected::before {
+      background: var(--theme-primary, #0f0);
+    }
+
+    /* Context Usage Indicator */
+    .context-usage-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.05);
+      border: 1px solid var(--theme-border, var(--border-primary));
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    .context-usage-label {
+      color: var(--text-dim);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .context-usage-bar {
+      width: 60px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .context-usage-fill {
+      height: 100%;
+      background: var(--theme-primary, var(--color-primary));
+      border-radius: 3px;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+
+    .context-usage-fill.high {
+      background: #f97316; /* Orange at 80%+ */
+    }
+
+    .context-usage-fill.critical {
+      background: #ef4444; /* Red at 95%+ */
+    }
+
+    .context-usage-percent {
+      color: var(--theme-primary, var(--color-primary));
+      font-weight: 600;
+      min-width: 32px;
+      text-align: right;
+    }
+
+    /*
+     * =====================================================
+     * TOOL BUTTON STYLING PATTERN - CYAN GLASSMORPHISM
+     * =====================================================
+     *
+     * This is the signature visual style for icon buttons.
+     * Preserved here for reuse across the application.
+     *
+     * REQUIRED CSS VARIABLES:
+     *   --bg-solid: #000000           (page background)
+     *   --color-primary: #00d4ff      (cyan accent color)
+     *   --border-primary: rgba(0,212,255,0.3)   (subtle border)
+     *   --border-glow: rgba(0,212,255,0.6)    (glow state)
+     *   --glass-bg: rgba(0,212,255,0.05)      (hover background)
+     *
+     * VISUAL EFFECT:
+     *   - Default: transparent with subtle border
+     *   - Hover: soft glass background + border brightens + gentle glow
+     *   - Active: deeper cyan tint + stronger glow + stays lit
+     *   - Transition: smooth 0.2s ease on all properties
+     *
+     * USAGE:
+     *   <button class="tool-btn" title="Description">
+     *     <span class="material-symbols-outlined">icon_name</span>
+     *   </button>
+     *
+     * =====================================================
+     */
+
+    /* Tools Panel - Leftmost - Uses theme border at 30% */
+    .tools-panel {
+      background: var(--bg-solid);
+      border-right: 1px solid var(--theme-border, var(--border-primary));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 0;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    /* Base button style - transparent, subtle border (30%) */
+    .tool-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid var(--theme-border, var(--border-primary));
+      border-radius: 8px;
+      color: var(--theme-primary, var(--color-primary));
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    /* Hover state - glass background + brighter border (60%) + glow */
+    .tool-btn:hover {
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.05);
+      border-color: var(--theme-border-glow, var(--border-glow));
+      box-shadow: 0 0 8px rgba(var(--theme-primary-rgb, 0, 212, 255), 0.3);
+    }
+
+    /* Active state - deeper tint + brighter border + stronger glow */
+    .tool-btn.active {
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.15);
+      border-color: var(--theme-border-glow, var(--border-glow));
+      box-shadow: 0 0 12px rgba(var(--theme-primary-rgb, 0, 212, 255), 0.4);
+    }
+
+    /* Sidebar - Chat List */
+    .sidebar {
+      background: var(--bg-solid);
+      border-right: 1px solid var(--border-primary);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-primary);
+    }
+
+    .new-chat-btn {
+      width: 100%;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-primary);
+      border-radius: 8px;
+      color: var(--color-primary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .new-chat-btn:hover {
+      background: rgba(0, 212, 255, 0.1);
+      border-color: var(--border-glow);
+    }
+
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .chat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0 10px 12px;
+      margin-bottom: 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .chat-item:hover {
+      background: var(--glass-bg);
+    }
+
+    .chat-item.active {
+      background: rgba(0, 212, 255, 0.1);
+      border: 1px solid var(--border-primary);
+    }
+
+    .chat-item-ellipsis {
+      opacity: 0.5;
+      color: var(--text-dim);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-left: auto;
+    }
+
+    .chat-item-ellipsis:hover {
+      opacity: 1;
+      color: var(--color-primary);
+    }
+
+    .chat-item-text {
+      flex: 1;
+      font-size: 14px;
+      color: var(--text-white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 0;
+    }
+
+    /* Chat Area */
+    .chat-area {
+      background: var(--bg-solid);
+      border-right: 1px solid var(--border-primary);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      max-width: 100%;
+    }
+
+    .message-user {
+      align-self: flex-end;
+      background: rgba(0, 212, 255, 0.15);
+      border: 1px solid var(--border-primary);
+      border-radius: 16px;
+      padding: 12px 16px;
+      color: var(--text-white);
+      font-size: 14px;
+      max-width: 85%;
+    }
+
+    .message-assistant {
+      align-self: flex-start;
+      color: var(--text-white);
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 100%;
+    }
+
+    .message-assistant .bubble {
+      background: rgba(0, 255, 0, 0.05);
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message-system {
+      align-self: center;
+      color: var(--text-dim);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    /* Streaming cursor */
+    .streaming-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 16px;
+      background: var(--color-primary);
+      margin-left: 2px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    .chat-input-container {
+      padding: 12px;
+      border-top: 1px solid var(--border-primary);
+    }
+
+    .chat-input-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-primary);
+      border-radius: 20px;
+      padding: 8px 12px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-white);
+      font-size: 14px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      min-height: 20px;
+      max-height: 120px;
+    }
+
+    .chat-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .send-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-primary);
+      border: none;
+      border-radius: 50%;
+      color: var(--bg-solid);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .send-btn:hover {
+      box-shadow: 0 0 12px rgba(0, 212, 255, 0.5);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Content Area */
+    .content-area {
+      background: var(--bg-solid);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .content-placeholder {
+      color: var(--text-dim);
+      font-size: 14px;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-primary);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-glow);
+    }
+
+    /* =====================================================
+     * CODE BLOCKS & MARKDOWN RENDERING
+     * ===================================================== */
+
+    /* Markdown content container */
+    .markdown-content {
+      line-height: 1.6;
+    }
+
+    .markdown-content p {
+      margin: 0 0 12px 0;
+    }
+
+    .markdown-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Code blocks - theme-colored borders */
+    .markdown-content pre {
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 1px solid var(--theme-border, var(--border-primary));
+      border-right: 1px solid var(--theme-border, var(--border-primary));
+      border-bottom: 1px solid var(--theme-border, var(--border-primary));
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 12px;
+      margin: 0;
+      max-height: 200px;
+      overflow: auto;
+      position: relative;
+    }
+
+    .markdown-content pre code {
+      display: block;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+
+    /* Inline code - subtle */
+    .markdown-content code {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--text-white);
+    }
+
+    /* Syntax highlighting overrides for dark theme */
+    .hljs {
+      background: transparent !important;
+      padding: 0 !important;
+    }
+
+    /* Code block wrapper - unified container */
+    .code-block-wrapper {
+      position: relative;
+      margin: 12px 0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.1);
+      border: 1px solid var(--theme-border, var(--border-primary));
+      border-radius: 8px 8px 0 0;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--theme-primary, var(--color-primary));
+    }
+
+    .code-block-wrapper pre {
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+      border-left: 1px solid var(--theme-border, var(--border-primary));
+      border-right: 1px solid var(--theme-border, var(--border-primary));
+      border-bottom: 1px solid var(--theme-border, var(--border-primary));
+      border-top: none;
+      max-height: 200px;
+      overflow: auto;
+    }
+
+    /* Copy button for code blocks - themed style */
+    .copy-code-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: transparent;
+      border: 1px solid var(--theme-border, var(--border-primary));
+      border-radius: 4px;
+      color: var(--theme-primary, var(--color-primary));
+      font-size: 11px;
+      padding: 4px 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .copy-code-btn:hover {
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.1);
+      border-color: var(--theme-border-glow, var(--border-glow));
+      color: var(--theme-primary, var(--color-primary));
+      box-shadow: 0 0 6px rgba(var(--theme-primary-rgb, 0, 212, 255), 0.3);
+    }
+
+    /* Lists */
+    .markdown-content ul, .markdown-content ol {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .markdown-content li {
+      margin: 4px 0;
+    }
+
+    /* Headings */
+    .markdown-content h1, .markdown-content h2, .markdown-content h3,
+    .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+      margin: 16px 0 8px 0;
+      font-weight: 600;
+      color: var(--text-white);
+    }
+
+    .markdown-content h1 { font-size: 20px; }
+    .markdown-content h2 { font-size: 18px; }
+    .markdown-content h3 { font-size: 16px; }
+    .markdown-content h4 { font-size: 14px; }
+
+    /* =====================================================
+     * WORKSPACE SYSTEM - 7 Domain-Specific Views
+     * =====================================================
+     *
+     * Each workspace has its own sidebar, chat, and content.
+     * Only one workspace is visible at a time.
+     * Workspaces are switched via the tools panel buttons.
+     *
+     * Workspaces:
+     *   1. code       - Code editor, file explorer, diffs
+     *   2. rocket     - Launchpad for deployments and builds
+     *   3. issues     - To-do list, ongoing processes, tickets
+     *   4. scheduler  - Cron jobs, scheduled tasks, timeline
+     *   5. skills     - Skills, commands, system prompts, guidance
+     *   6. wiki       - Documentation, knowledge base
+     *   7. claw       - Direct Kimi OpenClaw chat
+     *
+     * ===================================================== */
+
+    .workspaces-container {
+      grid-column: 2 / -1;
+      display: grid;
+      grid-template-columns: var(--sidebar-width) var(--chat-width) 1fr;
+      overflow: hidden;
+    }
+
+    .workspace {
+      display: contents;
+    }
+
+    .workspace.hidden {
+      display: none;
+    }
+
+    /* Generic workspace sidebar styling - ALL use theme colors */
+    .workspace-sidebar {
+      background: var(--bg-solid);
+      border-right: 1px solid var(--theme-border, var(--border-primary));
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .workspace-sidebar-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--theme-border, var(--border-primary));
+    }
+
+    .workspace-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--theme-primary, var(--color-primary));
+      margin-bottom: 8px;
+    }
+
+    .workspace-new-btn {
+      width: 100%;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.05);
+      border: 1px solid var(--theme-border, var(--border-primary));
+      border-radius: 8px;
+      color: var(--theme-primary, var(--color-primary));
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .workspace-new-btn:hover {
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.15);
+      border-color: var(--theme-border-glow, var(--border-glow));
+    }
+
+    .workspace-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .workspace-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0 10px 12px;
+      margin-bottom: 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .workspace-item:hover {
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.05);
+    }
+
+    .workspace-item.active {
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.1);
+      border: 1px solid var(--theme-border, var(--border-primary));
+    }
+
+    .workspace-item-text {
+      flex: 1;
+      font-size: 14px;
+      color: var(--text-white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .workspace-chat {
+      background: var(--bg-solid);
+      border-right: 1px solid var(--theme-border, var(--border-primary));
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Workspace-themed chat input - Uses theme border at 30% */
+    .workspace .chat-input-container {
+      padding: 12px;
+      border-top: 1px solid var(--theme-border, var(--border-primary));
+    }
+
+    .workspace .chat-input-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.05);
+      border: 1px solid var(--theme-border, var(--border-primary));
+      border-radius: 20px;
+      padding: 8px 12px;
+      transition: all 0.2s ease;
+    }
+
+    .workspace .chat-input-wrapper:focus-within {
+      border-color: var(--theme-border-glow, var(--border-glow));
+    }
+
+    .workspace .chat-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-white);
+      font-size: 14px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      min-height: 20px;
+      max-height: 120px;
+    }
+
+    .workspace .chat-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .workspace .send-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--theme-primary, var(--color-primary));
+      border: none;
+      border-radius: 50%;
+      color: var(--bg-solid);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .workspace .send-btn:hover {
+      box-shadow: 0 0 12px rgba(var(--theme-primary-rgb, 0, 212, 255), 0.5);
+    }
+
+    /* Workspace-themed user message bubbles - subtle border at 30% */
+    .workspace .message-user {
+      align-self: flex-end;
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.15);
+      border: 1px solid var(--theme-border, var(--border-primary));
+      border-radius: 16px;
+      padding: 12px 16px;
+      color: var(--text-white);
+      font-size: 14px;
+      max-width: 85%;
+    }
+
+    /* Workspace-themed assistant message bubbles - no border, clean look */
+    .workspace .message-assistant .bubble {
+      background: rgba(var(--theme-primary-rgb, 0, 212, 255), 0.05);
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Workspace-themed streaming cursor */
+    .workspace .streaming-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 16px;
+      background: var(--theme-primary, var(--color-primary));
+      margin-left: 2px;
+      animation: blink 1s infinite;
+    }
+
+    .workspace-content {
+      background: var(--bg-solid);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .workspace-placeholder {
+      color: var(--text-dim);
+      font-size: 14px;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    /* Workspace-themed scrollbar - subtle at 30% */
+    .workspace ::-webkit-scrollbar-thumb {
+      background: var(--theme-border, var(--border-primary));
+    }
+
+    .workspace ::-webkit-scrollbar-thumb:hover {
+      background: var(--theme-border-glow, var(--border-glow));
+    }
+
+    /* Shimmer animation for thinking header */
+    @keyframes shimmer {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+    
+    .thinking-shimmer {
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+    /* =====================================================
+     * RIBBON ANIMATION SYSTEM
+     * ===================================================== */
+    
+    .ribbon-container {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 4px;
+      transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0;
+    }
+    
+    .ribbon-container.visible {
+      opacity: 1;
+    }
+    
+    .ribbon {
+      position: absolute;
+      height: 100%;
+      width: 100px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--theme-primary, var(--color-primary)) 20%, 
+        var(--theme-primary, var(--color-primary)) 80%, 
+        transparent 100%
+      );
+      box-shadow: 0 0 20px var(--theme-primary, var(--color-primary)),
+                  0 0 40px var(--theme-primary, var(--color-primary));
+      border-radius: 2px;
+    }
+    
+    /* Phase: ribbon_entering - Dart in from left */
+    .ribbon-container.entering .ribbon {
+      animation: ribbon-enter 150ms ease-out forwards;
+    }
+    
+    @keyframes ribbon-enter {
+      0% { left: -100px; opacity: 0; }
+      100% { left: 50%; transform: translateX(-50%); opacity: 1; }
+    }
+    
+    /* Phase: ribbon_caught - Hold with pulse */
+    .ribbon-container.caught .ribbon {
+      left: 50%;
+      transform: translateX(-50%);
+      animation: ribbon-pulse 800ms ease-in-out infinite;
+    }
+    
+    @keyframes ribbon-pulse {
+      0%, 100% { opacity: 0.8; box-shadow: 0 0 20px var(--theme-primary, var(--color-primary)); }
+      50% { opacity: 1; box-shadow: 0 0 30px var(--theme-primary, var(--color-primary)), 0 0 50px var(--theme-primary, var(--color-primary)); }
+    }
+    
+    /* Phase: ribbon_completing - Dart out to right */
+    .ribbon-container.completing .ribbon {
+      left: 50%;
+      transform: translateX(-50%);
+      animation: ribbon-exit 200ms ease-in forwards;
+    }
+    
+    @keyframes ribbon-exit {
+      0% { left: 50%; transform: translateX(-50%); opacity: 1; }
+      100% { left: calc(100% + 100px); transform: translateX(0); opacity: 0; }
+    }
+
+    /* =====================================================
+     * LENS BLUR PULSE SYMBOL
+     * ===================================================== */
+    
+    .pulse-symbol {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      color: var(--theme-primary);
+      filter: brightness(1.2);
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+    
+    .pulse-symbol .material-symbols-outlined {
+      font-size: 16px;
+      filter: drop-shadow(0 0 4px rgba(var(--theme-primary-rgb), 0.5));
+    }
+    
+    /* Continuous pulse animation for waiting */
+    .pulse-symbol.pulsing .material-symbols-outlined {
+      animation: lens-pulse-continuous 1.2s ease-in-out infinite;
+    }
+    
+    /* Single pulse cycle for transitions */
+    .pulse-symbol.pulse-once .material-symbols-outlined {
+      animation: lens-pulse-once 0.8s ease-in-out;
+    }
+    
+    @keyframes lens-pulse-continuous {
+      0% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(0.6); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 0.8; }
+    }
+    
+    @keyframes lens-pulse-once {
+      0% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(0.6); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 0.8; }
+    }
+
+    /* =====================================================
+     * THINKING SECTION STYLES
+     * ===================================================== */
+    
+    .thinking-section {
+      margin-bottom: 12px;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    
+    .thinking-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    /* =====================================================
+     * STATUS LABELS - Unified styling for thinking, tools, etc.
+     * ===================================================== */
+    
+    /* Base status label - used for thinking, tool calls, etc. */
+    .status-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--theme-primary, var(--color-primary));
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    
+    .thinking-header {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--theme-primary, var(--color-primary));
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    /* Tool call status labels (read, search, etc.) */
+    .tool-call-status {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--theme-primary, var(--color-primary));
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    
+    .tool-call-status .material-symbols-outlined {
+      font-size: 14px;
+    }
+    
+    .thinking-content {
+      font-style: italic;
+      color: var(--text-dim);
+      opacity: 0.7;
+      border-left: 2px solid var(--theme-border, var(--border-primary));
+      padding-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-btn">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <span class="project-name">kimi-claude</span>
+      </div>
+      <div class="header-right">
+        <!-- Context Usage Indicator -->
+        <div class="context-usage-container" id="context-usage" style="display: none;">
+          <div class="context-usage-label">Context</div>
+          <div class="context-usage-bar">
+            <div class="context-usage-fill" id="context-fill"></div>
+          </div>
+          <div class="context-usage-percent" id="context-percent">0%</div>
+        </div>
+        <span id="connection-status" class="connection-status">Connecting...</span>
+      </div>
+    </header>
+
+    <!-- Tools Panel - Workspace Switcher -->
+    <nav class="tools-panel">
+      <button class="tool-btn active" data-workspace="code" title="Code Workspace">
+        <span class="material-symbols-outlined">code_blocks</span>
+      </button>
+      <button class="tool-btn" data-workspace="rocket" title="Launchpad">
+        <span class="material-symbols-outlined">rocket</span>
+      </button>
+      <button class="tool-btn" data-workspace="issues" title="Issues & Processes">
+        <span class="material-symbols-outlined">business_messages</span>
+      </button>
+      <button class="tool-btn" data-workspace="scheduler" title="Scheduler & Cron">
+        <span class="material-symbols-outlined">calendar_clock</span>
+      </button>
+      <button class="tool-btn" data-workspace="skills" title="Skills & Commands">
+        <span class="material-symbols-outlined">dynamic_form</span>
+      </button>
+      <button class="tool-btn" data-workspace="wiki" title="Wiki & Docs">
+        <span class="material-symbols-outlined">dataset_linked</span>
+      </button>
+      <button class="tool-btn" data-workspace="claw" title="Kimi OpenClaw">
+        <span class="material-symbols-outlined">smart_toy</span>
+      </button>
+    </nav>
+
+    <!-- Workspaces Container -->
+    <div class="workspaces-container">
+      <!-- CODE WORKSPACE - File explorer, editor, diffs -->
+      <div class="workspace workspace-code" data-workspace="code">
+        <aside class="workspace-sidebar">
+          <div class="workspace-sidebar-header">
+            <div class="workspace-title">Code Workspace</div>
+            <button class="workspace-new-btn" onclick="startNewChat('code')">
+              <span class="material-symbols-outlined">add</span>
+              New Code Session
+            </button>
+          </div>
+          <div class="workspace-list" id="code-list">
+            <div class="workspace-item active">
+              <span class="workspace-item-text">main.ts - Auth refactor</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">api/routes.ts</span>
+            </div>
+          </div>
+        </aside>
+        <section class="workspace-chat">
+          <div class="ribbon-container" id="ribbon-code">
+            <div class="ribbon"></div>
+          </div>
+          <div id="chat-messages-code" class="chat-messages">
+            <div class="message message-system">Code workspace active - Chat about code changes</div>
+          </div>
+          <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+              <textarea class="chat-input" data-workspace="code" rows="1" placeholder="Ask about code..."></textarea>
+              <button class="send-btn" onclick="sendMessage('code')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_upward</span>
+              </button>
+            </div>
+          </div>
+        </section>
+        <main class="workspace-content">
+          <div class="workspace-placeholder">
+            Code editor / diff view / file explorer<br><br>
+            Current file: <code>src/auth.ts</code>
+          </div>
+        </main>
+      </div>
+
+      <!-- ROCKET WORKSPACE - Launchpad for deployments and builds -->
+      <div class="workspace workspace-rocket hidden" data-workspace="rocket">
+        <aside class="workspace-sidebar">
+          <div class="workspace-sidebar-header">
+            <div class="workspace-title">Launchpad</div>
+            <button class="workspace-new-btn" onclick="startNewChat('rocket')">
+              <span class="material-symbols-outlined">add</span>
+              New Launch
+            </button>
+          </div>
+          <div class="workspace-list" id="rocket-list">
+            <div class="workspace-item active">
+              <span class="workspace-item-text">🚀 Deploy to prod</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">🔧 Build staging</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">📦 Package release</span>
+            </div>
+          </div>
+        </aside>
+        <section class="workspace-chat">
+          <div class="ribbon-container" id="ribbon-rocket">
+            <div class="ribbon"></div>
+          </div>
+          <div id="chat-messages-rocket" class="chat-messages">
+            <div class="message message-system">Launchpad - Deployments and builds</div>
+          </div>
+          <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+              <textarea class="chat-input" data-workspace="rocket" rows="1" placeholder="Launch or build..."></textarea>
+              <button class="send-btn" onclick="sendMessage('rocket')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_upward</span>
+              </button>
+            </div>
+          </div>
+        </section>
+        <main class="workspace-content">
+          <div class="workspace-placeholder">
+            Deployment console / Build pipeline / Release manager<br><br>
+            🚀 Launch controls<br>
+            🔧 Build configuration<br>
+            📊 Deployment status
+          </div>
+        </main>
+      </div>
+
+      <!-- ISSUES WORKSPACE - To-do, processes, tickets -->
+      <div class="workspace workspace-issues hidden" data-workspace="issues">
+        <aside class="workspace-sidebar">
+          <div class="workspace-sidebar-header">
+            <div class="workspace-title">Issues & Processes</div>
+            <button class="workspace-new-btn" onclick="startNewChat('issues')">
+              <span class="material-symbols-outlined">add</span>
+              New Issue
+            </button>
+          </div>
+          <div class="workspace-list" id="issues-list">
+            <div class="workspace-item active">
+              <span class="workspace-item-text">🟡 Rate limiting retry</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">🟢 Workspace switcher done</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">🔴 Firestore schema design</span>
+            </div>
+          </div>
+        </aside>
+        <section class="workspace-chat">
+          <div class="ribbon-container" id="ribbon-issues">
+            <div class="ribbon"></div>
+          </div>
+          <div id="chat-messages-issues" class="chat-messages">
+            <div class="message message-system">Discuss issues and ongoing processes</div>
+          </div>
+          <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+              <textarea class="chat-input" data-workspace="issues" rows="1" placeholder="Discuss issues..."></textarea>
+              <button class="send-btn" onclick="sendMessage('issues')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_upward</span>
+              </button>
+            </div>
+          </div>
+        </section>
+        <main class="workspace-content">
+          <div class="workspace-placeholder">
+            Issues list / Process tracker / Kanban board<br><br>
+            - Rate limiting handling<br>
+            - Pipeline stages<br>
+            - Task assignments
+          </div>
+        </main>
+      </div>
+
+      <!-- SCHEDULER WORKSPACE - Cron jobs, timeline -->
+      <div class="workspace workspace-scheduler hidden" data-workspace="scheduler">
+        <aside class="workspace-sidebar">
+          <div class="workspace-sidebar-header">
+            <div class="workspace-title">Scheduler</div>
+            <button class="workspace-new-btn" onclick="startNewChat('scheduler')">
+              <span class="material-symbols-outlined">add</span>
+              New Schedule
+            </button>
+          </div>
+          <div class="workspace-list" id="scheduler-list">
+            <div class="workspace-item active">
+              <span class="workspace-item-text">⏰ Nightly backup (2am)</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">📊 Daily metrics (9am)</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">🔄 Sync jobs</span>
+            </div>
+          </div>
+        </aside>
+        <section class="workspace-chat">
+          <div class="ribbon-container" id="ribbon-scheduler">
+            <div class="ribbon"></div>
+          </div>
+          <div id="chat-messages-scheduler" class="chat-messages">
+            <div class="message message-system">Scheduler and cron job management</div>
+          </div>
+          <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+              <textarea class="chat-input" data-workspace="scheduler" rows="1" placeholder="Schedule tasks..."></textarea>
+              <button class="send-btn" onclick="sendMessage('scheduler')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_upward</span>
+              </button>
+            </div>
+          </div>
+        </section>
+        <main class="workspace-content">
+          <div class="workspace-placeholder">
+            Cron job timeline / Job queue / Dispatcher<br><br>
+            Next runs:<br>
+            - 14:30 - Data sync<br>
+            - 02:00 - Backup (tomorrow)
+          </div>
+        </main>
+      </div>
+
+      <!-- SKILLS WORKSPACE - Commands, system prompts -->
+      <div class="workspace workspace-skills hidden" data-workspace="skills">
+        <aside class="workspace-sidebar">
+          <div class="workspace-sidebar-header">
+            <div class="workspace-title">Skills & Commands</div>
+            <button class="workspace-new-btn" onclick="startNewChat('skills')">
+              <span class="material-symbols-outlined">add</span>
+              New Skill
+            </button>
+          </div>
+          <div class="workspace-list" id="skills-list">
+            <div class="workspace-item active">
+              <span class="workspace-item-text">/git-commit</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">/explain-code</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">System prompt: Code review</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">Guidance: Style guide</span>
+            </div>
+          </div>
+        </aside>
+        <section class="workspace-chat">
+          <div class="ribbon-container" id="ribbon-skills">
+            <div class="ribbon"></div>
+          </div>
+          <div id="chat-messages-skills" class="chat-messages">
+            <div class="message message-system">Skills, commands, and guidance management</div>
+          </div>
+          <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+              <textarea class="chat-input" data-workspace="skills" rows="1" placeholder="Edit skills..."></textarea>
+              <button class="send-btn" onclick="sendMessage('skills')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_upward</span>
+              </button>
+            </div>
+          </div>
+        </section>
+        <main class="workspace-content">
+          <div class="workspace-placeholder">
+            Skills editor / Commands / System prompts<br><br>
+            - Custom slash commands<br>
+            - Embedded guidance<br>
+            - Prompt templates
+          </div>
+        </main>
+      </div>
+
+      <!-- WIKI WORKSPACE - Documentation -->
+      <div class="workspace workspace-wiki hidden" data-workspace="wiki">
+        <aside class="workspace-sidebar">
+          <div class="workspace-sidebar-header">
+            <div class="workspace-title">Wiki & Docs</div>
+            <button class="workspace-new-btn" onclick="startNewChat('wiki')">
+              <span class="material-symbols-outlined">add</span>
+              New Page
+            </button>
+          </div>
+          <div class="workspace-list" id="wiki-list">
+            <div class="workspace-item active">
+              <span class="workspace-item-text">Architecture</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">API Reference</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">Style Guide</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">Deployment</span>
+            </div>
+          </div>
+        </aside>
+        <section class="workspace-chat">
+          <div class="ribbon-container" id="ribbon-wiki">
+            <div class="ribbon"></div>
+          </div>
+          <div id="chat-messages-wiki" class="chat-messages">
+            <div class="message message-system">Knowledge base and documentation</div>
+          </div>
+          <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+              <textarea class="chat-input" data-workspace="wiki" rows="1" placeholder="Ask about docs..."></textarea>
+              <button class="send-btn" onclick="sendMessage('wiki')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_upward</span>
+              </button>
+            </div>
+          </div>
+        </section>
+        <main class="workspace-content">
+          <div class="workspace-placeholder">
+            Wiki pages / Documentation viewer<br><br>
+            Browse and search the knowledge base
+          </div>
+        </main>
+      </div>
+
+      <!-- CLAW WORKSPACE - Direct Kimi OpenClaw -->
+      <div class="workspace workspace-claw hidden" data-workspace="claw">
+        <aside class="workspace-sidebar">
+          <div class="workspace-sidebar-header">
+            <div class="workspace-title">Kimi OpenClaw</div>
+            <button class="workspace-new-btn" onclick="startNewChat('claw')">
+              <span class="material-symbols-outlined">add</span>
+              New Session
+            </button>
+          </div>
+          <div class="workspace-list" id="claw-list">
+            <div class="workspace-item active">
+              <span class="workspace-item-text">🟢 OpenClaw Session #1</span>
+            </div>
+            <div class="workspace-item">
+              <span class="workspace-item-text">⚫ OpenClaw Session #2</span>
+            </div>
+          </div>
+        </aside>
+        <section class="workspace-chat">
+          <div class="ribbon-container" id="ribbon-claw">
+            <div class="ribbon"></div>
+          </div>
+          <div id="chat-messages-claw" class="chat-messages">
+            <div class="message message-system">Direct connection to Kimi OpenClaw</div>
+          </div>
+          <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+              <textarea class="chat-input" data-workspace="claw" rows="1" placeholder="Chat with Kimi..."></textarea>
+              <button class="send-btn" onclick="sendMessage('claw')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_upward</span>
+              </button>
+            </div>
+          </div>
+        </section>
+        <main class="workspace-content">
+          <div class="workspace-placeholder">
+            OpenClaw tools / File browser / Quick actions<br><br>
+            Direct tool access and file operations
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =====================================================
+    // WORKSPACE MANAGEMENT SYSTEM
+    // =====================================================
+    
+    const state = {
+      currentWorkspace: 'code',
+      workspaces: {},
+      ws: null,
+      isStreaming: false,
+      currentTurnElement: null,
+      wireLog: [] // Raw wire traffic for debugging
+    };
+
+    // Workspace configurations
+    const workspaceConfig = {
+      code: { name: 'Code', color: '#00d4ff', hasChat: true },
+      rocket: { name: 'Launchpad', color: '#f97316', hasChat: true },
+      issues: { name: 'Issues', color: '#facc15', hasChat: true },
+      scheduler: { name: 'Scheduler', color: '#22c55e', hasChat: true },
+      skills: { name: 'Skills', color: '#a855f7', hasChat: true },
+      wiki: { name: 'Wiki', color: '#ec4899', hasChat: true },
+      claw: { name: 'OpenClaw', color: '#ef4444', hasChat: true }
+    };
+
+    // Initialize workspace state
+    Object.keys(workspaceConfig).forEach(ws => {
+      state.workspaces[ws] = {
+        messages: [],
+        isStreaming: false,
+        currentTurn: null,
+        hasThinking: false,
+        contentBuffer: '', // Buffered main content
+        thinkingBuffer: '', // Buffered thinking content
+        thinkingRevealed: 0, // Characters revealed in thinking
+        thinkingStarted: false, // Whether thinking typewriter started
+        thinkingTimer: null, // Thinking typewriter interval
+        
+        // Render State Machine (Phase 1 & 2)
+        renderPhase: 'idle', // idle, ribbon_entering, ribbon_caught, ribbon_completing, pre_thinking_pause, streaming
+        messageQueue: [], // Queued messages during non-streaming phases
+        pendingTurnEnd: false, // Flag for graceful turn end
+        thinkingVisible: false, // Whether thinking UI is visible
+        thinkingMinDurationTimer: null, // Timer for 0.8s minimum thinking visibility
+        
+        // Per-workspace typewriter state (isolated from other workspaces)
+        typewriter: {
+          active: false,
+          buffer: '',
+          revealedLength: 0,
+          timer: null,
+          textContainer: null
+        }
+      };
+    });
+
+    // Get elements for a workspace
+    function getWorkspaceElements(workspace) {
+      const container = document.querySelector(`.workspace[data-workspace="${workspace}"]`);
+      return {
+        container,
+        chatMessages: container?.querySelector('.chat-messages'),
+        textarea: container?.querySelector('.chat-input'),
+        sendBtn: container?.querySelector('.send-btn')
+      };
+    }
+
+    // Switch to a workspace - Updates SINGLE theme variable
+    function switchWorkspace(workspace) {
+      if (!workspaceConfig[workspace]) return;
+      
+      // Update UI
+      document.querySelectorAll('.workspace').forEach(el => el.classList.add('hidden'));
+      document.querySelector(`.workspace[data-workspace="${workspace}"]`)?.classList.remove('hidden');
+      
+      // Update active tool button
+      document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.workspace === workspace);
+      });
+      
+      // SINGLE VARIABLE UPDATE - Changes ALL colors at once
+      updateTheme(workspace);
+      
+      state.currentWorkspace = workspace;
+      console.log('Switched to workspace:', workspace, 'Theme:', workspaceConfig[workspace].color);
+    }
+
+    // Add user message to current workspace
+    function addUserMessage(text, workspace = state.currentWorkspace) {
+      const { chatMessages } = getWorkspaceElements(workspace);
+      if (!chatMessages) return;
+      
+      const div = document.createElement('div');
+      div.className = 'message message-user';
+      div.textContent = text;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      // Store in state
+      state.workspaces[workspace].messages.push({ type: 'user', text });
+    }
+
+    // Create assistant turn in current workspace
+    function createAssistantTurn(workspace = state.currentWorkspace) {
+      const { chatMessages } = getWorkspaceElements(workspace);
+      if (!chatMessages) return null;
+      
+      const div = document.createElement('div');
+      div.className = 'message message-assistant';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      // No cursor - we use pulse symbol instead (Phase 7: Cursor Removal)
+      div.appendChild(bubble);
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      return { div, bubble };
+    }
+
+    // Render a complete code block with header and copy button
+    function renderCodeBlock(bubble, language, content, cursor, onComplete) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-block-wrapper';
+      
+      const header = document.createElement('div');
+      header.className = 'code-block-header';
+      header.innerHTML = `<span>${language || 'code'}</span>`;
+      
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-code-btn';
+      copyBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span> Copy';
+      
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      
+      // Phase 5: Terminal-style Bottom-Up Rendering with Syntax Highlighting
+      code.textContent = content;
+      if (language) code.className = `language-${language}`;
+      hljs.highlightElement(code);
+      
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(content); // Use full content for copy
+        copyBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px;">check</span> Copied!';
+        setTimeout(() => {
+          copyBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span> Copy';
+        }, 2000);
+      };
+      
+      header.appendChild(copyBtn);
+      wrapper.appendChild(header);
+      wrapper.appendChild(pre);
+      pre.appendChild(code);
+      
+      if (cursor) {
+        bubble.insertBefore(wrapper, cursor);
+      } else {
+        bubble.appendChild(wrapper);
+      }
+      
+      // Prepare for character-by-character reveal
+      const textNodes = [];
+      const walkDOM = (node) => {
+        if (node.nodeType === Node.TEXT_NODE) textNodes.push(node);
+        else for (let child of node.childNodes) walkDOM(child);
+      };
+      walkDOM(code);
+      
+      const totalChars = textNodes.reduce((sum, node) => sum + node.textContent.length, 0);
+      let currentChar = 0;
+      
+      textNodes.forEach(node => {
+        node._originalText = node.textContent;
+        node.textContent = '';
+      });
+      
+      pre.scrollTop = pre.scrollHeight;
+      
+      const codeTimer = setInterval(() => {
+        if (currentChar < totalChars) {
+          let charsCounted = 0;
+          for (let node of textNodes) {
+            const nodeLen = node._originalText.length;
+            if (currentChar < charsCounted + nodeLen) {
+              const charsToReveal = currentChar - charsCounted + 1;
+              node.textContent = node._originalText.substring(0, charsToReveal);
+              break;
+            }
+            charsCounted += nodeLen;
+          }
+          currentChar++;
+          pre.scrollTop = pre.scrollHeight;
+          const chatMessages = bubble.closest('.chat-messages');
+          if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+        } else {
+          clearInterval(codeTimer);
+          pre.scrollTop = pre.scrollHeight;
+          if (onComplete) onComplete();
+        }
+      }, 2); // 2ms per character (faster than text)
+    }
+
+    // Add system message
+    function addSystemMessage(text, workspace = state.currentWorkspace) {
+      const { chatMessages } = getWorkspaceElements(workspace);
+      if (!chatMessages) return;
+      
+      const div = document.createElement('div');
+      div.className = 'message message-system';
+      div.textContent = text;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Set input enabled/disabled
+    function setInputEnabled(enabled, workspace = state.currentWorkspace) {
+      const { textarea, sendBtn } = getWorkspaceElements(workspace);
+      if (textarea) textarea.disabled = !enabled;
+      if (sendBtn) sendBtn.disabled = !enabled;
+      if (enabled && textarea) textarea.focus();
+    }
+
+    // Start new chat in workspace
+    function startNewChat(workspace = state.currentWorkspace) {
+      const wsState = state.workspaces[workspace];
+      const { chatMessages } = getWorkspaceElements(workspace);
+      
+      // Clear any running timers
+      if (wsState.thinkingTimer) clearInterval(wsState.thinkingTimer);
+      if (wsState.thinkingMinDurationTimer) clearTimeout(wsState.thinkingMinDurationTimer);
+      if (wsState.typewriter.timer) clearInterval(wsState.typewriter.timer);
+      
+      if (chatMessages) {
+        chatMessages.innerHTML = `<div class="message message-system">New ${workspaceConfig[workspace].name} session started</div>`;
+      }
+      
+      // Reset all state
+      wsState.messages = [];
+      wsState.isStreaming = false;
+      wsState.currentTurn = null;
+      wsState.hasThinking = false;
+      wsState.contentBuffer = '';
+      wsState.thinkingBuffer = '';
+      wsState.thinkingRevealed = 0;
+      wsState.thinkingStarted = false;
+      wsState.renderPhase = 'idle';
+      wsState.messageQueue = [];
+      wsState.pendingTurnEnd = false;
+      wsState.thinkingVisible = false;
+      wsState.thinkingTimer = null;
+      wsState.thinkingMinDurationTimer = null;
+      wsState.typewriter = {
+        active: false,
+        buffer: '',
+        processedIndex: 0,
+        revealedLength: 0,
+        timer: null,
+        textContainer: null
+      };
+      
+      // Hide ribbon
+      hideRibbon(workspace);
+    }
+
+    // Ribbon animation control
+    function showRibbon(workspace, phase) {
+      const ribbon = document.getElementById(`ribbon-${workspace}`);
+      if (!ribbon) return;
+      
+      ribbon.className = 'ribbon-container visible';
+      if (phase) ribbon.classList.add(phase);
+    }
+    
+    function hideRibbon(workspace) {
+      const ribbon = document.getElementById(`ribbon-${workspace}`);
+      if (!ribbon) return;
+      ribbon.className = 'ribbon-container';
+    }
+    
+    // Start the ribbon animation sequence
+    function startRibbonSequence(workspace) {
+      const wsState = state.workspaces[workspace];
+      
+      // Phase: ribbon_entering (150ms minimum)
+      wsState.renderPhase = 'ribbon_entering';
+      showRibbon(workspace, 'entering');
+      
+      // After minimum entrance time, transition to caught state
+      setTimeout(() => {
+        if (wsState.renderPhase === 'ribbon_entering') {
+          wsState.renderPhase = 'ribbon_caught';
+          showRibbon(workspace, 'caught');
+        }
+      }, 150);
+    }
+    
+    // Complete ribbon animation (called on turn_begin)
+    function completeRibbonAnimation(workspace) {
+      const wsState = state.workspaces[workspace];
+      
+      if (wsState.renderPhase === 'ribbon_entering' || wsState.renderPhase === 'ribbon_caught') {
+        // Phase: ribbon_completing (200ms exit animation)
+        wsState.renderPhase = 'ribbon_completing';
+        showRibbon(workspace, 'completing');
+        
+        // After exit animation, hide and start pre-thinking pause
+        setTimeout(() => {
+          hideRibbon(workspace);
+          startPreThinkingPause(workspace);
+        }, 200);
+      }
+    }
+    
+    // Pre-thinking pause (200ms)
+    function startPreThinkingPause(workspace) {
+      const wsState = state.workspaces[workspace];
+      wsState.renderPhase = 'pre_thinking_pause';
+      
+      setTimeout(() => {
+        if (wsState.renderPhase === 'pre_thinking_pause') {
+          wsState.renderPhase = 'streaming';
+          flushMessageQueue(workspace);
+        }
+      }, 200);
+    }
+    
+    // Flush queued messages once we're in streaming phase
+    function flushMessageQueue(workspace) {
+      const wsState = state.workspaces[workspace];
+      const { chatMessages } = getWorkspaceElements(workspace);
+      
+      // Process all queued messages
+      while (wsState.messageQueue.length > 0) {
+        const msg = wsState.messageQueue.shift();
+        handleStreamMessage(msg, workspace, chatMessages);
+      }
+    }
+    
+    // Send message from a workspace
+    function sendMessage(workspace = state.currentWorkspace) {
+      const { textarea } = getWorkspaceElements(workspace);
+      if (!textarea) return;
+      
+      const text = textarea.value.trim();
+      if (!text || !state.ws || state.ws.readyState !== WebSocket.OPEN) return;
+      
+      const wsState = state.workspaces[workspace];
+      if (wsState.renderPhase !== 'idle') return; // Already processing
+      
+      addUserMessage(text, workspace);
+      state.ws.send(JSON.stringify({ type: 'prompt', user_input: text, workspace }));
+      
+      textarea.value = '';
+      textarea.style.height = 'auto';
+      setInputEnabled(false, workspace);
+      
+      // Start ribbon animation sequence (Phase 1)
+      startRibbonSequence(workspace);
+    }
+
+    // Setup textarea auto-resize for all workspaces
+    document.querySelectorAll('.chat-input').forEach(textarea => {
+      textarea.addEventListener('input', () => {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+      });
+    });
+
+    // Wire log download helper
+    window.downloadWireLog = function() {
+      const blob = new Blob([JSON.stringify(state.wireLog, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `wire-log-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    // Global typewriter state reference (for backwards compatibility during refactor)
+    // All workspaces now have isolated typewriter state in state.workspaces[ws].typewriter
+    
+    // Start typewriter animation for buffered content (workspace-scoped)
+    // FIXED v4: Simple chunked rendering with pause effect - reliable and clean
+    function startTypewriter(workspace, turn, chatMessages) {
+      const wsState = state.workspaces[workspace];
+      const tw = wsState.typewriter;
+      
+      if (tw.active) return;
+      tw.active = true;
+      
+      if (tw.processedIndex === undefined) tw.processedIndex = 0;
+      
+      // Current text container
+      let currentContainer = null;
+      
+      function processNextChunk() {
+        if (!tw.active) return;
+        
+        const remaining = wsState.contentBuffer.substring(tw.processedIndex);
+        
+        if (remaining.length === 0) {
+          if (wsState.pendingTurnEnd) {
+            tw.active = false;
+            finishTurnEnd(workspace);
+          } else {
+            setTimeout(processNextChunk, 50);
+          }
+          return;
+        }
+        
+        // 1. Check for complete code block - render instantly
+        const codeMatch = remaining.match(/^```(\w*)\n([\s\S]*?)\n```($|\n)/);
+        if (codeMatch) {
+          showPulseSymbol(turn.bubble, null, true);
+          setTimeout(() => {
+            renderCodeBlock(turn.bubble, codeMatch[1], codeMatch[2], null, () => {
+              tw.processedIndex += codeMatch[0].length;
+              showPulseSymbol(turn.bubble, null, false);
+              setTimeout(processNextChunk, 300);
+            });
+          }, 400);
+          return;
+        }
+        
+        // 2. Find text chunk boundary (natural break points)
+        let chunkEnd = remaining.length;
+        
+        const nextCodeBlock = remaining.indexOf('\n```');
+        const paragraphEnd = remaining.indexOf('\n\n');
+        const lineEnd = remaining.indexOf('\n', 1);
+        
+        // Choose smallest valid boundary
+        const candidates = [];
+        if (nextCodeBlock > 20) candidates.push(nextCodeBlock);
+        if (paragraphEnd > 20) candidates.push(paragraphEnd + 2);
+        if (lineEnd > 20) candidates.push(lineEnd + 1);
+        
+        if (candidates.length > 0) {
+          chunkEnd = Math.min(...candidates);
+        } else if (remaining.length > 120) {
+          const lastSpace = remaining.substring(0, 120).lastIndexOf(' ');
+          chunkEnd = lastSpace > 40 ? lastSpace + 1 : 120;
+        }
+        
+        // Don't include partial code block markers
+        const partialCode = remaining.match(/\n```[\s\S]*$/);
+        if (partialCode && !wsState.pendingTurnEnd) {
+          chunkEnd = Math.min(chunkEnd, partialCode.index + 1);
+        }
+        
+        const textChunk = remaining.substring(0, chunkEnd);
+        
+        if (textChunk.length > 0) {
+          renderChunk(textChunk, () => {
+            tw.processedIndex += textChunk.length;
+            // Random pause between chunks (50-150ms) for "machine" effect
+            const pause = Math.floor(Math.random() * 100) + 50;
+            setTimeout(processNextChunk, pause);
+          });
+        } else {
+          setTimeout(processNextChunk, 50);
+        }
+      }
+      
+      function renderChunk(markdown, onComplete) {
+        // Check if we need a new container (new paragraph/section)
+        const needsNewContainer = !currentContainer ||
+                                  markdown.match(/^(\n)?#/) ||
+                                  markdown.match(/^(\n)?[-*]\s/) ||
+                                  markdown.match(/^(\n)?\d+\./);
+        
+        if (needsNewContainer) {
+          currentContainer = document.createElement('div');
+          currentContainer.className = 'typewriter-text markdown-content';
+          turn.bubble.appendChild(currentContainer);
+        }
+        
+        // Parse markdown and append to container
+        const parsed = marked.parse(markdown);
+        const temp = document.createElement('div');
+        temp.innerHTML = parsed;
+        
+        // Append all children to current container
+        while (temp.firstChild) {
+          currentContainer.appendChild(temp.firstChild);
+        }
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        onComplete();
+      }
+      
+      processNextChunk();
+    }
+    
+    // Show pulse symbol (lens_blur icon)
+    function showPulseSymbol(bubble, cursor, continuous) {
+      // Remove existing pulse
+      const existing = bubble.querySelector('.pulse-symbol');
+      if (existing) existing.remove();
+      
+      const pulse = document.createElement('span');
+      pulse.className = 'pulse-symbol';
+      pulse.innerHTML = '<span class="material-symbols-outlined">lens_blur</span>';
+      if (continuous) {
+        pulse.classList.add('pulsing');
+      } else {
+        pulse.classList.add('pulse-once');
+      }
+      
+      if (cursor) {
+        bubble.insertBefore(pulse, cursor);
+      } else {
+        bubble.appendChild(pulse);
+      }
+      
+      if (!continuous) {
+        // Remove after single pulse completes
+        setTimeout(() => {
+          pulse.remove();
+        }, 800);
+      }
+      
+      return pulse;
+    }
+    
+    // Remove pulse symbol
+    function removePulseSymbol(bubble) {
+      const pulse = bubble.querySelector('.pulse-symbol');
+      if (pulse) pulse.remove();
+    }
+
+    // Create a reusable pulse symbol controller
+    function createPulseSymbol() {
+      const container = document.createElement('span');
+      container.className = 'pulse-symbol';
+      container.innerHTML = '<span class="material-symbols-outlined">lens_blur</span>';
+      
+      const icon = container.querySelector('.material-symbols-outlined');
+      
+      return {
+        element: container,
+        
+        startContinuous() {
+          container.classList.remove('pulse-once');
+          container.classList.add('pulsing');
+          return this;
+        },
+        
+        pulseOnce() {
+          container.classList.remove('pulsing');
+          // Trigger reflow to restart animation
+          void icon.offsetWidth;
+          container.classList.add('pulse-once');
+          return this;
+        },
+        
+        stop() {
+          container.classList.remove('pulsing', 'pulse-once');
+          return this;
+        }
+      };
+    }
+
+    // Handle streaming messages (called from queue flush or directly in streaming phase)
+    function handleStreamMessage(msg, workspace, chatMessages) {
+      const wsState = state.workspaces[workspace];
+      const turn = wsState.currentTurn;
+      
+      switch (msg.type) {
+        case 'turn_begin':
+          wsState.isStreaming = true;
+          // Only create turn if not already created (e.g., by early turn_begin handling)
+          if (!wsState.currentTurn) {
+            wsState.currentTurn = createAssistantTurn(workspace);
+            // No cursor to remove - we use pulse symbol instead (Phase 7)
+          }
+          // Note: completeRibbonAnimation is already called by the early handler
+          // that queues messages before streaming phase begins
+          break;
+          
+        case 'content':
+          if (!turn || !chatMessages) return;
+          
+          // Accumulate in buffer
+          wsState.contentBuffer += msg.text;
+          
+          // Only start typewriter when we have a complete parseable unit
+          // This prevents gibberish from parsing incomplete markdown
+          const buffer = wsState.contentBuffer;
+          const hasCompleteParagraph = buffer.includes('\n\n') && buffer.length > 50;
+          const hasSentenceEnd = buffer.match(/[.!?]\s+/) && buffer.length > 100;
+          const hasEnoughContent = buffer.length >= 200; // Force start at 200 chars
+          const hasCodeBlockStart = buffer.includes('\n```');
+          const isTurnEnding = wsState.pendingTurnEnd;
+          
+          const shouldStartTyping = !wsState.typewriter.active && (
+            hasCompleteParagraph || 
+            hasSentenceEnd || 
+            hasEnoughContent || 
+            hasCodeBlockStart ||
+            isTurnEnding
+          );
+          
+          if (shouldStartTyping) {
+            startTypewriter(workspace, turn, chatMessages);
+          }
+          break;
+          
+        case 'thinking':
+          if (!turn || !chatMessages) return;
+          
+          // Accumulate thinking text
+          wsState.thinkingBuffer += msg.text;
+          
+          // Show thinking UI after 200ms delay
+          if (!wsState.thinkingVisible) {
+            wsState.thinkingVisible = true;
+            showThinkingUI(workspace, turn, chatMessages);
+          }
+          
+          // Type out thinking content
+          const thinkingContainer = turn.bubble.querySelector('.thinking-content');
+          if (thinkingContainer) {
+            // Start thinking typewriter if not started
+            if (!wsState.thinkingStarted) {
+              wsState.thinkingStarted = true;
+              startThinkingTypewriter(workspace, thinkingContainer, chatMessages);
+            }
+          }
+          break;
+          
+        case 'turn_end':
+          // Set pending flag - typewriter will call finishTurnEnd when buffer empties
+          wsState.pendingTurnEnd = true;
+          if (!wsState.typewriter.active) {
+            // If typewriter isn't running (e.g. content was too short to trigger it),
+            // start it now to flush the remaining buffer
+            startTypewriter(workspace, turn, chatMessages);
+          }
+          break;
+      }
+    }
+    
+    // Show thinking UI (Phase 2: 200ms delay, 0.8s minimum visibility)
+    function showThinkingUI(workspace, turn, chatMessages) {
+      const wsState = state.workspaces[workspace];
+      
+      let thinkingSection = turn.bubble.querySelector('.thinking-section');
+      if (!thinkingSection) {
+        thinkingSection = document.createElement('div');
+        thinkingSection.className = 'thinking-section';
+        
+        // Create header with shimmer effect
+        const thinkingHeader = document.createElement('div');
+        thinkingHeader.className = 'thinking-header';
+        thinkingHeader.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px;">lightbulb</span> <span class="thinking-shimmer">Thinking</span> <span class="material-symbols-outlined thinking-arrow" style="font-size: 16px;">arrow_drop_down</span>';
+        
+        // Add click handler to toggle collapse
+        thinkingHeader.addEventListener('click', () => {
+          const content = thinkingSection.querySelector('.thinking-content');
+          const arrow = thinkingHeader.querySelector('.thinking-arrow');
+          if (content) {
+            const isCollapsed = content.style.display === 'none';
+            content.style.display = isCollapsed ? 'block' : 'none';
+            arrow.textContent = isCollapsed ? 'arrow_drop_down' : 'arrow_right';
+          }
+        });
+        
+        // Content container
+        const thinkingContainer = document.createElement('div');
+        thinkingContainer.className = 'thinking-content';
+        
+        thinkingSection.appendChild(thinkingHeader);
+        thinkingSection.appendChild(thinkingContainer);
+        turn.bubble.appendChild(thinkingSection);
+      }
+      
+      // Fade in after 200ms delay
+      setTimeout(() => {
+        thinkingSection.classList.add('visible');
+      }, 200);
+      
+      // Minimum 0.8s visibility timer
+      wsState.thinkingMinDurationTimer = setTimeout(() => {
+        wsState.thinkingMinDurationTimer = null;
+      }, 800);
+    }
+    
+    // Start thinking typewriter
+    function startThinkingTypewriter(workspace, contentContainer, chatMessages) {
+      const wsState = state.workspaces[workspace];
+      
+      wsState.thinkingTimer = setInterval(() => {
+        if (wsState.thinkingRevealed < wsState.thinkingBuffer.length) {
+          wsState.thinkingRevealed++;
+          contentContainer.textContent = wsState.thinkingBuffer.substring(0, wsState.thinkingRevealed);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      }, 5); // 5ms per character
+    }
+    
+    // Finish turn end (called by typewriter when buffer is empty)
+    function finishTurnEnd(workspace) {
+      const wsState = state.workspaces[workspace];
+      const turn = wsState.currentTurn;
+      
+      wsState.isStreaming = false;
+      wsState.renderPhase = 'idle';
+      wsState.pendingTurnEnd = false;
+      wsState.thinkingVisible = false;
+      
+      if (turn) {
+        // Remove pulse symbol if present
+        removePulseSymbol(turn.bubble);
+        
+        // Show any remaining content that wasn't processed
+        if (wsState.contentBuffer && wsState.typewriter.processedIndex < wsState.contentBuffer.length) {
+          const remaining = wsState.contentBuffer.substring(wsState.typewriter.processedIndex);
+          if (remaining.trim()) {
+            const span = document.createElement('div');
+            span.className = 'typewriter-text markdown-content';
+            span.innerHTML = marked.parse(remaining);
+            turn.bubble.appendChild(span);
+          }
+        }
+        
+        // Remove thinking shimmer
+        const shimmerSpan = turn.bubble.querySelector('.thinking-shimmer');
+        if (shimmerSpan) shimmerSpan.classList.remove('thinking-shimmer');
+      }
+      
+      // Clear timers
+      if (wsState.thinkingTimer) {
+        clearInterval(wsState.thinkingTimer);
+        wsState.thinkingTimer = null;
+      }
+      if (wsState.thinkingMinDurationTimer) {
+        clearTimeout(wsState.thinkingMinDurationTimer);
+        wsState.thinkingMinDurationTimer = null;
+      }
+      
+      // Reset state
+      wsState.currentTurn = null;
+      wsState.contentBuffer = '';
+      wsState.thinkingBuffer = '';
+      wsState.thinkingRevealed = 0;
+      wsState.thinkingStarted = false;
+      wsState.typewriter.buffer = '';
+      wsState.typewriter.revealedLength = 0;
+      wsState.typewriter.textContainer = null;
+      
+      setInputEnabled(true, workspace);
+    }
+
+    // WebSocket connection
+    const connectionStatus = document.getElementById('connection-status');
+    
+    function connect() {
+      state.ws = new WebSocket(`ws://${window.location.host}`);
+      
+      state.ws.onopen = () => {
+        console.log('Connected to server');
+        connectionStatus.textContent = 'Connected';
+        connectionStatus.classList.add('connected');
+      };
+      
+      state.ws.onmessage = (event) => {
+        // RAW WIRE LOG
+        console.log('[RAW WIRE]', event.data);
+        state.wireLog.push({time: Date.now(), data: event.data});
+        
+        const msg = JSON.parse(event.data);
+        const workspace = msg.workspace || state.currentWorkspace;
+        const { chatMessages } = getWorkspaceElements(workspace);
+        const wsState = state.workspaces[workspace];
+        
+        switch (msg.type) {
+          case 'connected':
+            console.log('Session ID:', msg.sessionId);
+            break;
+            
+          case 'turn_begin':
+          case 'content':
+          case 'thinking':
+          case 'turn_end':
+            // Queue messages if not in streaming phase
+            if (wsState.renderPhase !== 'streaming') {
+              wsState.messageQueue.push(msg);
+              
+              // Handle turn_begin specially to complete ribbon animation
+              if (msg.type === 'turn_begin') {
+                wsState.currentTurn = createAssistantTurn(workspace);
+                // No cursor to remove - we use pulse symbol instead (Phase 7)
+                completeRibbonAnimation(workspace);
+              }
+            } else {
+              handleStreamMessage(msg, workspace, chatMessages);
+            }
+            break;
+            
+          case 'step_begin':
+            console.log('Step', msg.stepNumber, 'in', workspace);
+            break;
+            
+          case 'tool_call':
+            // Display tool call with consistent status styling
+            if (wsState.currentTurn && msg.toolName) {
+              const toolDiv = document.createElement('div');
+              toolDiv.className = 'tool-call-status';
+              // Map common tool names to icons
+              const iconMap = {
+                'read': 'description',
+                'search': 'search',
+                'grep': 'search',
+                'write': 'edit',
+                'shell': 'terminal',
+                'fetch': 'download',
+                'ask': 'help'
+              };
+              const icon = iconMap[msg.toolName.toLowerCase()] || 'build';
+              toolDiv.innerHTML = `<span class="material-symbols-outlined">${icon}</span> <span>${msg.toolName}</span>`;
+              wsState.currentTurn.bubble.appendChild(toolDiv);
+              chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            console.log('Tool call:', msg.toolName);
+            break;
+            
+          case 'tool_result':
+            // Tool result received - could display output if needed
+            console.log('Tool result:', msg.toolOutput?.slice(0, 100));
+            break;
+            
+          case 'status_update':
+            console.log('Status:', msg.tokenUsage);
+            
+            // Update context usage indicator
+            const contextUsage = msg.contextUsage;
+            if (contextUsage !== undefined) {
+              const container = document.getElementById('context-usage');
+              const fill = document.getElementById('context-fill');
+              const percent = document.getElementById('context-percent');
+              
+              if (container && fill && percent) {
+                container.style.display = 'flex';
+                const percentage = Math.round(contextUsage * 100);
+                fill.style.width = `${percentage}%`;
+                percent.textContent = `${percentage}%`;
+                
+                // Color coding based on usage
+                fill.classList.remove('high', 'critical');
+                if (percentage >= 95) {
+                  fill.classList.add('critical');
+                } else if (percentage >= 80) {
+                  fill.classList.add('high');
+                }
+              }
+            }
+            break;
+            
+          case 'request':
+            addSystemMessage(`[Request: ${msg.requestType}]`, workspace);
+            console.log('Request:', msg);
+            break;
+            
+          case 'response':
+            console.log('Response:', msg.result);
+            break;
+            
+          case 'error':
+            console.error('Error:', msg.error);
+            addSystemMessage(`Error: ${msg.error.message}`, workspace);
+            state.workspaces[workspace].isStreaming = false;
+            setInputEnabled(true, workspace);
+            break;
+            
+          case 'event':
+            console.log('Event:', msg.eventType, msg.payload);
+            break;
+            
+          default:
+            console.log('Unknown message:', msg);
+        }
+      };
+      
+      state.ws.onclose = () => {
+        console.log('Disconnected from server');
+        connectionStatus.textContent = 'Disconnected';
+        connectionStatus.classList.remove('connected');
+        Object.keys(workspaceConfig).forEach(ws => {
+          addSystemMessage('Disconnected from wire session', ws);
+          setInputEnabled(false, ws);
+        });
+      };
+      
+      state.ws.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        addSystemMessage('WebSocket error', state.currentWorkspace);
+      };
+    }
+
+    // Tool button click handling - Switch workspaces
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const workspace = btn.dataset.workspace;
+        if (workspace) {
+          switchWorkspace(workspace);
+        }
+      });
+    });
+
+    // SINGLE THEME VARIABLE - Updates everything
+    function updateTheme(workspace) {
+      const themes = {
+        code: { color: '#00d4ff', rgb: '0, 212, 255' },
+        rocket: { color: '#f97316', rgb: '249, 115, 22' },
+        issues: { color: '#facc15', rgb: '250, 204, 21' },
+        scheduler: { color: '#22c55e', rgb: '34, 197, 94' },
+        skills: { color: '#a855f7', rgb: '168, 85, 247' },
+        wiki: { color: '#ec4899', rgb: '236, 72, 153' },
+        claw: { color: '#ef4444', rgb: '239, 68, 68' }
+      };
+      
+      const theme = themes[workspace];
+      if (!theme) return;
+      
+      // Set CSS variables on app-container
+      const appContainer = document.querySelector('.app-container');
+      appContainer.style.setProperty('--theme-primary', theme.color);
+      appContainer.style.setProperty('--theme-primary-rgb', theme.rgb);
+      
+      // Borders at 30% opacity (subtle, as documented)
+      appContainer.style.setProperty('--theme-border', `rgba(${theme.rgb}, 0.3)`);
+      // Glow borders at 60% opacity (hover state)
+      appContainer.style.setProperty('--theme-border-glow', `rgba(${theme.rgb}, 0.6)`);
+    }
+
+    // Initialize - Set initial theme
+    connect();
+    updateTheme('code'); // Apply initial code theme - ALL colors come from this
+    console.log('Kimi IDE Workspaces initialized:', Object.keys(workspaceConfig));
+  </script>
+</body>
+</html>

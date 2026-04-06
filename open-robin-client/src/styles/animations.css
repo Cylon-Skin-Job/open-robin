@@ -1,0 +1,117 @@
+/* AI Thinking Orb - Pulsating cursor effect */
+@keyframes thinking-pulse {
+  0%, 100% { 
+    opacity: 0.4; 
+    transform: scale(0.8);
+    filter: blur(0px);
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.2);
+    filter: blur(2px);
+  }
+}
+
+/* User bubble fade-in: 0 → 1 over 200ms. Applied on new user messages. */
+@keyframes user-bubble-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.user-bubble-in {
+  animation: user-bubble-in 200ms ease-out forwards;
+}
+
+/* Tool block fade-in: 0 → 1 over 200ms. Applied on mount. */
+@keyframes tool-fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.tool-fade-in {
+  animation: tool-fade-in 200ms ease-in forwards;
+}
+
+/* Shimmer for thinking */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/*
+ * Blur sphere — three-phase animation:
+ *   1. Expand: 0.3 → 1.0 scale over 1.5s (with 500ms initial delay)
+ *   2. Breathe: pulse between 1.0 and 0.7 scale indefinitely (handles API latency)
+ *   3. Dispose: collapse from current state to 0.3 scale over 500ms
+ *
+ * The expand animation runs once, then the breathe loop takes over.
+ * Disposal is triggered by adding the .disposing class.
+ */
+@keyframes blur-sphere-expand {
+  0%   { opacity: 0; transform: scale(0.3); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes blur-sphere-breathe {
+  0%   { opacity: 1;   transform: scale(1); }
+  50%  { opacity: 0.6; transform: scale(0.7); }
+  100% { opacity: 1;   transform: scale(1); }
+}
+
+@keyframes blur-sphere-dispose {
+  0%   { opacity: 1; transform: scale(1); }
+  40%  { opacity: 1; transform: scale(0.5); }
+  100% { opacity: 0; transform: scale(0.3); }
+}
+
+.blur-sphere {
+  display: inline-block;
+  opacity: 0;
+  transform: scale(0.3);
+  /* Expand first (1.5s + 500ms delay), then breathe loop takes over */
+  animation:
+    blur-sphere-expand 1500ms ease-out 500ms forwards,
+    blur-sphere-breathe 2000ms ease-in-out 2000ms infinite;
+}
+
+.blur-sphere.disposing {
+  /* Override both animations — collapse from wherever we are */
+  animation: blur-sphere-dispose 500ms ease-in forwards;
+}
+
+/* Cursor blink (legacy - can be removed per Phase 7) */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, 
+    var(--text-dim) 0%, 
+    var(--theme-primary) 50%, 
+    var(--text-dim) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 1500ms linear infinite;
+}
+
+/* Typing cursor */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.typing-cursor {
+  animation: blink 800ms infinite;
+  color: var(--theme-primary);
+  font-size: 0.85em;
+  vertical-align: baseline;
+  margin-left: 1px;
+}

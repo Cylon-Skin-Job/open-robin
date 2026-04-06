@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OK/Cancel Popup Demo</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        /* Custom Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            min-width: 300px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .modal-title {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+        }
+        .modal-message {
+            margin: 0 0 24px 0;
+            color: #555;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn-cancel {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn-ok {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>OK / Cancel Popup Demo</h1>
+    
+    <h3>Option 1: Native Browser Confirm</h3>
+    <button onclick="showNativeConfirm()">Show Native Confirm</button>
+    
+    <h3>Option 2: Custom Modal Dialog</h3>
+    <button onclick="showCustomModal()">Show Custom Modal</button>
+    
+    <div id="result"></div>
+
+    <!-- Custom Modal HTML -->
+    <div class="modal-overlay" id="customModal">
+        <div class="modal">
+            <h3 class="modal-title">Confirm Action</h3>
+            <p class="modal-message">Are you sure you want to proceed?</p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="handleModalResult(false)">Cancel</button>
+                <button class="btn-ok" onclick="handleModalResult(true)">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // OPTION 1: Native Browser Confirm (Simplest)
+        // ============================================
+        function showNativeConfirm() {
+            // confirm() returns true if OK clicked, false if Cancel clicked
+            const result = confirm('Are you sure you want to proceed?');
+            
+            if (result) {
+                displayResult('Native Confirm: You clicked OK');
+            } else {
+                displayResult('Native Confirm: You clicked Cancel');
+            }
+        }
+
+        // ============================================
+        // OPTION 2: Custom Modal (More Control)
+        // ============================================
+        function showCustomModal() {
+            document.getElementById('customModal').classList.add('active');
+        }
+
+        function handleModalResult(confirmed) {
+            document.getElementById('customModal').classList.remove('active');
+            
+            if (confirmed) {
+                displayResult('Custom Modal: You clicked OK');
+            } else {
+                displayResult('Custom Modal: You clicked Cancel');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('customModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                handleModalResult(false);
+            }
+        });
+
+        // Helper to display results
+        function displayResult(message) {
+            document.getElementById('result').textContent = `Result: ${message}`;
+        }
+    </script>
+</body>
+</html>

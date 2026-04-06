@@ -1,0 +1,193 @@
+/* Modal overlay — universal trigger-driven modal system */
+
+.rv-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 10000);
+  background: var(--modal-backdrop, rgba(0, 0, 0, 0.6));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: rv-modal-fade-in 200ms ease-out;
+}
+
+.rv-modal-shell {
+  background: var(--modal-bg, #1a1a1a);
+  border: 1px solid var(--modal-border, #333);
+  border-radius: var(--space-sm, 8px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  min-width: 400px;
+  max-width: 720px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rv-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm, 8px) var(--space-md, 16px);
+  border-bottom: 1px solid var(--modal-border, #333);
+}
+
+.rv-modal-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #eee);
+}
+
+.rv-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-dim, #666);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rv-modal-close:hover {
+  color: var(--text-primary, #eee);
+  background: var(--modal-hover, rgba(255, 255, 255, 0.08));
+}
+
+.rv-modal-body {
+  padding: var(--space-md, 16px);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Split layout for drag_file modals */
+.rv-modal-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md, 16px);
+  min-height: 300px;
+}
+
+/* Source panel (draggable document) */
+.rv-modal-source {
+  border: 1px solid var(--modal-border, #333);
+  border-radius: var(--space-xs, 4px);
+  padding: var(--space-sm, 8px);
+  cursor: grab;
+  transition: border-color var(--transition-fast, 150ms);
+  overflow: auto;
+  max-height: 400px;
+}
+
+.rv-modal-source:active {
+  cursor: grabbing;
+}
+
+.rv-modal-source:hover {
+  border-color: var(--theme-primary, #4fc3f7);
+}
+
+.rv-modal-source-label {
+  font-size: 0.75rem;
+  color: var(--text-dim, #666);
+  margin-bottom: var(--space-xs, 4px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rv-modal-source-content {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-secondary, #aaa);
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Target panel (drop zone) */
+.rv-modal-target {
+  border: 2px dashed var(--modal-border, #333);
+  border-radius: var(--space-sm, 8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm, 8px);
+  transition: all var(--transition-fast, 150ms);
+  color: var(--text-dim, #666);
+}
+
+.rv-modal-target-icon {
+  font-size: 48px;
+  transition: color var(--transition-fast, 150ms);
+}
+
+.rv-modal-target-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.rv-modal-target-hint {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* Drag-over state */
+.rv-modal-target.drag-over {
+  border-color: var(--theme-primary, #4fc3f7);
+  background: rgba(79, 195, 247, 0.08);
+  color: var(--theme-primary, #4fc3f7);
+}
+
+/* Success state */
+.rv-modal-target.deployed {
+  border-color: #4caf50;
+  background: rgba(76, 175, 80, 0.08);
+  color: #4caf50;
+}
+
+/* Alert modal */
+.rv-modal-alert-message {
+  font-size: 0.875rem;
+  color: var(--text-primary, #eee);
+  line-height: 1.6;
+  margin-bottom: var(--space-md, 16px);
+}
+
+.rv-modal-alert-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm, 8px);
+}
+
+.rv-modal-btn {
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  border: 1px solid var(--modal-border, #333);
+  background: transparent;
+  color: var(--text-primary, #eee);
+  transition: background var(--transition-fast, 150ms);
+}
+
+.rv-modal-btn:hover {
+  background: var(--modal-hover, rgba(255, 255, 255, 0.08));
+}
+
+.rv-modal-btn-primary {
+  background: var(--theme-primary, #4fc3f7);
+  color: #000;
+  border-color: transparent;
+}
+
+.rv-modal-btn-primary:hover {
+  opacity: 0.9;
+}
+
+@keyframes rv-modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

@@ -1,0 +1,204 @@
+/**
+ * Voice Recorder - K.I.T.T. Style Visualizer
+ * Ring IS the timer + three vertical stripes in center for voice
+ */
+
+.voice-recorder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  min-width: 200px;
+}
+
+/* Header */
+.voice-recorder__header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.voice-recorder__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Ring container - ring is the timer, bars in center */
+.voice-recorder__ring-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Progress ring - THIS is the timer */
+.voice-recorder__ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 140px;
+  height: 140px;
+  transform: rotate(-90deg);
+}
+
+.voice-recorder__ring-bg {
+  fill: none;
+  stroke: var(--neutral-chrome-bg, #3a3a3a);
+  stroke-width: 4;
+}
+
+.voice-recorder__ring-fill {
+  fill: none;
+  stroke: var(--theme-primary, #00d4ff);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+/* K.I.T.T. Visualizer - Three vertical stripes IN THE CENTER */
+.voice-recorder__kitt {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  height: 44px;
+  z-index: 1;
+}
+
+.voice-recorder__kitt-bar {
+  width: 8px;
+  background: var(--theme-primary, #00d4ff);
+  border-radius: 2px;
+  transition: height 0.05s ease-out;
+  min-height: 4px;
+}
+
+/* Content area for other states */
+.voice-recorder__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 0;
+}
+
+/* Grant button */
+.voice-recorder__grant-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--neutral-chrome-bg);
+  border: 1px solid var(--neutral-chrome-border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.voice-recorder__grant-btn:hover {
+  background: var(--hover-modal-row-hover-bg);
+  color: var(--text-primary);
+}
+
+/* Cancel link */
+.voice-recorder__cancel-link {
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.voice-recorder__cancel-link:hover {
+  color: var(--text-secondary);
+}
+
+/* Error state */
+.voice-recorder__error {
+  color: var(--text-error, #ff4444);
+  font-size: 12px;
+  text-align: center;
+  margin: 0;
+}
+
+/* Spinner */
+.voice-recorder__spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--neutral-chrome-border);
+  border-top-color: var(--text-secondary);
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
+}
+
+@keyframes spinner {
+  to { transform: rotate(360deg); }
+}
+
+/* Footer buttons */
+.voice-recorder__footer {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+.voice-recorder__btn {
+  padding: 6px 12px;
+  border: 1px solid var(--neutral-chrome-border);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.voice-recorder__btn--secondary {
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.voice-recorder__btn--secondary:hover {
+  background: var(--neutral-chrome-bg);
+  color: var(--text-secondary);
+}
+
+.voice-recorder__btn--primary {
+  background: var(--neutral-chrome-bg);
+  color: var(--text-secondary);
+}
+
+.voice-recorder__btn--primary:hover {
+  background: var(--hover-modal-row-hover-bg);
+  color: var(--text-primary);
+}
+
+/* Hint text */
+.voice-recorder__hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.voice-recorder__hint kbd {
+  display: inline-block;
+  padding: 1px 4px;
+  background: var(--neutral-chrome-bg);
+  border: 1px solid var(--neutral-chrome-border);
+  border-radius: 3px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+}

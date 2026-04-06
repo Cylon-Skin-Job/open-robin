@@ -1,0 +1,161 @@
+/* ── File Page View ─────────────────────────────────────── */
+
+.file-page-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Top bar — back arrow + filename */
+.file-page-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.file-page-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary, #e0e0e0);
+  cursor: pointer;
+  transition: background 150ms;
+}
+
+.file-page-back:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.file-page-back .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.file-page-filename {
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #aaa);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.file-page-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--text-secondary, #aaa);
+  cursor: pointer;
+  padding: 4px;
+  transition: color 150ms;
+}
+
+.file-page-action:hover {
+  color: var(--text-primary, #e0e0e0);
+}
+
+.file-page-action .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* Content area — fills remaining space, scrolls */
+.file-page-content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px 24px;
+  min-height: 0;
+  scrollbar-width: none;
+}
+
+.file-page-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Document page treatment — gray page on dark background */
+.file-page-content.file-page-document {
+  padding: 20px;
+}
+
+.file-page-content.file-page-document .code-editor {
+  background: #1e1e1e;
+  width: 100%;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  overflow: visible;
+}
+
+.file-page-content.file-page-document .code-content {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.file-page-text {
+  margin: 0;
+  font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary, #e0e0e0);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.file-page-text code {
+  font-family: inherit;
+}
+
+.file-page-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+/* ── Bottom Ribbon ─────────────────────────────────────── */
+
+.file-page-ribbon {
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 0;
+}
+
+.file-page-ribbon-scroll {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.file-page-ribbon-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.file-page-ribbon-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.file-page-ribbon-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+/* Ribbon tiles now use DocumentTile with size="small" — see tile-row.css */
