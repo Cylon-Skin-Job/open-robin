@@ -60,6 +60,12 @@ const {
 // Wire message router — per-connection event switch (extracted per SPEC-01d)
 const { createWireMessageRouter } = require('./lib/wire/message-router');
 
+// Agent session handler — per-connection thread:open-agent factory (SPEC-01e).
+// NOTE: this require is load-bearing — its transitive require chain sets the
+// persona-wire global that the runner reads at startup. Do not make this
+// conditional or lazy.
+const { createAgentSessionHandler } = require('./lib/thread/agent-session-handler');
+
 // File operations with archive support
 const { moveFileWithArchive } = require('./lib/file-ops');
 
@@ -171,11 +177,6 @@ app.get(/.*/, (req, res) => {
 
 // Store active sessions (ws -> session state)
 const sessions = new Map();
-
-// Agent persona wire sessions (agentName -> wire)
-// Used by hold registry and runner to notify active persona sessions
-const agentWireSessions = new Map();
-global.__agentWireSessions = agentWireSessions;
 
 // ============================================================================
 // Project Root & Path Resolution
@@ -320,6 +321,17 @@ wss.on('connection', (ws) => {
     onWireMessage: handleMessage,
   });
 
+  // Per-connection thread:open-agent handler (extracted per SPEC-01e).
+  const { handleThreadOpenAgent } = createAgentSessionHandler({
+    ws,
+    session,
+    projectRoot,
+    AI_PANELS_PATH,
+    getDefaultProjectRoot,
+    threadWebSocketHandler: ThreadWebSocketHandler,
+    wireLifecycle: { awaitHarnessReady, initializeWire, setupWireHandlers },
+  });
+
   // ==========================================================================
   // Client Message Handler
   // ==========================================================================
@@ -438,110 +450,7 @@ wss.on('connection', (ws) => {
       }
 
       if (clientMsg.type === 'thread:open-agent') {
-        const { agentPath } = clientMsg;
-        if (!agentPath) {
-          ws.send(JSON.stringify({ type: 'error', message: 'Missing agentPath' }));
-          return;
-        }
-
-        // Close current wire if switching
-        if (session.wire) {
-          session.wire.kill('SIGTERM');
-          session.wire = null;
-        }
-
-        const { parseSessionConfig, buildSystemContext, checkSessionInvalidation, getStrategy } = require('./lib/session/session-loader');
-        const agentFolderPath = path.join(AI_PANELS_PATH, 'agents-viewer', agentPath);
-
-        // Load SESSION.md config
-        const config = parseSessionConfig(agentFolderPath);
-        if (!config) {
-          ws.send(JSON.stringify({ type: 'error', message: `No SESSION.md in ${agentPath}` }));
-          return;
-        }
-
-        // Get or create ThreadManager for this agent (single instance, cached)
-        // Use absolute path to agent's chat folder as the stable DB key
-        const agentChatPath = path.join(agentFolderPath, 'chat');
-        ThreadWebSocketHandler.setPanel(ws, agentChatPath, {
-          panelPath: agentFolderPath,
-          projectRoot: getDefaultProjectRoot(),
-          viewName: `agent:${agentPath}`,
-        });
-        const agentThreadManager = ThreadWebSocketHandler.getState(ws).threadManager;
-        await agentThreadManager.init();
-
-        // Get strategy and resolve thread
-        const strategy = getStrategy(config.threadModel);
-        const { threadId, isNew } = await strategy.resolveThread(agentThreadManager);
-
-        if (!threadId) {
-          ws.send(JSON.stringify({ type: 'error', message: 'Strategy returned no thread' }));
-          return;
-        }
-
-        // Check session invalidation
-        if (config.sessionInvalidation === 'memory-mtime' && !isNew) {
-          const thread = await agentThreadManager.index.get(threadId);
-          const lastMessage = thread?.resumedAt ? new Date(thread.resumedAt).getTime() : 0;
-          if (checkSessionInvalidation(agentFolderPath, lastMessage)) {
-            console.log(`[WS] MEMORY.md changed — archiving thread ${threadId}`);
-            await agentThreadManager.index.suspend(threadId);
-            // Resolve a fresh thread
-            const fresh = await strategy.resolveThread(agentThreadManager);
-            if (fresh.threadId && fresh.threadId !== threadId) {
-              // Use the fresh thread
-              Object.assign(fresh, { threadId: fresh.threadId });
-            }
-          }
-        }
-
-        session.currentThreadId = threadId;
-
-        // Build system context from SESSION.md's system-context list
-        const systemContext = buildSystemContext(agentFolderPath, config.systemContext);
-        session.pendingSystemContext = systemContext;
-
-        // Send thread history to client
-        const history = await agentThreadManager.getHistory(threadId);
-        const richHistory = await agentThreadManager.getRichHistory(threadId);
-        
-        // Extract context usage from the last exchange's metadata
-        const exchanges = richHistory?.exchanges || [];
-        const lastExchange = exchanges.length > 0 ? exchanges[exchanges.length - 1] : null;
-        const contextUsage = lastExchange?.metadata?.contextUsage ?? null;
-        
-        ws.send(JSON.stringify({
-          type: 'thread:opened',
-          threadId,
-          thread: await agentThreadManager.index.get(threadId),
-          history: history?.messages || [],
-          exchanges: exchanges,
-          contextUsage,  // Restore context usage from last exchange
-          agentPath,
-          strategy: { canBrowseOld: strategy.canBrowseOld, canCreateNew: strategy.canCreateNew },
-        }));
-
-        // Spawn wire
-        console.log(`[WS] Spawning wire for agent persona: ${agentPath}, thread: ${threadId}`);
-        session.wire = spawnThreadWire(threadId, projectRoot);
-        registerWire(threadId, session.wire, projectRoot, ws);
-        await awaitHarnessReady(session.wire);
-        setupWireHandlers(session.wire, threadId);
-        initializeWire(session.wire);
-
-        // Track agent wire session for notifications
-        const registry = JSON.parse(fs.readFileSync(path.join(AI_PANELS_PATH, 'agents-viewer', 'registry.json'), 'utf8'));
-        for (const [botName, agent] of Object.entries(registry.agents || {})) {
-          if (agent.folder === agentPath) {
-            agentWireSessions.set(botName, session.wire);
-            session.wire.on('exit', () => agentWireSessions.delete(botName));
-            break;
-          }
-        }
-
-        await agentThreadManager.openSession(threadId, session.wire, ws);
-        console.log(`[WS] Agent persona session opened: ${agentPath}`);
+        await handleThreadOpenAgent(clientMsg);
         return;
       }
 
