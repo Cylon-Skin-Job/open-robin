@@ -48,6 +48,15 @@ const { checkSettingsBounce } = require('./lib/enforcement');
 // Server startup orchestrator (DB init, handlers, listen, watcher, triggers, shutdown)
 const { start: startServer } = require('./lib/startup');
 
+// Wire process manager — registry, marshalling, and per-connection lifecycle
+const {
+  createWireLifecycle,
+  sendToWire,
+  registerWire,
+  unregisterWire,
+  getWireForThread,
+} = require('./lib/wire/process-manager');
+
 // File operations with archive support
 const { moveFileWithArchive } = require('./lib/file-ops');
 
@@ -58,9 +67,7 @@ const config = require('./config');
 const views = require('./lib/views');
 
 // Logging
-const WIRE_LOG_FILE = path.join(__dirname, 'wire-debug.log');
 const SERVER_LOG_FILE = path.join(__dirname, 'server-live.log');
-const MAX_WIRE_LOG_SIZE = 10 * 1024 * 1024; // 10MB
 
 // Override console.log to also write to file
 const originalLog = console.log;
@@ -71,20 +78,6 @@ console.log = function(...args) {
 `;
   fs.appendFileSync(SERVER_LOG_FILE, line);
 };
-
-function logWire(direction, data) {
-  try {
-    const stats = fs.statSync(WIRE_LOG_FILE);
-    if (stats.size > MAX_WIRE_LOG_SIZE) {
-      try { fs.unlinkSync(WIRE_LOG_FILE + '.old'); } catch {}
-      fs.renameSync(WIRE_LOG_FILE, WIRE_LOG_FILE + '.old');
-    }
-  } catch {}
-  
-  const timestamp = new Date().toISOString();
-  const entry = `[${timestamp}] ${direction}: ${data}\n`;
-  fs.appendFileSync(WIRE_LOG_FILE, entry);
-}
 
 const app = express();
 const server = http.createServer(app);
@@ -176,28 +169,10 @@ app.get(/.*/, (req, res) => {
 // Store active sessions (ws -> session state)
 const sessions = new Map();
 
-// Global wire registry by thread ID (threadId -> { wire, projectRoot })
-// Allows any WebSocket connection to send messages to the wire for a given thread
-const wireRegistry = new Map();
-
 // Agent persona wire sessions (agentName -> wire)
 // Used by hold registry and runner to notify active persona sessions
 const agentWireSessions = new Map();
 global.__agentWireSessions = agentWireSessions;
-
-function getWireForThread(threadId) {
-  return wireRegistry.get(threadId)?.wire || null;
-}
-
-function registerWire(threadId, wire, projectRoot) {
-  wireRegistry.set(threadId, { wire, projectRoot });
-  console.log(`[WireRegistry] Registered wire for thread ${threadId.slice(0,8)}, pid: ${wire?.pid}`);
-}
-
-function unregisterWire(threadId) {
-  wireRegistry.delete(threadId);
-  console.log(`[WireRegistry] Unregistered wire for thread ${threadId.slice(0,8)}`);
-}
 
 // ============================================================================
 // Project Root & Path Resolution
@@ -274,25 +249,7 @@ const fileExplorer = createFileExplorerHandlers({
 
 // NOTE: spawnThreadWire is now imported from ./lib/harness/compat
 // The implementation has been moved there for gradual migration to RobinHarness
-
-function sendToWire(wire, method, params, id = null) {
-  const message = {
-    jsonrpc: '2.0',
-    method,
-    params
-  };
-  if (id) {
-    message.id = id;
-  }
-  const json = JSON.stringify(message);
-  console.log('[→ Wire]:', method, json.slice(0, 300));
-  if (wire && wire.stdin && !wire.killed) {
-    wire.stdin.write(json + '\n');
-    console.log('[→ Wire] SENT:', method);
-  } else {
-    console.error('[→ Wire] FAILED: wire not ready (killed:', wire?.killed, ', stdin:', !!wire?.stdin, ')');
-  }
-}
+// NOTE: sendToWire is now imported from ./lib/wire/process-manager
 
 // ============================================================================
 // WebSocket Connection Handler with Thread Support
@@ -340,70 +297,17 @@ wss.on('connection', (ws) => {
   // ==========================================================================
   // Wire Process Handlers
   // ==========================================================================
-  
-  /**
-   * If wire was spawned via the new harness (has _harnessPromise), wait for
-   * it to resolve before attaching stdout listeners. For legacy Kimi wires
-   * this is a no-op.
-   */
-  async function awaitHarnessReady(wire) {
-    if (wire._harnessPromise) {
-      console.log('[WS] Awaiting harness initialization...');
-      await wire._harnessPromise;
-      console.log('[WS] Harness ready');
-    }
-  }
 
-  function initializeWire(wire) {
-    // Skip for new-harness wires — ACP session is already initialized inside the harness
-    if (wire._harnessPromise) {
-      console.log('[Wire] Skipping initialize for new harness (ACP already initialized)');
-      return;
-    }
-    const id = generateId();
-    console.log('[Wire] Initializing wire...');
-    sendToWire(wire, 'initialize', {
-      protocol_version: '1.4',
-      client: { name: 'open-robin', version: '0.1.0' },
-      capabilities: { supports_question: true }
-    }, id);
-    console.log('[Wire] Initialize sent with id:', id);
-  }
-  
-  function setupWireHandlers(wire, threadId) {
-    wire.stdout.on('data', (data) => {
-      session.buffer += data.toString();
-      
-      let lines = session.buffer.split('\n');
-      session.buffer = lines.pop();
-      
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        
-        console.log('[← Wire]:', line.length > 500 ? line.slice(0, 500) + '...' : line);
-        logWire('WIRE_IN', line);
-        
-        try {
-          const msg = JSON.parse(line);
-          handleWireMessage(msg);
-        } catch (err) {
-          console.error('[Wire] Parse error:', err.message);
-          ws.send(JSON.stringify({ type: 'parse_error', line: line.slice(0, 200) }));
-        }
-      }
-    });
-    
-    wire.on('exit', (code) => {
-      console.log(`[Wire] Session ${connectionId} exited with code ${code}`);
-      if (session.wire === wire) session.wire = null;
-      if (threadId) unregisterWire(threadId);
-      // Only notify if WebSocket is still open
-      if (ws.readyState === 1) {
-        ws.send(JSON.stringify({ type: 'wire_disconnected', code }));
-      }
-    });
-  }
-  
+  // Per-connection wire lifecycle helpers. onWireMessage relies on function
+  // declaration hoisting — handleWireMessage is defined further down in this
+  // connection handler but is available here because it's a function declaration.
+  const { awaitHarnessReady, initializeWire, setupWireHandlers } = createWireLifecycle({
+    session,
+    ws,
+    connectionId,
+    onWireMessage: handleWireMessage,
+  });
+
   function handleWireMessage(msg) {
     console.log('[Wire] Message received:', msg.method, msg.id ? `(id:${msg.id})` : '(event)');
     
