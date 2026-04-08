@@ -9,19 +9,27 @@
 
 const fs = require('fs').promises;
 const path = require('path');
-const { execSync } = require('child_process');
+const os = require('os');
 
 const TOOL_CALL_MARKER = '**TOOL CALL(S)**';
 
 /**
- * Get the current git username, cached per process.
+ * Get the current OS login username, cached per process.
+ *
+ * Uses os.userInfo().username (the computer login) as the source of truth.
+ * Git config user.name was tried first but is too fragile — developers
+ * often set it to personas, jokes, or project-specific names.
+ *
+ * Future: a system panel UI will let the user explicitly set their
+ * username; this OS value will become the fallback when no override is set.
+ *
  * @returns {string}
  */
 let _cachedUsername = null;
 function getUsername() {
   if (_cachedUsername) return _cachedUsername;
   try {
-    _cachedUsername = execSync('git config user.name', { encoding: 'utf8' }).trim();
+    _cachedUsername = os.userInfo().username;
   } catch {
     _cachedUsername = 'local';
   }
