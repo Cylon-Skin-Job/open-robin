@@ -42,14 +42,11 @@ const { getHarnessMode } = require('./lib/harness/feature-flags');
 // Log current harness mode on startup
 console.log('[Server] Harness mode:', getHarnessMode());
 
-// Audit subscriber for message ID tracking
-const { startAuditSubscriber } = require('./lib/audit/audit-subscriber');
-
 // Hardwired enforcement — settings/ folders are write-locked for AI
 const { checkSettingsBounce } = require('./lib/enforcement');
 
-// Component loader for modal definitions
-const { loadComponents, getModalDefinition } = require('./lib/components/component-loader');
+// Server startup orchestrator (DB init, handlers, listen, watcher, triggers, shutdown)
+const { start: startServer } = require('./lib/startup');
 
 // File operations with archive support
 const { moveFileWithArchive } = require('./lib/file-ops');
@@ -1255,140 +1252,23 @@ wss.on('connection', (ws) => {
 // Server Startup
 // ============================================================================
 
-const PORT = process.env.PORT || 3001;
-
-// Robin handlers — initialized after DB is ready
+// Module-level mutable handler references. Populated when startServer() resolves.
+// The client message router (in the ws.on('message') handler) reads from these.
+// See SPEC-01b for the mutable-reference pattern rationale.
 let robinHandlers = {};
 let clipboardHandlers = {};
 
-// Initialize SQLite, then start the server
-initDb(getDefaultProjectRoot())
-  .then(() => {
-    console.log('[DB] robin.db initialized');
-    robinHandlers = createRobinHandlers({ getDb, sessions, getDefaultProjectRoot });
-    clipboardHandlers = createClipboardHandlers({ getDb });
-    
-    // Start audit subscriber (listens to event bus, persists exchange metadata)
-    startAuditSubscriber();
-    
-    startServer();
+startServer({
+  server,
+  sessions,
+  getDefaultProjectRoot,
+  AI_PANELS_PATH,
+})
+  .then(result => {
+    robinHandlers = result.robinHandlers;
+    clipboardHandlers = result.clipboardHandlers;
   })
   .catch(err => {
-    console.error('[DB] Failed to initialize:', err);
+    console.error('[Server] Startup failed:', err);
     process.exit(1);
   });
-
-function startServer() {
-  server.listen(PORT, () => {
-    console.log(`[Server] Running on http://localhost:${PORT}`);
-    console.log(`[Server] Default CLI: ${process.env.KIMI_PATH || 'kimi'}`);
-    console.log(`[Server] Thread storage: ${AI_PANELS_PATH}`);
-
-    // Start wiki hooks — watches ai/views/wiki-viewer/content/ tree (collections with topics)
-    const wikiPath = path.join(getDefaultProjectRoot(), 'ai', 'views', 'wiki-viewer', 'content');
-    wikiHooks.start(wikiPath);
-
-    // Start project-wide file watcher
-    const { createWatcher } = require('./lib/watcher');
-    const { loadFilters } = require('./lib/watcher/filter-loader');
-    const { createActionHandlers } = require('./lib/watcher/actions');
-    const { createTicket } = require(path.join(getDefaultProjectRoot(), 'ai', 'views', 'issues-viewer', 'scripts', 'create-ticket'));
-
-    // Create hold registry for auto-block timers
-    const { createHoldRegistry } = require('./lib/triggers/hold-registry');
-    const issuesDir = path.join(AI_PANELS_PATH, 'issues-viewer');
-    const holdRegistry = global.__holdRegistry = createHoldRegistry(issuesDir);
-
-    // Wrap createTicket to hook trigger-created tickets into the hold registry
-    const wrappedCreateTicket = function(ticketData) {
-      const result = createTicket(ticketData);
-      if (ticketData.autoHold && ticketData.triggerName && result?.id) {
-        holdRegistry.hold(ticketData.assignee, ticketData.triggerName, result.id);
-      }
-      return result;
-    };
-
-    const projectWatcher = createWatcher(getDefaultProjectRoot());
-
-    // Load declarative filters (.md) from filters/
-    const filterDir = path.join(__dirname, 'lib', 'watcher', 'filters');
-    // Load modal component definitions from ai/components/
-    const componentsDir = path.join(getDefaultProjectRoot(), 'ai', 'components');
-    loadComponents(componentsDir);
-
-    const actionHandlers = createActionHandlers({
-      createTicket: wrappedCreateTicket,
-      projectRoot: getDefaultProjectRoot(),
-      getModalDefinition,
-      db: getDb(),
-      sendChatMessage(target, message, role) {
-        for (const [ws, sess] of sessions) {
-          if (ws.readyState === 1) {
-            ws.send(JSON.stringify({
-              type: 'system_message',
-              content: message,
-              role: role || 'system',
-              target,
-            }));
-          }
-        }
-      },
-      broadcastModal(config) {
-        for (const [ws, sess] of sessions) {
-          if (ws.readyState === 1) {
-            ws.send(JSON.stringify({ type: 'modal:show', ...config }));
-          }
-        }
-      },
-      broadcastFileChange(payload) {
-        for (const [ws, sess] of sessions) {
-          if (ws.readyState === 1) {
-            ws.send(JSON.stringify(payload));
-          }
-        }
-      },
-    });
-    const declFilters = loadFilters(filterDir, actionHandlers);
-    for (const f of declFilters) projectWatcher.addFilter(f);
-
-    // Load agent TRIGGERS.md files
-    const { loadTriggers } = require('./lib/triggers/trigger-loader');
-    const { createCronScheduler } = require('./lib/triggers/cron-scheduler');
-    const { evaluateCondition } = require('./lib/watcher/filter-loader');
-
-    const agentsBasePath = path.join(AI_PANELS_PATH, 'agents-viewer');
-    try {
-      const registry = JSON.parse(fs.readFileSync(path.join(agentsBasePath, 'registry.json'), 'utf8'));
-      const { filters: triggerFilters, cronTriggers } = loadTriggers(
-        getDefaultProjectRoot(), agentsBasePath, registry, actionHandlers
-      );
-
-      for (const f of triggerFilters) projectWatcher.addFilter(f);
-
-      if (cronTriggers.length > 0) {
-        const cronScheduler = createCronScheduler(wrappedCreateTicket, { evaluateCondition });
-        for (const { trigger, assignee } of cronTriggers) {
-          cronScheduler.register(trigger, assignee);
-        }
-        cronScheduler.start();
-      }
-    } catch (err) {
-      console.error(`[Server] Failed to load agent triggers: ${err.message}`);
-    }
-
-    // Start runner heartbeat monitor
-    const { checkHeartbeats } = require('./lib/runner');
-    checkHeartbeats(getDefaultProjectRoot());
-  });
-}
-
-// Clean shutdown — close DB connection
-const { closeDb } = require('./lib/db');
-process.on('SIGTERM', async () => {
-  await closeDb();
-  process.exit(0);
-});
-process.on('SIGINT', async () => {
-  await closeDb();
-  process.exit(0);
-});
