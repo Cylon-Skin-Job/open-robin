@@ -57,6 +57,9 @@ const {
   getWireForThread,
 } = require('./lib/wire/process-manager');
 
+// Wire message router — per-connection event switch (extracted per SPEC-01d)
+const { createWireMessageRouter } = require('./lib/wire/message-router');
+
 // File operations with archive support
 const { moveFileWithArchive } = require('./lib/file-ops');
 
@@ -298,287 +301,25 @@ wss.on('connection', (ws) => {
   // Wire Process Handlers
   // ==========================================================================
 
-  // Per-connection wire lifecycle helpers. onWireMessage relies on function
-  // declaration hoisting — handleWireMessage is defined further down in this
-  // connection handler but is available here because it's a function declaration.
+  // Per-connection wire message router (extracted per SPEC-01d).
+  // Emits chat:* events to the bus (wire-broadcaster handles client
+  // delivery); sends non-chat events directly via ws.
+  const { handleMessage } = createWireMessageRouter({
+    session,
+    ws,
+    threadWebSocketHandler: ThreadWebSocketHandler,
+    emit,
+    checkSettingsBounce,
+  });
+
+  // Per-connection wire lifecycle helpers.
   const { awaitHarnessReady, initializeWire, setupWireHandlers } = createWireLifecycle({
     session,
     ws,
     connectionId,
-    onWireMessage: handleWireMessage,
+    onWireMessage: handleMessage,
   });
 
-  function handleWireMessage(msg) {
-    console.log('[Wire] Message received:', msg.method, msg.id ? `(id:${msg.id})` : '(event)');
-    
-    // Guard: don't process if WebSocket closed
-    if (ws.readyState !== 1) {
-      console.log('[Wire] WebSocket closed, dropping message');
-      return;
-    }
-    
-    // Event notifications
-    if (msg.method === 'event' && msg.params) {
-      const { type: eventType, payload } = msg.params;
-      console.log('[Wire] Event:', eventType);
-      
-      switch (eventType) {
-        case 'TurnBegin':
-          // Ignore spurious startup turns (Gemini emits one on ACP session creation)
-          if (!payload?.user_input && !session.pendingUserInput) {
-            console.log('[Wire] Ignoring spurious TurnBegin (no user input)');
-            break;
-          }
-          session.currentTurn = {
-            id: generateId(),
-            text: '',
-            userInput: payload?.user_input || session.pendingUserInput || ''
-          };
-          session.pendingUserInput = null;
-          session.hasToolCalls = false;
-          session.assistantParts = [];  // Reset parts for new exchange
-          ws.send(JSON.stringify({
-            type: 'turn_begin',
-            turnId: session.currentTurn.id,
-            userInput: session.currentTurn.userInput
-          }));
-          emit('chat:turn_begin', { workspace: 'code-viewer', threadId: session.currentThreadId, turnId: session.currentTurn.id, userInput: session.currentTurn.userInput });
-          break;
-          
-        case 'ContentPart':
-          if (payload?.type === 'text' && session.currentTurn) {
-            session.currentTurn.text += payload.text;
-            
-            // Combine consecutive text parts
-            const lastPart = session.assistantParts[session.assistantParts.length - 1];
-            if (lastPart && lastPart.type === 'text') {
-              lastPart.content += payload.text;
-            } else {
-              session.assistantParts.push({
-                type: 'text',
-                content: payload.text
-              });
-            }
-            
-            ws.send(JSON.stringify({
-              type: 'content',
-              text: payload.text,
-              turnId: session.currentTurn.id
-            }));
-            emit('chat:content', { workspace: 'code-viewer', threadId: session.currentThreadId, turnId: session.currentTurn.id, text: payload.text });
-          } else if (payload?.type === 'think') {
-            // Track thinking separately (not combined with text)
-            const lastPart = session.assistantParts[session.assistantParts.length - 1];
-            if (lastPart && lastPart.type === 'think') {
-              lastPart.content += payload.think || '';
-            } else {
-              session.assistantParts.push({
-                type: 'think',
-                content: payload.think || ''
-              });
-            }
-            ws.send(JSON.stringify({
-              type: 'thinking',
-              text: payload.think || '',
-              turnId: session.currentTurn?.id
-            }));
-            emit('chat:thinking', { workspace: 'code-viewer', threadId: session.currentThreadId, turnId: session.currentTurn?.id, text: payload.think || '' });
-          }
-          break;
-          
-        case 'ToolCall':
-          session.hasToolCalls = true;
-          session.activeToolId = payload?.id || '';
-          session.toolArgs[session.activeToolId] = '';
-          // Start tracking tool call for history.json
-          session.assistantParts.push({
-            type: 'tool_call',
-            toolCallId: session.activeToolId,  // Include ID for matching
-            name: payload?.function?.name || 'unknown',
-            arguments: {},
-            result: {
-              output: '',
-              display: [],
-              isError: false
-            }
-          });
-          ws.send(JSON.stringify({
-            type: 'tool_call',
-            toolName: payload?.function?.name || 'unknown',
-            toolCallId: session.activeToolId,
-            turnId: session.currentTurn?.id
-          }));
-          emit('chat:tool_call', { workspace: 'code-viewer', threadId: session.currentThreadId, turnId: session.currentTurn?.id, toolName: payload?.function?.name || 'unknown', toolCallId: session.activeToolId });
-          break;
-          
-        case 'ToolCallPart':
-          if (session.activeToolId && payload?.arguments_part) {
-            session.toolArgs[session.activeToolId] += payload.arguments_part;
-          }
-          break;
-          
-        case 'ToolResult': {
-          const toolCallId = payload?.tool_call_id || '';
-          const fullArgs = session.toolArgs[toolCallId] || '';
-          let parsedArgs = {};
-          try { parsedArgs = JSON.parse(fullArgs); } catch (_) {}
-          delete session.toolArgs[toolCallId];
-
-          // --- Hardwired enforcement: settings/ folder write-lock ---
-          const toolNameForBounce = payload?.function?.name || '';
-          const bounce = checkSettingsBounce(toolNameForBounce, parsedArgs);
-          if (bounce) {
-            emit('system:tool_bounced', {
-              workspace: 'code-viewer',
-              threadId: session.currentThreadId,
-              toolName: toolNameForBounce,
-              filePath: parsedArgs.file_path,
-              reason: bounce.message
-            });
-            ws.send(JSON.stringify({
-              type: 'tool_result',
-              toolCallId,
-              toolArgs: parsedArgs,
-              toolOutput: bounce.message,
-              toolDisplay: [],
-              isError: true,
-              turnId: session.currentTurn?.id
-            }));
-            break;
-          }
-          // --- End enforcement ---
-
-          // Find and update the corresponding tool_call part
-          const toolCallPart = session.assistantParts.find(
-            p => p.type === 'tool_call' && p.name === (payload?.function?.name || '')
-          );
-          if (toolCallPart) {
-            toolCallPart.arguments = parsedArgs;
-            toolCallPart.result = {
-              output: payload?.return_value?.output || '',
-              display: payload?.return_value?.display || [],
-              error: payload?.return_value?.is_error ? (payload?.return_value?.output || 'Tool failed') : undefined,
-              files: payload?.return_value?.files || []
-            };
-          }
-          
-          ws.send(JSON.stringify({
-            type: 'tool_result',
-            toolCallId,
-            toolArgs: parsedArgs,
-            toolOutput: payload?.return_value?.output || '',
-            toolDisplay: payload?.return_value?.display || [],
-            isError: payload?.return_value?.is_error || false,
-            turnId: session.currentTurn?.id
-          }));
-          emit('chat:tool_result', { workspace: 'code-viewer', threadId: session.currentThreadId, turnId: session.currentTurn?.id, toolCallId, toolName: payload?.function?.name, isError: payload?.return_value?.is_error || false });
-          break;
-        }
-          
-        case 'TurnEnd':
-          if (session.currentTurn) {
-            // Build metadata from tracked context/token usage
-            const metadata = {
-              contextUsage: session.contextUsage,
-              tokenUsage: session.tokenUsage,
-              messageId: session.messageId,
-              planMode: session.planMode,
-              capturedAt: Date.now()
-            };
-
-            // Save assistant message to CHAT.md (with metadata)
-            // Note: SQLite persistence is handled by audit-subscriber listening to chat:turn_end
-            ThreadWebSocketHandler.addAssistantMessage(
-              ws,
-              session.currentTurn.text,
-              session.hasToolCalls,
-              metadata
-            );
-            
-            ws.send(JSON.stringify({
-              type: 'turn_end',
-              turnId: session.currentTurn.id,
-              fullText: session.currentTurn.text,
-              hasToolCalls: session.hasToolCalls
-            }));
-            emit('chat:turn_end', {
-              workspace: 'code-viewer',
-              threadId: session.currentThreadId,
-              turnId: session.currentTurn.id,
-              fullText: session.currentTurn.text,
-              hasToolCalls: session.hasToolCalls,
-              userInput: session.currentTurn.userInput,
-              parts: session.assistantParts
-            });
-
-            // Reset turn tracking
-            session.currentTurn = null;
-            session.assistantParts = [];
-            session.contextUsage = null;
-            session.tokenUsage = null;
-            session.messageId = null;
-            session.planMode = false;
-          }
-          break;
-          
-        case 'StepBegin':
-          ws.send(JSON.stringify({ type: 'step_begin', stepNumber: payload?.n }));
-          break;
-          
-        case 'StatusUpdate':
-          // Track latest context/token usage for persistence
-          session.contextUsage = payload?.context_usage ?? null;
-          session.tokenUsage = payload?.token_usage ?? null;
-          session.messageId = payload?.message_id ?? null;
-          session.planMode = payload?.plan_mode ?? false;
-          
-          // Flow audit metadata through event bus (subscriber will filter/persist)
-          emit('chat:status_update', {
-            workspace: 'code-viewer',
-            threadId: session.currentThreadId,
-            contextUsage: payload?.context_usage,
-            tokenUsage: payload?.token_usage,
-            messageId: payload?.message_id,
-            planMode: payload?.plan_mode
-          });
-          
-          ws.send(JSON.stringify({
-            type: 'status_update',
-            contextUsage: payload?.context_usage,
-            tokenUsage: payload?.token_usage
-          }));
-          break;
-          
-        default:
-          ws.send(JSON.stringify({ type: 'event', eventType, payload }));
-      }
-    }
-    
-    // Requests from agent
-    else if (msg.method === 'request' && msg.params) {
-      ws.send(JSON.stringify({
-        type: 'request',
-        requestType: msg.params.type,
-        payload: msg.params.payload,
-        requestId: msg.id
-      }));
-    }
-    
-    // Responses to our requests
-    else if (msg.id !== undefined && msg.result !== undefined) {
-      ws.send(JSON.stringify({ type: 'response', id: msg.id, result: msg.result }));
-    }
-    
-    // Errors
-    else if (msg.id !== undefined && msg.error !== undefined) {
-      ws.send(JSON.stringify({ type: 'error', id: msg.id, error: msg.error }));
-    }
-    
-    else {
-      ws.send(JSON.stringify({ type: 'unknown', data: msg }));
-    }
-  }
-  
   // ==========================================================================
   // Client Message Handler
   // ==========================================================================
@@ -614,7 +355,7 @@ wss.on('connection', (ws) => {
           session.currentThreadId = threadId;  // Track for history.json
           const wire = spawnThreadWire(threadId, projectRoot);
           session.wire = wire;
-          registerWire(threadId, wire, projectRoot);
+          registerWire(threadId, wire, projectRoot, ws);
           console.log('[WS] Wire spawned, awaiting harness ready...');
           await awaitHarnessReady(wire);
           console.log('[WS] Setting up handlers...');
@@ -656,7 +397,7 @@ wss.on('connection', (ws) => {
         // Spawn wire process with --session
         console.log('[WS] Spawning wire for opened thread:', threadId);
         session.wire = spawnThreadWire(threadId, projectRoot);
-        registerWire(threadId, session.wire, projectRoot);
+        registerWire(threadId, session.wire, projectRoot, ws);
         console.log('[WS] Wire spawned, awaiting harness ready...');
         await awaitHarnessReady(session.wire);
         console.log('[WS] Setting up handlers...');
@@ -684,7 +425,7 @@ wss.on('connection', (ws) => {
         if (dailyThreadId) {
           session.currentThreadId = dailyThreadId;
           session.wire = spawnThreadWire(dailyThreadId, projectRoot);
-          registerWire(dailyThreadId, session.wire, projectRoot);
+          registerWire(dailyThreadId, session.wire, projectRoot, ws);
           await awaitHarnessReady(session.wire);
           setupWireHandlers(session.wire, dailyThreadId);
           initializeWire(session.wire);
@@ -784,7 +525,7 @@ wss.on('connection', (ws) => {
         // Spawn wire
         console.log(`[WS] Spawning wire for agent persona: ${agentPath}, thread: ${threadId}`);
         session.wire = spawnThreadWire(threadId, projectRoot);
-        registerWire(threadId, session.wire, projectRoot);
+        registerWire(threadId, session.wire, projectRoot, ws);
         await awaitHarnessReady(session.wire);
         setupWireHandlers(session.wire, threadId);
         initializeWire(session.wire);

@@ -24,15 +24,19 @@ const { logWire } = require('./wire-log');
 // ── Registry ────────────────────────────────────────────────────────────────
 
 // Module-private Map. Do not export.
-// threadId → { wire, projectRoot }
+// threadId → { wire, projectRoot, ws }
 const wireRegistry = new Map();
 
 function getWireForThread(threadId) {
   return wireRegistry.get(threadId)?.wire || null;
 }
 
-function registerWire(threadId, wire, projectRoot) {
-  wireRegistry.set(threadId, { wire, projectRoot });
+function getClientForThread(threadId) {
+  return wireRegistry.get(threadId)?.ws || null;
+}
+
+function registerWire(threadId, wire, projectRoot, ws) {
+  wireRegistry.set(threadId, { wire, projectRoot, ws });
   console.log(`[WireRegistry] Registered wire for thread ${threadId.slice(0,8)}, pid: ${wire?.pid}`);
 }
 
@@ -149,6 +153,7 @@ function createWireLifecycle({ session, ws, connectionId, onWireMessage }) {
 module.exports = {
   // Registry
   getWireForThread,
+  getClientForThread,
   registerWire,
   unregisterWire,
   // Marshalling

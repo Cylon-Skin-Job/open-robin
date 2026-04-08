@@ -55,6 +55,12 @@ async function start({ server, sessions, getDefaultProjectRoot, AI_PANELS_PATH }
   // 3. Audit subscriber — listens to event bus, persists exchange metadata
   startAuditSubscriber();
 
+  // 3.5. Wire broadcaster — must subscribe before listen() so chat events
+  // from the first connection are delivered.
+  const { createWireBroadcaster } = require('./wire/wire-broadcaster');
+  const { getClientForThread } = require('./wire/process-manager');
+  createWireBroadcaster({ getClientForThread });
+
   // 4. listen() — must come before watcher/hooks start, they broadcast to clients
   await new Promise((resolve, reject) => {
     server.listen(PORT, () => {
