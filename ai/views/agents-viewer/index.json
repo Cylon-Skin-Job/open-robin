@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "id": "agents-viewer",
+  "folderName": "agents-viewer",
+  "label": "Agents",
+  "description": "Agent command center — tiles UI for all background agents, their status, runs, and pending tickets",
+  "type": "agent-tiles",
+  "icon": "smart_toy",
+  "rank": 5,
+  "sort": "ranked",
+  "created": "2026-03-20T20:00:00-07:00",
+  "settings": {
+    "layout": "full",
+    "theme": {
+      "primary": "#ef4444",
+      "sidebar_bg": "#1a0a0a",
+      "content_bg": "#0d0d0d",
+      "panel_border": "#ef444433"
+    },
+    "folders": {
+      "System": {
+        "description": "Default agents that ship with the app",
+        "reserved": true
+      }
+    }
+  }
+}

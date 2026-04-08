@@ -6,7 +6,7 @@ test('issues workspace debug', async ({ page }) => {
     logs.push(`[${msg.type()}] ${msg.text()}`);
   });
 
-  await page.goto('http://localhost:5173');
+  await page.goto('/');
   await page.waitForTimeout(2000);
 
   // Click issues tab

@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "agents": {
+    "kimi-wiki": {
+      "folder": "System/wiki-manager",
+      "status": "idle"
+    },
+    "kimi-code": {
+      "folder": "System/code-manager",
+      "status": "idle"
+    },
+    "kimi-ops": {
+      "folder": "System/ops-manager",
+      "status": "idle"
+    }
+  }
+}

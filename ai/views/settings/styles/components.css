@@ -1,0 +1,58 @@
+/*
+ * code-viewer–scoped file tree (workspace-loaded).
+ * Shared code/markdown presentation: kimi-ide-client/src/styles/document.css
+ */
+
+/* File Tree Item (shared by folders and files) */
+.file-tree-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  margin-bottom: 2px;
+}
+
+.file-tree-item:hover {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+}
+
+.file-tree-item .tree-icon {
+  font-size: 1.2rem;
+  width: 1rem;
+  height: 1rem;
+  line-height: 1rem;
+  text-align: center;
+  color: var(--text-secondary, #aaa);
+}
+
+.file-tree-item .tree-icon.folder-filled {
+  font-variation-settings: 'FILL' 1;
+}
+
+.file-tree-item .tree-icon.folder-outline {
+  font-variation-settings: 'FILL' 0;
+}
+
+.file-tree-item .tree-icon.icon-javascript {
+  /* No special styling - matches other file icons */
+}
+
+.file-tree-item .tree-label {
+  flex: 1;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-tree-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.file-tree-empty {
+  padding: 0.4rem 0;
+}

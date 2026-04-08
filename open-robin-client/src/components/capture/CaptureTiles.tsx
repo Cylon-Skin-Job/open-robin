@@ -64,8 +64,8 @@ export function CaptureTiles() {
 
   // Grid view
   return (
-    <div className="tile-grid">
-      <div className="tile-grid-title">
+    <div className="rv-tile-grid">
+      <div className="rv-tile-grid-title">
         <span className="material-symbols-outlined">open_run</span>
         Capture
       </div>

@@ -1,0 +1,430 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-04-08T05:38:24.770Z",
+  "collections": [
+    {
+      "id": "project",
+      "label": "Project",
+      "rank": 1,
+      "sort": "ranked",
+      "frozen": false
+    },
+    {
+      "id": "enforcement",
+      "label": "Enforcement",
+      "rank": 50,
+      "sort": "ranked",
+      "frozen": false
+    }
+  ],
+  "topics": {
+    "project/background-agents": {
+      "slug": "Background-Agents",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Ticket-Routing",
+        "Run-Auditing",
+        "Workspace-Agent-Model",
+        "Model-Config",
+        "Workspaces"
+      ],
+      "edges_in": [
+        "Home",
+        "Workspaces",
+        "Ticket-Routing",
+        "Run-Auditing",
+        "Workspace-Agent-Model"
+      ],
+      "sources": []
+    },
+    "project/chat-panel-architecture": {
+      "slug": "Chat Panel Architecture",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 5,
+      "frozen": false,
+      "edges_out": [
+        "turn-lifecycle"
+      ],
+      "edges_in": [],
+      "sources": []
+    },
+    "project/gitlab": {
+      "slug": "Gitlab",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Secrets",
+        "Home"
+      ],
+      "edges_in": [
+        "Home",
+        "Secrets"
+      ],
+      "sources": []
+    },
+    "project/home": {
+      "slug": "Home",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 1,
+      "frozen": false,
+      "edges_out": [
+        "Secrets",
+        "GitLab",
+        "Workspace-Agent-Model",
+        "Workspaces",
+        "Background-Agents",
+        "Progressive-Disclosure",
+        "Session-Scoping",
+        "Model-Config",
+        "Wiki-System",
+        "Wiki-Interface",
+        "Ticket-Routing",
+        "Run-Auditing"
+      ],
+      "edges_in": [
+        "Workspaces",
+        "GitLab",
+        "Secrets"
+      ],
+      "sources": []
+    },
+    "project/hooks": {
+      "slug": "Hooks",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Wiki-System",
+        "Workspace-Index",
+        "Ticket-Routing"
+      ],
+      "edges_in": [
+        "Wiki-System",
+        "Workspaces"
+      ],
+      "sources": []
+    },
+    "project/model-config": {
+      "slug": "Model-Config",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Workspace-Agent-Model",
+        "Session-Scoping",
+        "Workspaces"
+      ],
+      "edges_in": [
+        "Home",
+        "Workspace-Agent-Model",
+        "Workspaces",
+        "Session-Scoping",
+        "Background-Agents"
+      ],
+      "sources": []
+    },
+    "project/path-resolution": {
+      "slug": "Path-Resolution",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Workspaces",
+        "Workspace-Agent-Model",
+        "Session-Scoping",
+        "Workspace-Index"
+      ],
+      "edges_in": [
+        "Workspaces",
+        "Workspace-Agent-Model"
+      ],
+      "sources": []
+    },
+    "project/progressive-disclosure": {
+      "slug": "Progressive-Disclosure",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Workspace-Agent-Model",
+        "Wiki-System",
+        "Session-Scoping"
+      ],
+      "edges_in": [
+        "Home",
+        "Workspace-Agent-Model",
+        "Session-Scoping"
+      ],
+      "sources": []
+    },
+    "project/run-auditing": {
+      "slug": "Run-Auditing",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Workspace-Agent-Model",
+        "Ticket-Routing",
+        "Background-Agents"
+      ],
+      "edges_in": [
+        "Home",
+        "Ticket-Routing",
+        "Background-Agents"
+      ],
+      "sources": []
+    },
+    "project/screenshot-capture": {
+      "slug": "Screenshot-Capture",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Setup-Wizard"
+      ],
+      "edges_in": [
+        "Home",
+        "Setup-Wizard"
+      ],
+      "sources": []
+    },
+    "project/session-scoping": {
+      "slug": "Session-Scoping",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Workspace-Agent-Model",
+        "Model-Config",
+        "Workspaces",
+        "Progressive-Disclosure"
+      ],
+      "edges_in": [
+        "Home",
+        "Workspace-Agent-Model",
+        "Workspaces",
+        "Model-Config",
+        "Progressive-Disclosure"
+      ],
+      "sources": []
+    },
+    "project/setup-wizard": {
+      "slug": "Setup-Wizard",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Screenshot-Capture",
+        "Secrets",
+        "GitLab",
+        "Background-Agents"
+      ],
+      "edges_in": [
+        "Home",
+        "Screenshot-Capture"
+      ],
+      "sources": []
+    },
+    "project/ticket-routing": {
+      "slug": "Ticket-Routing",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Background-Agents",
+        "Workspaces",
+        "Workspace-Agent-Model",
+        "Run-Auditing"
+      ],
+      "edges_in": [
+        "Home",
+        "Workspaces",
+        "Run-Auditing",
+        "Background-Agents"
+      ],
+      "sources": []
+    },
+    "project/turn-lifecycle": {
+      "slug": "Turn Lifecycle & Finalization",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 4,
+      "frozen": true,
+      "edges_out": [
+        "code-standards",
+        "database-architecture"
+      ],
+      "edges_in": [],
+      "sources": []
+    },
+    "project/warmth-settings": {
+      "slug": "Warmth & Session Management",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 5,
+      "frozen": true,
+      "edges_out": [
+        "database-architecture",
+        "cascading-settings"
+      ],
+      "edges_in": [],
+      "sources": []
+    },
+    "project/wiki-interface": {
+      "slug": "Wiki-Interface",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [],
+      "edges_in": [
+        "Home",
+        "Workspaces"
+      ],
+      "sources": []
+    },
+    "project/wiki-system": {
+      "slug": "Wiki-System",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Secrets"
+      ],
+      "edges_in": [
+        "Home",
+        "Workspaces",
+        "Ticket-Routing",
+        "Run-Auditing"
+      ],
+      "sources": []
+    },
+    "project/wire-protocol": {
+      "slug": "Wire Protocol & CLI Interpreters",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 6,
+      "frozen": false,
+      "edges_out": [
+        "chat-panel-architecture",
+        "turn-lifecycle"
+      ],
+      "edges_in": [],
+      "sources": []
+    },
+    "project/workspace-agent-model": {
+      "slug": "Workspace-Agent-Model",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Workspaces",
+        "Model-Config",
+        "Session-Scoping",
+        "Progressive-Disclosure",
+        "Background-Agents"
+      ],
+      "edges_in": [
+        "Home",
+        "Workspaces",
+        "Ticket-Routing",
+        "Run-Auditing",
+        "Model-Config",
+        "Session-Scoping",
+        "Progressive-Disclosure",
+        "Background-Agents"
+      ],
+      "sources": []
+    },
+    "project/workspace-index": {
+      "slug": "Workspace-Index",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Workspaces",
+        "Session-Scoping"
+      ],
+      "edges_in": [
+        "Workspaces"
+      ],
+      "sources": []
+    },
+    "project/workspaces": {
+      "slug": "Workspaces",
+      "collection": "project",
+      "collectionLabel": "Project",
+      "collectionRank": 1,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [
+        "Workspace-Agent-Model",
+        "Ticket-Routing",
+        "Session-Scoping",
+        "Model-Config",
+        "Wiki-Interface",
+        "Background-Agents",
+        "Path-Resolution"
+      ],
+      "edges_in": [
+        "Home",
+        "Workspace-Agent-Model",
+        "Ticket-Routing",
+        "Model-Config",
+        "Session-Scoping",
+        "Background-Agents"
+      ],
+      "sources": []
+    },
+    "enforcement/code-standards": {
+      "slug": "Code Standards",
+      "collection": "enforcement",
+      "collectionLabel": "Enforcement",
+      "collectionRank": 50,
+      "rank": 10,
+      "frozen": false,
+      "edges_out": [],
+      "edges_in": [],
+      "sources": []
+    }
+  }
+}

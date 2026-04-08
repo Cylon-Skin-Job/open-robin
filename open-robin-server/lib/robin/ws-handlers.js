@@ -43,13 +43,13 @@ module.exports = function createRobinHandlers({ getDb, sessions, getDefaultProje
     const workspaceList = [];
     for (const ws of workspaces) {
       const custom = await robinQueries.getWorkspaceTheme(db, ws.id);
-      let themeState = 'inheriting';
+      let themeState = 'inherited';
       if (filesystemCss !== null) {
         if (custom?.theme_css && filesystemCss.trim() === custom.theme_css.trim()) {
-          themeState = 'custom';
+          themeState = 'individual';
         } else if (filesystemCss.trim() !== systemTheme.theme_css.trim()) {
           if (custom?.theme_css) {
-            themeState = 'diverged';
+            themeState = 'override';
           }
           // No custom row + doesn't match system = still inheriting (file may not exist yet)
         }
@@ -104,6 +104,11 @@ module.exports = function createRobinHandlers({ getDb, sessions, getDefaultProje
     'robin:wiki-page': async (ws, msg) => {
       try {
         const page = await robinQueries.getWikiPage(getDb(), msg.slug);
+        // Coerce Buffer columns to UTF-8 strings. SQLite BLOB columns come back
+        // as Node Buffers via Knex, which serialize to {type:"Buffer",data:[...]}
+        // over JSON and crash marked.parse on the client.
+        if (page && Buffer.isBuffer(page.content)) page.content = page.content.toString('utf8');
+        if (page && Buffer.isBuffer(page.context)) page.context = page.context.toString('utf8');
         ws.send(JSON.stringify({ type: 'robin:wiki', ...page }));
       } catch (err) {
         console.error('[Robin] wiki-page error:', err.message);

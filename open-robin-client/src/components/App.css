@@ -1,5 +1,5 @@
 /* Main App Layout */
-.app-container {
+.rv-app-container {
   display: grid;
   grid-template-rows: var(--header-height) 1fr;
   grid-template-columns: var(--tools-width) var(--sidebar-width) var(--chat-width) 1fr;
@@ -13,7 +13,7 @@
 }
 
 /* Header */
-.header {
+.rv-header {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
@@ -24,13 +24,13 @@
   box-shadow: 0 0 10px rgba(var(--theme-primary-rgb), 0.1);
 }
 
-.header-left {
+.rv-header-left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.menu-btn {
+.rv-menu-btn {
   width: 40px;
   height: 40px;
   display: flex;
@@ -43,19 +43,19 @@
   transition: color 0.2s ease, background 0.2s ease;
 }
 
-.menu-btn:hover {
+.rv-menu-btn:hover {
   color: var(--theme-primary);
   background: rgba(var(--theme-primary-rgb), 0.05);
 }
 
-.project-name {
+.rv-project-name {
   font-size: 16px;
   font-weight: 500;
   color: var(--theme-primary);
   letter-spacing: 0.5px;
 }
 
-.header-right {
+.rv-header-right {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -63,7 +63,7 @@
 
 /* Context usage chip: views.css */
 
-.connection-status {
+.rv-connection-status {
   font-size: 12px;
   color: var(--text-dim);
   display: flex;
@@ -71,11 +71,11 @@
   gap: 6px;
 }
 
-.connection-status.connected {
+.rv-connection-status.connected {
   color: var(--theme-primary);
 }
 
-.connection-status::before {
+.rv-connection-status::before {
   content: '';
   width: 8px;
   height: 8px;
@@ -83,12 +83,12 @@
   background: var(--text-dim);
 }
 
-.connection-status.connected::before {
+.rv-connection-status.connected::before {
   background: var(--theme-primary);
 }
 
 /* Tools Panel */
-.tools-panel {
+.rv-tools-panel {
   background: var(--document-code-bg, #161616);
   border-right: 1px solid var(--neutral-chrome-border, rgba(255, 255, 255, 0.12));
   display: flex;
@@ -97,7 +97,7 @@
   gap: 4px;
 }
 
-.tool-btn {
+.rv-tool-btn {
   width: 60px;
   height: 60px;
   display: flex;
@@ -110,16 +110,16 @@
   position: relative;
 }
 
-.tool-btn:hover {
+.rv-tool-btn:hover {
   color: var(--theme-primary);
   background: rgba(var(--theme-primary-rgb), 0.05);
 }
 
-.tool-btn.active {
+.rv-tool-btn.active {
   color: var(--theme-primary);
 }
 
-.tool-btn.active::before {
+.rv-tool-btn.active::before {
   content: '';
   position: absolute;
   left: 0;
@@ -132,14 +132,22 @@
 }
 
 /* Panel Container */
-.panel-container {
+.rv-panel-container {
   grid-column: 2 / -1;
   grid-row: 2;
   position: relative;
   overflow: hidden;
 }
 
-.panel {
+.rv-panel-container--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim, #555);
+  font-size: var(--font-md, 13px);
+}
+
+.rv-panel {
   position: absolute;
   inset: 0;
   display: grid;
@@ -151,7 +159,7 @@
   min-height: 0; /* children must not blow out the grid */
 }
 
-.panel.active {
+.rv-panel.active {
   opacity: 1;
   visibility: visible;
 }
@@ -159,7 +167,7 @@
 /* Sidebar + chat column: ai/views/settings/styles/views.css */
 
 /* Content Area — flex column so the active panel (file explorer, wiki, etc.) can fill height */
-.content-area {
+.rv-content-area {
   background: var(--bg-solid);
   padding: 24px;
   min-height: 0;
@@ -168,7 +176,7 @@
   overflow: hidden;
 }
 
-.content-area > * {
+.rv-content-area > * {
   flex: 1;
   min-height: 0;
   min-width: 0;
@@ -177,37 +185,37 @@
 /* Content area in full layout gets no padding (explorer/viewer fills it) */
 
 /* Layout classes — driven by index.json "layout" field */
-.layout-full {
+.rv-layout-full {
   grid-template-columns: 1fr;
 }
 
-.layout-full .content-area {
+.rv-layout-full .rv-content-area {
   padding: 0;
 }
 
-.layout-chat-content {
+.rv-layout-chat-content {
   grid-template-columns: var(--chat-width) 1fr;
 }
 
-.layout-chat-content .content-area {
+.rv-layout-chat-content .rv-content-area {
   padding: 0;
 }
 
-.layout-sidebar-chat-content {
+.rv-layout-sidebar-chat-content {
   /* default grid already has 3 columns */
 }
 
-.layout-sidebar-chat-content .content-area {
+.rv-layout-sidebar-chat-content .rv-content-area {
   padding: 0;
 }
 
 /* Chat input - reduce gap to icons */
-.chat-input-container {
+.rv-chat-input-container {
   margin-bottom: -15px;
 }
 
 /* Chat footer layout - icons and button on one row */
-.chat-composer-meta-row {
+.rv-chat-composer-meta-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -216,19 +224,19 @@
 }
 
 /* Icons container */
-.chat-composer-meta-row > div:first-child {
+.rv-chat-composer-meta-row > div:first-child {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
 }
 
 /* Send/Stop button */
-.chat-composer-meta-row .chat-footer-btn {
+.rv-chat-composer-meta-row .rv-chat-footer-btn {
   flex-shrink: 0;
 }
 
 /* Send button group - unified container with divider */
-.send-button-group {
+.rv-send-button-group {
   display: flex;
   align-items: center;
   background: var(--neutral-chrome-bg);
@@ -238,7 +246,7 @@
   flex-shrink: 0;
 }
 
-.send-btn-main {
+.rv-send-btn-main {
   padding: 0 12px;
   height: 32px;
   background: transparent;
@@ -252,18 +260,18 @@
   justify-content: center;
 }
 
-.send-btn-main:hover {
+.rv-send-btn-main:hover {
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.7);
 }
 
-.send-btn-divider {
+.rv-send-btn-divider {
   width: 1px;
   height: 100%;
   background: rgba(255, 255, 255, 0.2);
 }
 
-.send-btn-secondary {
+.rv-send-btn-secondary {
   width: 32px;
   height: 32px;
   background: transparent;
@@ -275,19 +283,19 @@
   justify-content: center;
 }
 
-.send-btn-secondary:hover {
+.rv-send-btn-secondary:hover {
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.7);
 }
 
 /* Send dropdown modal content */
-.send-dropdown-content {
+.rv-send-dropdown-content {
   display: flex;
   flex-direction: column;
   min-width: 180px;
 }
 
-.send-dropdown-item {
+.rv-send-dropdown-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -300,17 +308,17 @@
   cursor: pointer;
 }
 
-.send-dropdown-item:hover {
+.rv-send-dropdown-item:hover {
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.9);
 }
 
-.send-dropdown-item .material-symbols-outlined {
+.rv-send-dropdown-item .material-symbols-outlined {
   font-size: 18px;
 }
 
 /* Context usage container - below buttons, aligned left, pushed to bottom */
-.context-usage-container {
+.rv-context-usage-container {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -321,7 +329,7 @@
 }
 
 /* Standalone context usage bar */
-.context-usage-bar-standalone {
+.rv-context-usage-bar-standalone {
   flex: 1;
   height: 4px;
   background: rgba(255, 255, 255, 0.1);
@@ -331,7 +339,7 @@
   min-width: 100px;
 }
 
-.context-usage-bar-standalone .context-usage-fill {
+.rv-context-usage-bar-standalone .rv-context-usage-fill {
   height: 100%;
   background: var(--theme-primary, #00d4ff);
   border-radius: 1px;
@@ -340,14 +348,14 @@
 }
 
 /* Context usage percentage text */
-.context-usage-text {
+.rv-context-usage-text {
   color: rgba(255, 255, 255, 0.6);
   font-size: 12px;
   min-width: 30px;
   flex-shrink: 0;
 }
 
-.chat-composer-meta-row .chat-footer-btn {
+.rv-chat-composer-meta-row .rv-chat-footer-btn {
   width: 32px;
   height: 32px;
   display: flex;
@@ -361,18 +369,18 @@
   transition: all 0.15s ease;
 }
 
-.chat-composer-meta-row .chat-footer-btn:hover {
+.rv-chat-composer-meta-row .rv-chat-footer-btn:hover {
   background: var(--hover-modal-row-hover-bg);
   color: var(--text-primary);
 }
 
-.chat-composer-meta-row .chat-footer-btn:disabled {
+.rv-chat-composer-meta-row .rv-chat-footer-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Chat footer disabled state — when no thread is active */
-.chat-footer--disabled {
+.rv-chat-footer--disabled {
   pointer-events: none;
   opacity: 0.3;
   user-select: none;
@@ -381,23 +389,23 @@
 /* Floating chat: ai/views/settings/styles/views.css */
 
 /* Send dropdown - narrower than standard hover modals */
-.send-dropdown-modal {
+.rv-send-dropdown-modal {
   width: 200px !important;
   min-height: auto !important;
   max-height: none !important;
 }
 
-.send-dropdown-modal .hover-icon-modal-list {
+.rv-send-dropdown-modal .rv-hover-icon-modal-list {
   max-height: none;
 }
 
-.send-dropdown-content {
+.rv-send-dropdown-content {
   display: flex;
   flex-direction: column;
   padding: 4px 0;
 }
 
-.send-dropdown-item {
+.rv-send-dropdown-item {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -411,16 +419,16 @@
   width: 100%;
 }
 
-.send-dropdown-item:hover {
+.rv-send-dropdown-item:hover {
   background: var(--neutral-chrome-bg);
   color: var(--text-primary);
 }
 
-.send-dropdown-item .material-symbols-outlined {
+.rv-send-dropdown-item .material-symbols-outlined {
   font-size: 18px;
   color: var(--text-dim);
 }
 
-.send-dropdown-item:hover .material-symbols-outlined {
+.rv-send-dropdown-item:hover .material-symbols-outlined {
   color: var(--text-primary);
 }

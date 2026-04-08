@@ -1,0 +1,291 @@
+/* Terminal Workspace — Split Pane Layout */
+
+.ws-term-container {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.ws-term-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ── Panel Header ── */
+.ws-term-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  height: 36px;
+  min-height: 36px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-subtle, #1e1e1e);
+}
+
+.ws-term-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ws-term-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+}
+
+.ws-term-tab-count {
+  font-size: 10px;
+  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.ws-term-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ws-term-actions button {
+  background: none;
+  border: none;
+  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ws-term-actions button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-white, #ffffff);
+}
+
+.ws-term-actions button.active {
+  color: var(--theme-primary, #4ade80);
+  background: rgba(var(--theme-primary-rgb, 74, 222, 128), 0.1);
+}
+
+.ws-term-split-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-subtle, #1e1e1e);
+  margin: 0 4px;
+}
+
+/* ── Split Container ── */
+.ws-term-splits {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.ws-term-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.ws-term-pane + .ws-term-pane {
+  border-left: 1px solid var(--border-subtle, #1e1e1e);
+}
+
+.ws-term-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  height: 28px;
+  min-height: 28px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-subtle, #1e1e1e);
+}
+
+.ws-term-pane-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-label, rgba(255, 255, 255, 0.7));
+}
+
+.ws-term-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ws-term-dot-active { background: var(--theme-primary, #4ade80); }
+.ws-term-dot-idle { background: #facc15; }
+.ws-term-dot-dead { background: #f87171; }
+
+.ws-term-pane-close {
+  background: none;
+  border: none;
+  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+}
+
+.ws-term-pane-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-white, #ffffff);
+}
+
+.ws-term-body {
+  flex: 1;
+  background: #000000;
+  padding: 8px 12px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-y: auto;
+  color: var(--text-white, #ffffff);
+}
+
+.ws-term-body .prompt {
+  color: var(--theme-primary, #4ade80);
+}
+
+.ws-term-body .path {
+  color: var(--theme-primary, #4ade80);
+}
+
+.ws-term-body .output {
+  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+}
+
+.ws-term-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  background: var(--theme-primary, #4ade80);
+  animation: ws-term-blink 1s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 2px;
+}
+
+@keyframes ws-term-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ── Right Sidebar: Terminal List ── */
+.ws-term-sidebar {
+  width: 200px;
+  min-width: 200px;
+  background: rgba(255, 255, 255, 0.01);
+  border-left: 1px solid var(--border-subtle, #1e1e1e);
+  display: flex;
+  flex-direction: column;
+}
+
+.ws-term-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle, #1e1e1e);
+}
+
+.ws-term-sidebar-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+}
+
+.ws-term-sidebar-add {
+  background: none;
+  border: none;
+  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.ws-term-sidebar-add:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--theme-primary, #4ade80);
+}
+
+.ws-term-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.ws-term-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-label, rgba(255, 255, 255, 0.7));
+  border-left: 2px solid transparent;
+}
+
+.ws-term-list-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ws-term-list-item.active {
+  background: rgba(var(--theme-primary-rgb, 74, 222, 128), 0.06);
+  border-left-color: var(--theme-primary, #4ade80);
+  color: var(--text-white, #ffffff);
+}
+
+.ws-term-list-item .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+}
+
+.ws-term-list-item.active .material-symbols-outlined {
+  color: var(--theme-primary, #4ade80);
+}
+
+.ws-term-list-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ws-term-list-item-name {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ws-term-list-item-path {
+  font-size: 10px;
+  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Split layout states ── */
+.ws-term-splits[data-split="1"] .ws-term-pane:nth-child(n+2) { display: none; }
+.ws-term-splits[data-split="2"] .ws-term-pane:nth-child(n+3) { display: none; }
+.ws-term-splits[data-split="3"] .ws-term-pane { display: flex; }

@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "id": "settings-viewer",
+  "folderName": "settings-viewer",
+  "label": "Settings",
+  "description": "Project-specific configuration — skills, triggers, sessions, prompts, workflows, and theme",
+  "type": "tabbed",
+  "icon": "tune",
+  "rank": 6,
+  "sort": "manual",
+  "created": "2026-03-30T12:00:00-07:00",
+  "settings": {
+    "layout": "tabbed-list-detail",
+    "tabs": [
+      { "id": "skills", "label": "Skills", "icon": "build" },
+      { "id": "triggers", "label": "Triggers", "icon": "bolt" },
+      { "id": "sessions", "label": "Sessions", "icon": "terminal" },
+      { "id": "prompts", "label": "Prompts", "icon": "description" },
+      { "id": "workflows", "label": "Workflows", "icon": "account_tree" },
+      { "id": "theme", "label": "Theme", "icon": "palette" }
+    ],
+    "theme": {
+      "primary": "#4fc3f7",
+      "sidebar_bg": "#0a1520",
+      "content_bg": "#0d0d0d",
+      "panel_border": "#4fc3f733"
+    }
+  }
+}

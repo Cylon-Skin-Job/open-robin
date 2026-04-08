@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "id": "code-standards",
+  "label": "Code Standards",
+  "description": "Coding conventions and style rules enforced across the project",
+  "type": "page",
+  "rank": 10,
+  "icon": "code",
+  "color": null,
+  "created": "2026-03-27T00:00:00Z",
+  "updated": "2026-04-06T00:00:00Z",
+  "frozen": false,
+  "children": null,
+  "edges_out": [],
+  "edges_in": [],
+  "sources": [],
+  "settings": {}
+}

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('debug thread UI', async ({ page }) => {
-  await page.goto('http://localhost:5173');
+  await page.goto('/');
   await page.waitForTimeout(3000);
   
   // Check console logs

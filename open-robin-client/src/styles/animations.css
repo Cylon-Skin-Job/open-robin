@@ -68,7 +68,7 @@
   100% { opacity: 0; transform: scale(0.3); }
 }
 
-.blur-sphere {
+.rv-blur-sphere {
   display: inline-block;
   opacity: 0;
   transform: scale(0.3);
@@ -78,9 +78,19 @@
     blur-sphere-breathe 2000ms ease-in-out 2000ms infinite;
 }
 
-.blur-sphere.disposing {
+.rv-blur-sphere.disposing {
   /* Override both animations — collapse from wherever we are */
   animation: blur-sphere-dispose 500ms ease-in forwards;
+}
+
+/* Orb component wrapper and icon */
+.rv-orb-wrapper {
+  padding: var(--space-xs, 4px) 0;
+}
+
+.rv-orb-icon {
+  font-size: var(--font-lg, 16px);
+  color: var(--theme-primary);
 }
 
 /* Cursor blink (legacy - can be removed per Phase 7) */

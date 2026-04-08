@@ -12,7 +12,7 @@ import {
   HoverIconModalContainer,
   HoverIconModalList,
 } from './hover-icon-modal';
-import { ChatHarnessPicker } from './ChatHarnessPicker';
+import { ChatHarnessPicker, type HarnessStatus } from './ChatHarnessPicker';
 import { ConnectingOverlay } from './ConnectingOverlay';
 import { getHarnessOption } from '../config/harness';
 
@@ -27,6 +27,8 @@ export function ChatArea({ panel }: ChatAreaProps) {
   const justSentRef = useRef(false);
   const [isSending, setIsSending] = useState(false);
   const [connectingHarnessId, setConnectingHarnessId] = useState<string | null>(null);
+  const [harnessStatuses, setHarnessStatuses] = useState<Record<string, HarnessStatus>>({});
+  const [harnessLoading, setHarnessLoading] = useState(false);
 
   const handleInsertText = (text: string) => {
     chatInputRef.current?.insertText(text);
@@ -55,6 +57,26 @@ export function ChatArea({ panel }: ChatAreaProps) {
       ws.send(JSON.stringify({ type: 'thread:create', harnessId }));
     }
   }, [ws, setWireReady]);
+
+  // Fetch harness install statuses once on mount — passed to ChatHarnessPicker as props
+  const fetchHarnessStatuses = useCallback(async () => {
+    setHarnessLoading(true);
+    try {
+      const res = await fetch('/api/harnesses');
+      if (!res.ok) return;
+      const list: HarnessStatus[] = await res.json();
+      const map = list.reduce((acc, s) => { acc[s.id] = s; return acc; }, {} as Record<string, HarnessStatus>);
+      setHarnessStatuses(map);
+    } catch {
+      // silent — show local config as fallback
+    } finally {
+      setHarnessLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchHarnessStatuses();
+  }, [fetchHarnessStatuses]);
 
   // Clear overlay once wire is ready
   useEffect(() => {
@@ -129,7 +151,11 @@ export function ChatArea({ panel }: ChatAreaProps) {
         {connectingHarnessId ? (
           <ConnectingOverlay harnessName={getHarnessOption(connectingHarnessId)?.name} />
         ) : noThread ? (
-          <ChatHarnessPicker onSelect={handleHarnessSelect} />
+          <ChatHarnessPicker
+            onSelect={handleHarnessSelect}
+            statuses={harnessStatuses}
+            isLoading={harnessLoading}
+          />
         ) : messages.length === 0 && !currentTurn && !showOrb ? (
           <div className="message message-system">
             Start a conversation
@@ -150,7 +176,7 @@ export function ChatArea({ panel }: ChatAreaProps) {
         {!noThread && <div style={{ minHeight: '80vh' }} />}
       </div>
 
-      <div className={`chat-footer${noThread ? ' chat-footer--disabled' : ''}`}>
+      <div className={`chat-footer${noThread ? ' rv-chat-footer--disabled' : ''}`}>
         <ChatInput
           ref={chatInputRef}
           onSend={handleSend}
@@ -159,7 +185,7 @@ export function ChatArea({ panel }: ChatAreaProps) {
           panel={panel}
           isTurnActive={isTurnActive}
         />
-        <div className="chat-composer-meta-row">
+        <div className="rv-chat-composer-meta-row">
           <div style={{ display: 'flex', gap: '4px' }}>
             <ClipboardTrigger onInsert={handleInsertText} />
             <ScreenshotsTrigger onInsert={handleInsertText} />
@@ -169,7 +195,7 @@ export function ChatArea({ panel }: ChatAreaProps) {
           </div>
           {isTurnActive ? (
             <button
-              className="chat-footer-btn stop-btn"
+              className="rv-chat-footer-btn stop-btn"
               onClick={handleStop}
               title="Stop generating"
             >
@@ -184,14 +210,14 @@ export function ChatArea({ panel }: ChatAreaProps) {
             />
           )}
         </div>
-        <div className="context-usage-container">
-          <div className="context-usage-bar-standalone">
+        <div className="rv-context-usage-container">
+          <div className="rv-context-usage-bar-standalone">
             <div
-              className="context-usage-fill"
+              className="rv-context-usage-fill"
               style={{ width: `${Math.min(contextUsage * 100, 100)}%` }}
             />
           </div>
-          <span className="context-usage-text">{Math.round(contextUsage * 100)}%</span>
+          <span className="rv-context-usage-text">{Math.round(contextUsage * 100)}%</span>
         </div>
       </div>
     </section>
@@ -243,18 +269,18 @@ function SendButtonGroup({ chatInputRef, onSend }: SendButtonGroupProps) {
 
   return (
     <>
-      <div className="send-button-group">
+      <div className="rv-send-button-group">
         <button
-          className="send-btn-main"
+          className="rv-send-btn-main"
           onClick={handleSendClick}
           title="Send message"
         >
           Send
         </button>
-        <div className="send-btn-divider" />
+        <div className="rv-send-btn-divider" />
         <button
           ref={triggerRef}
-          className="send-btn-secondary"
+          className="rv-send-btn-secondary"
           title="More options"
           {...triggerProps}
         >
@@ -270,19 +296,19 @@ function SendButtonGroup({ chatInputRef, onSend }: SendButtonGroupProps) {
         position={popoverPos ?? { left: 0, bottom: 0 }}
         popoverRef={popoverRef}
         popoverProps={popoverProps}
-        className="send-dropdown-modal"
+        className="rv-send-dropdown-modal"
       >
         <HoverIconModalList>
-          <div className="send-dropdown-content">
-            <button className="send-dropdown-item" onClick={() => { close(); }}>
+          <div className="rv-send-dropdown-content">
+            <button className="rv-send-dropdown-item" onClick={() => { close(); }}>
               <span className="material-symbols-outlined">chat</span>
               <span>Send as chat</span>
             </button>
-            <button className="send-dropdown-item" onClick={() => { close(); }}>
+            <button className="rv-send-dropdown-item" onClick={() => { close(); }}>
               <span className="material-symbols-outlined">code</span>
               <span>Send as code block</span>
             </button>
-            <button className="send-dropdown-item" onClick={() => { close(); }}>
+            <button className="rv-send-dropdown-item" onClick={() => { close(); }}>
               <span className="material-symbols-outlined">terminal</span>
               <span>Send as command</span>
             </button>

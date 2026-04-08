@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skills Workspace — 3 Column + Chat</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    line-height: 1.5;
+  }
+
+  :root {
+    --primary: #a855f7;
+    --primary-dim: rgba(168, 85, 247, 0.12);
+    --primary-border: rgba(168, 85, 247, 0.25);
+    --kimi-color: #00d4ff;
+    --kimi-dim: rgba(0, 212, 255, 0.12);
+    --kimi-border: rgba(0, 212, 255, 0.25);
+    --claude-color: #d97706;
+    --claude-dim: rgba(217, 119, 6, 0.12);
+    --claude-border: rgba(217, 119, 6, 0.25);
+    --local-color: #22c55e;
+    --local-dim: rgba(34, 197, 94, 0.12);
+    --local-border: rgba(34, 197, 94, 0.25);
+    --bg-page: #0a0a0a;
+    --bg-surface: #111;
+    --bg-card: #161616;
+    --bg-card-hover: #1c1c1c;
+    --bg-input: #0e0e0e;
+    --text-primary: #e8e8e8;
+    --text-secondary: #aaa;
+    --text-dim: #555;
+    --border-subtle: #1e1e1e;
+    --border-card: #242424;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+  }
+
+  /* === Full Page Layout === */
+  .skills-page {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 1fr;
+    overflow: hidden;
+  }
+
+  /* ======================================================
+     LEFT: Chat Sidebar (Daily Session — Reader + Ticket Creator)
+     ====================================================== */
+  .chat-sidebar {
+    background: #0d0d0d;
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chat-sidebar-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .chat-sidebar-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chat-sidebar-title .material-symbols-outlined {
+    font-size: 16px;
+    color: var(--primary);
+  }
+
+  .chat-date-badge {
+    font-size: 0.625rem;
+    color: var(--text-dim);
+    background: var(--bg-card);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  /* Chat Messages */
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chat-msg {
+    max-width: 92%;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .chat-msg.user {
+    align-self: flex-end;
+    background: var(--primary-dim);
+    border: 1px solid var(--primary-border);
+    color: var(--text-primary);
+  }
+
+  .chat-msg.assistant {
+    align-self: flex-start;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    color: var(--text-secondary);
+  }
+
+  .chat-msg-time {
+    font-size: 0.5625rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  .chat-msg code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.75rem;
+    background: rgba(255,255,255,0.06);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+
+  /* Date Separator */
+  .chat-date-sep {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.625rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .chat-date-sep::before,
+  .chat-date-sep::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+  }
+
+  /* Chat Input */
+  .chat-input-area {
+    padding: 12px;
+    border-top: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+
+  .chat-input-box {
+    display: flex;
+    align-items: flex-end;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .chat-input-box textarea {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.8125rem;
+    resize: none;
+    outline: none;
+    line-height: 1.4;
+    max-height: 80px;
+  }
+
+  .chat-input-box textarea::placeholder { color: var(--text-dim); }
+
+  .chat-send-btn {
+    background: var(--primary);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .chat-send-btn .material-symbols-outlined { font-size: 16px; }
+
+  /* ======================================================
+     RIGHT: 3-Column Skill Grid
+     ====================================================== */
+  .skills-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .skills-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+
+  .skills-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .skills-topbar-icon {
+    color: var(--primary);
+    font-size: 22px;
+  }
+
+  .skills-topbar-title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .skills-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    width: 200px;
+  }
+
+  .skills-search .material-symbols-outlined { font-size: 14px; color: var(--text-dim); }
+
+  .skills-search input {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-family: inherit;
+    outline: none;
+    width: 100%;
+  }
+
+  .skills-search input::placeholder { color: var(--text-dim); }
+
+  /* Three Columns */
+  .skills-columns {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    overflow: hidden;
+  }
+
+  .skill-column {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--border-subtle);
+  }
+
+  .skill-column:last-child { border-right: none; }
+
+  .skill-column-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .skill-column-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .skill-column-label .material-symbols-outlined { font-size: 16px; }
+
+  .skill-column-count {
+    font-size: 0.625rem;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-dim);
+  }
+
+  /* Column accent colors */
+  .skill-column.local .skill-column-label { color: var(--local-color); }
+  .skill-column.local .skill-column-label .material-symbols-outlined { color: var(--local-color); }
+  .skill-column.kimi .skill-column-label { color: var(--kimi-color); }
+  .skill-column.kimi .skill-column-label .material-symbols-outlined { color: var(--kimi-color); }
+  .skill-column.claude .skill-column-label { color: var(--claude-color); }
+  .skill-column.claude .skill-column-label .material-symbols-outlined { color: var(--claude-color); }
+
+  .skill-column-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  /* === Skill Row (compact list item) === */
+  .skill-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 120ms;
+    border: 1px solid transparent;
+  }
+
+  .skill-row:hover {
+    background: var(--bg-card-hover);
+  }
+
+  .skill-column.local .skill-row:hover { border-color: var(--local-border); }
+  .skill-column.kimi .skill-row:hover { border-color: var(--kimi-border); }
+  .skill-column.claude .skill-row:hover { border-color: var(--claude-border); }
+
+  .skill-row-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+
+  .skill-column.local .skill-row-icon { background: var(--local-dim); color: var(--local-color); }
+  .skill-column.kimi .skill-row-icon { background: var(--kimi-dim); color: var(--kimi-color); }
+  .skill-column.claude .skill-row-icon { background: var(--claude-dim); color: var(--claude-color); }
+
+  .skill-row-info { flex: 1; min-width: 0; }
+
+  .skill-row-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .skill-row-name::before {
+    content: '/';
+    opacity: 0.4;
+    margin-right: 1px;
+  }
+
+  .skill-row-desc {
+    font-size: 0.6875rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+  }
+
+  .skill-row-badges {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .skill-tag {
+    font-size: 0.5625rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-dim);
+  }
+
+  /* Sync indicator dot */
+  .skill-row-sync {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 8px;
+  }
+
+  .skill-row-sync.synced { background: #4caf50; }
+  .skill-row-sync.drifted { background: #f97316; }
+  .skill-row-sync.missing { background: #555; }
+
+  /* === Empty / Disconnected State === */
+  .skill-column-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 32px 24px;
+    gap: 12px;
+  }
+
+  .skill-column-empty .material-symbols-outlined {
+    font-size: 36px;
+    opacity: 0.2;
+  }
+
+  .skill-column-empty-text {
+    font-size: 0.8125rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .skill-column-empty-action {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-sm);
+    padding: 6px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    margin-top: 4px;
+  }
+
+  .skill-column-empty-action .material-symbols-outlined { font-size: 14px; }
+
+  .skill-column.claude .skill-column-empty .material-symbols-outlined { color: var(--claude-color); }
+  .skill-column.kimi .skill-column-empty .material-symbols-outlined { color: var(--kimi-color); }
+
+  /* Status bar */
+  .skill-column-status {
+    padding: 6px 12px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.625rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+  }
+
+  .status-dot.connected { background: #4caf50; }
+  .status-dot.disconnected { background: #ef4444; }
+  .status-dot.pending { background: #f97316; }
+</style>
+</head>
+<body>
+
+<div class="skills-page">
+
+  <!-- ========== LEFT: Chat Sidebar ========== -->
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-header">
+      <span class="chat-sidebar-title">
+        <span class="material-symbols-outlined">forum</span>
+        Skills Chat
+      </span>
+      <span class="chat-date-badge">Mar 25</span>
+    </div>
+
+    <div class="chat-messages">
+
+      <div class="chat-date-sep">March 24</div>
+
+      <div class="chat-msg user">
+        Which skills are duplicated between Cursor and Claude?
+        <div class="chat-msg-time">2:14 PM</div>
+      </div>
+
+      <div class="chat-msg assistant">
+        I found 12 skills that exist in both systems. 10 are synced, 2 have drifted:
+        <br><br>
+        <strong>Drifted:</strong><br>
+        <code>/refine</code> — Cursor version has extra "notes" section<br>
+        <code>/version-hygiene</code> — Claude version updated Mar 22
+        <div class="chat-msg-time">2:14 PM</div>
+      </div>
+
+      <div class="chat-msg user">
+        Can you create a ticket to sync /refine?
+        <div class="chat-msg-time">2:16 PM</div>
+      </div>
+
+      <div class="chat-msg assistant">
+        Created <code>KIMI-0012</code>: "Sync /refine skill — Cursor version has diverged from Claude Code". Assigned to <strong>kimi-code</strong>.
+        <div class="chat-msg-time">2:16 PM</div>
+      </div>
+
+      <div class="chat-date-sep">Today</div>
+
+      <div class="chat-msg user">
+        How do I add a new skill that works in both Cursor and Claude Code?
+        <div class="chat-msg-time">10:30 AM</div>
+      </div>
+
+      <div class="chat-msg assistant">
+        Create the skill file in <code>~/.claude/commands/</code> with YAML frontmatter (name + description). Then run <code>/sync</code> to push it to Cursor's skill folder. The sync command handles format differences automatically.
+        <br><br>
+        See wiki topic <strong>skills</strong> for the full workflow.
+        <div class="chat-msg-time">10:30 AM</div>
+      </div>
+
+      <div class="chat-msg user">
+        What skills does Claude Code ship with that I haven't installed?
+        <div class="chat-msg-time">11:45 AM</div>
+      </div>
+
+      <div class="chat-msg assistant">
+        Claude Code doesn't ship with installable skills — all your skills are custom. The Claude column in the skills workspace will show built-in slash commands once the Claude CLI integration is connected.
+        <br><br>
+        Right now only the <strong>Kimi</strong> integration is active.
+        <div class="chat-msg-time">11:45 AM</div>
+      </div>
+
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chat-input-box">
+        <textarea rows="1" placeholder="Ask about skills..."></textarea>
+        <button class="chat-send-btn">
+          <span class="material-symbols-outlined">arrow_upward</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== RIGHT: Skills Content ========== -->
+  <div class="skills-content">
+
+    <div class="skills-topbar">
+      <div class="skills-topbar-left">
+        <span class="material-symbols-outlined skills-topbar-icon">dynamic_form</span>
+        <span class="skills-topbar-title">Skills</span>
+      </div>
+      <div class="skills-search">
+        <span class="material-symbols-outlined">search</span>
+        <input type="text" placeholder="Filter skills..." />
+      </div>
+    </div>
+
+    <div class="skills-columns">
+
+      <!-- ===== COLUMN 1: Local Skills ===== -->
+      <div class="skill-column local">
+        <div class="skill-column-header">
+          <span class="skill-column-label">
+            <span class="material-symbols-outlined">folder_open</span>
+            Local
+          </span>
+          <span class="skill-column-count">14</span>
+        </div>
+        <div class="skill-column-body">
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">psychology</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">curiosity</div>
+              <div class="skill-row-desc">Exploration engine. Riff on ideas, surface threads, mirror back.</div>
+              <div class="skill-row-badges"><span class="skill-tag">mode</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">psychology</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">flow</div>
+              <div class="skill-row-desc">Stream of consciousness, ideation, capture mode.</div>
+              <div class="skill-row-badges"><span class="skill-tag">mode</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">psychology</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">slow-down</div>
+              <div class="skill-row-desc">Methodical collaborative mode — stop rushing, trace systematically.</div>
+              <div class="skill-row-badges"><span class="skill-tag">mode</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">psychology</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">refine</div>
+              <div class="skill-row-desc">Shape ideas through list/notes style dialogue.</div>
+              <div class="skill-row-badges"><span class="skill-tag">mode</span></div>
+            </div>
+            <div class="skill-row-sync drifted"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">shield</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">export-safety</div>
+              <div class="skill-row-desc">Verify all importers before modifying exported JS functions.</div>
+              <div class="skill-row-badges"><span class="skill-tag">guardrail</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">shield</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">path-safety</div>
+              <div class="skill-row-desc">Invoke when moving files, renaming directories, or changing paths.</div>
+              <div class="skill-row-badges"><span class="skill-tag">guardrail</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">rule</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">js-conventions</div>
+              <div class="skill-row-desc">JavaScript naming, patterns, conventions.</div>
+              <div class="skill-row-badges"><span class="skill-tag">convention</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">rule</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">css-conventions</div>
+              <div class="skill-row-desc">CSS patterns, naming, anti-patterns.</div>
+              <div class="skill-row-badges"><span class="skill-tag">convention</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">build</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">handoff</div>
+              <div class="skill-row-desc">End a session — extract insights, commit state, prepare for next.</div>
+              <div class="skill-row-badges"><span class="skill-tag">utility</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">build</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">resume</div>
+              <div class="skill-row-desc">Start a session — load previous context, orient.</div>
+              <div class="skill-row-badges"><span class="skill-tag">utility</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">build</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">sync</div>
+              <div class="skill-row-desc">Keep Claude Code commands and Cursor skills in sync.</div>
+              <div class="skill-row-badges"><span class="skill-tag">utility</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">build</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">claude-search</div>
+              <div class="skill-row-desc">Search past conversation history by keyword.</div>
+              <div class="skill-row-badges"><span class="skill-tag">utility</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">build</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">workspace</div>
+              <div class="skill-row-desc">Bi-modal workspace for conversation. Manages doc layers.</div>
+              <div class="skill-row-badges"><span class="skill-tag">utility</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">shield</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">version-hygiene</div>
+              <div class="skill-row-desc">Invoke when creating versioned artifacts or time-ordered data.</div>
+              <div class="skill-row-badges"><span class="skill-tag">guardrail</span></div>
+            </div>
+            <div class="skill-row-sync drifted"></div>
+          </div>
+
+        </div>
+        <div class="skill-column-status">
+          <span class="status-dot connected"></span>
+          ~/.claude/commands/ &middot; 14 skills loaded
+        </div>
+      </div>
+
+      <!-- ===== COLUMN 2: Kimi Skills ===== -->
+      <div class="skill-column kimi">
+        <div class="skill-column-header">
+          <span class="skill-column-label">
+            <span class="material-symbols-outlined">terminal</span>
+            Kimi
+          </span>
+          <span class="skill-column-count">8</span>
+        </div>
+        <div class="skill-column-body">
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">smart_toy</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">wiki-sync</div>
+              <div class="skill-row-desc">Bidirectional sync between local wiki and GitLab wiki.</div>
+              <div class="skill-row-badges"><span class="skill-tag">agent</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">smart_toy</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">ticket-route</div>
+              <div class="skill-row-desc">Route incoming tickets to the right background agent.</div>
+              <div class="skill-row-badges"><span class="skill-tag">agent</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">deployed_code</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">preflight</div>
+              <div class="skill-row-desc">Run lint, type check, and test suite before commit.</div>
+              <div class="skill-row-badges"><span class="skill-tag">pipeline</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">deployed_code</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">deploy</div>
+              <div class="skill-row-desc">Build, test, and deploy to Cloud Run staging.</div>
+              <div class="skill-row-badges"><span class="skill-tag">pipeline</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">monitoring</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">status</div>
+              <div class="skill-row-desc">Show server health, active sessions, agent status.</div>
+              <div class="skill-row-badges"><span class="skill-tag">diagnostic</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">history</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">replay</div>
+              <div class="skill-row-desc">Replay an agent run from its manifest and frozen artifacts.</div>
+              <div class="skill-row-badges"><span class="skill-tag">diagnostic</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">edit_note</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">capture</div>
+              <div class="skill-row-desc">Quick-capture an idea to the capture workspace inbox.</div>
+              <div class="skill-row-badges"><span class="skill-tag">utility</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+          <div class="skill-row">
+            <div class="skill-row-icon"><span class="material-symbols-outlined">sync</span></div>
+            <div class="skill-row-info">
+              <div class="skill-row-name">gitlab-sync</div>
+              <div class="skill-row-desc">Push/pull issues between local index and GitLab API.</div>
+              <div class="skill-row-badges"><span class="skill-tag">integration</span></div>
+            </div>
+            <div class="skill-row-sync synced"></div>
+          </div>
+
+        </div>
+        <div class="skill-column-status">
+          <span class="status-dot connected"></span>
+          kimi CLI &middot; localhost:3001 &middot; connected
+        </div>
+      </div>
+
+      <!-- ===== COLUMN 3: Claude ===== -->
+      <div class="skill-column claude">
+        <div class="skill-column-header">
+          <span class="skill-column-label">
+            <span class="material-symbols-outlined">auto_awesome</span>
+            Claude
+          </span>
+          <span class="skill-column-count">&mdash;</span>
+        </div>
+        <div class="skill-column-body">
+          <div class="skill-column-empty">
+            <span class="material-symbols-outlined">link_off</span>
+            <div class="skill-column-empty-text">
+              Claude Code CLI not connected.<br>
+              Connect to see built-in commands and custom skills.
+            </div>
+            <button class="skill-column-empty-action">
+              <span class="material-symbols-outlined">add_link</span>
+              Connect Claude CLI
+            </button>
+          </div>
+        </div>
+        <div class="skill-column-status">
+          <span class="status-dot disconnected"></span>
+          claude CLI &middot; not connected
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

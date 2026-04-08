@@ -1,0 +1,9 @@
+/* wiki-manager agent display */
+.agent-tile--wiki-manager::before {
+  font-family: 'Material Symbols Outlined';
+  content: 'edit_note';
+}
+
+.agent-tile--wiki-manager {
+  --agent-color: #e91e8a;
+}

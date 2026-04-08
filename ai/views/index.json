@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "id": "views",
+  "folderName": "views",
+  "label": "Views",
+  "description": "All view definitions",
+  "type": "root",
+  "icon": "dashboard",
+  "rank": 1,
+  "sort": "ranked",
+  "created": "2026-03-12T18:17:00-07:00",
+  "children": [
+    "capture-viewer",
+    "code-viewer",
+    "terminal-viewer",
+    "issues-viewer",
+    "wiki-viewer",
+    "agents-viewer",
+    "settings-viewer",
+    "browser-viewer",
+    "calendar-viewer",
+    "email-viewer",
+    "docs-viewer",
+    "library-viewer"
+  ],
+  "settings": {}
+}

@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "id": "library-viewer",
+  "folderName": "library-viewer",
+  "label": "Library",
+  "description": "Hierarchical document reader for books, papers, and reference material",
+  "type": "library",
+  "icon": "local_library",
+  "rank": 11,
+  "sort": "manual",
+  "created": "2026-04-03T00:00:00-07:00",
+  "settings": {
+    "layout": "full",
+    "theme": {
+      "primary": "#fbbf24",
+      "sidebar_bg": "#1a1508",
+      "content_bg": "#0d0d0d",
+      "panel_border": "#fbbf2433"
+    }
+  }
+}

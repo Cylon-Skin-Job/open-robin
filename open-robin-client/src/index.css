@@ -39,7 +39,7 @@ body {
 /* Chat + threads + composer: ai/views/settings/styles/views.css (imported in main.tsx) */
 
 /* Panel placeholder */
-.panel-placeholder {
+.rv-panel-placeholder {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -77,7 +77,7 @@ body {
    CONFIRMATION MODAL
    ============================================ */
 
-.modal-overlay {
+.rv-confirm-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -87,11 +87,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-overlay, 1000);
   backdrop-filter: blur(4px);
 }
 
-.modal-content {
+.rv-confirm-modal-content {
   background: var(--bg-secondary);
   border: 1px solid var(--theme-border);
   border-radius: 12px;
@@ -101,7 +101,7 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-.modal-message {
+.rv-confirm-modal-message {
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.5;
@@ -109,13 +109,13 @@ body {
   text-align: center;
 }
 
-.modal-buttons {
+.rv-confirm-modal-buttons {
   display: flex;
   gap: 12px;
   justify-content: center;
 }
 
-.modal-btn {
+.rv-confirm-modal-btn {
   padding: 10px 20px;
   border-radius: 6px;
   font-size: 13px;
@@ -125,23 +125,23 @@ body {
   border: none;
 }
 
-.modal-btn-secondary {
+.rv-confirm-modal-btn-secondary {
   background: transparent;
   border: 1px solid var(--theme-border);
   color: var(--text-secondary);
 }
 
-.modal-btn-secondary:hover {
+.rv-confirm-modal-btn-secondary:hover {
   background: rgba(var(--theme-primary-rgb), 0.1);
   border-color: var(--theme-border-glow);
   color: var(--text-primary);
 }
 
-.modal-btn-primary {
+.rv-confirm-modal-btn-primary {
   background: var(--theme-primary);
   color: var(--bg-solid);
 }
 
-.modal-btn-primary:hover {
+.rv-confirm-modal-btn-primary:hover {
   box-shadow: 0 0 12px rgba(var(--theme-primary-rgb), 0.5);
 }

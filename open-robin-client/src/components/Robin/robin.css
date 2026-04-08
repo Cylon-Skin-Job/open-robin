@@ -2,10 +2,10 @@
    Robin System Panel Overlay
    ========================================================== */
 
-.robin-overlay {
+.rv-robin-overlay {
   position: fixed;
   inset: 0;
-  z-index: 600;
+  z-index: var(--z-panel, 600);
   background: var(--bg-solid, #0a0a0a);
   display: flex;
   flex-direction: column;
@@ -19,7 +19,7 @@
 
 /* --- Header --- */
 
-.robin-overlay-header {
+.rv-robin-overlay-header {
   height: var(--header-height, 60px);
   display: flex;
   align-items: center;
@@ -29,30 +29,30 @@
   flex-shrink: 0;
 }
 
-.robin-overlay-header-left {
+.rv-robin-overlay-header-left {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.robin-overlay-header-icon {
+.rv-robin-overlay-header-icon {
   font-size: 26px;
   color: var(--robin-primary, #4fc3f7);
 }
 
-.robin-overlay-header-name {
+.rv-robin-overlay-header-name {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--robin-primary, #4fc3f7);
 }
 
-.robin-overlay-header-subtitle {
+.rv-robin-overlay-header-subtitle {
   font-size: 0.75rem;
   color: var(--text-dim, #666);
   margin-left: 8px;
 }
 
-.robin-exit-btn {
+.rv-robin-exit-btn {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--robin-border, #282828);
   color: var(--text-dim, #666);
@@ -65,7 +65,7 @@
   transition: all 150ms;
 }
 
-.robin-exit-btn:hover {
+.rv-robin-exit-btn:hover {
   color: var(--text-primary, #e0e0e0);
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.15);
@@ -73,7 +73,7 @@
 
 /* --- Body grid --- */
 
-.robin-overlay-body {
+.rv-robin-overlay-body {
   flex: 1;
   display: grid;
   grid-template-columns: 380px 1fr;
@@ -84,14 +84,14 @@
    CHAT
    ========================================================== */
 
-.robin-chat {
+.rv-robin-chat {
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--robin-border, #1e1e1e);
   background: var(--robin-chat-bg, #111111);
 }
 
-.robin-chat-messages {
+.rv-robin-chat-messages {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
@@ -100,7 +100,7 @@
   gap: 12px;
 }
 
-.robin-msg-system {
+.rv-robin-msg-system {
   font-size: 0.75rem;
   color: var(--text-dim, #666);
   text-align: center;
@@ -108,13 +108,13 @@
   font-style: italic;
 }
 
-.robin-msg-robin {
+.rv-robin-msg-robin {
   display: flex;
   gap: 10px;
   align-items: flex-start;
 }
 
-.robin-msg-avatar {
+.rv-robin-msg-avatar {
   width: 28px;
   height: 28px;
   border-radius: 8px;
@@ -125,12 +125,12 @@
   flex-shrink: 0;
 }
 
-.robin-msg-avatar .material-symbols-outlined {
+.rv-robin-msg-avatar .material-symbols-outlined {
   font-size: 18px;
   color: var(--robin-primary, #4fc3f7);
 }
 
-.robin-msg-bubble {
+.rv-robin-msg-bubble {
   background: var(--robin-card-bg, #161616);
   border: 1px solid var(--robin-border, #282828);
   border-radius: 10px;
@@ -141,7 +141,7 @@
   max-width: 90%;
 }
 
-.robin-msg-bubble code {
+.rv-robin-msg-bubble code {
   background: rgba(255, 255, 255, 0.06);
   padding: 1px 5px;
   border-radius: 3px;
@@ -149,22 +149,22 @@
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
-.robin-msg-user {
+.rv-robin-msg-user {
   display: flex;
   justify-content: flex-end;
 }
 
-.robin-msg-user .robin-msg-bubble {
+.rv-robin-msg-user .rv-robin-msg-bubble {
   background: rgba(79, 195, 247, 0.12);
   border-color: rgba(79, 195, 247, 0.25);
 }
 
-.robin-chat-input {
+.rv-robin-chat-input {
   padding: 16px;
   border-top: 1px solid var(--robin-border, #1e1e1e);
 }
 
-.robin-chat-input textarea {
+.rv-robin-chat-input textarea {
   width: 100%;
   padding: 10px 14px;
   background: var(--robin-input-bg, #0d0d0d);
@@ -178,11 +178,11 @@
   min-height: 44px;
 }
 
-.robin-chat-input textarea:focus {
+.rv-robin-chat-input textarea:focus {
   border-color: rgba(79, 195, 247, 0.25);
 }
 
-.robin-chat-input textarea::placeholder {
+.rv-robin-chat-input textarea::placeholder {
   color: var(--text-dim, #666);
 }
 
@@ -190,7 +190,7 @@
    SETTINGS AREA
    ========================================================== */
 
-.robin-settings {
+.rv-robin-settings {
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -198,19 +198,19 @@
 
 /* --- Tab header (above tabs) --- */
 
-.robin-settings-header {
+.rv-robin-settings-header {
   padding: 20px 24px 0;
   flex-shrink: 0;
   display: flex;
   gap: 24px;
 }
 
-.robin-settings-header-info {
+.rv-robin-settings-header-info {
   flex: 1;
   min-width: 0;
 }
 
-.robin-settings-header-title {
+.rv-robin-settings-header-title {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--robin-primary, #4fc3f7);
@@ -220,17 +220,17 @@
   margin-bottom: 6px;
 }
 
-.robin-settings-header-title .material-symbols-outlined {
+.rv-robin-settings-header-title .material-symbols-outlined {
   font-size: 24px;
 }
 
-.robin-settings-header-desc {
+.rv-robin-settings-header-desc {
   font-size: 0.8125rem;
   color: var(--text-secondary, #aaa);
   line-height: 1.6;
 }
 
-.robin-settings-header-faqs {
+.rv-robin-settings-header-faqs {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -239,7 +239,7 @@
   padding-top: 4px;
 }
 
-.robin-faq-link {
+.rv-robin-faq-link {
   font-size: 0.75rem;
   color: var(--robin-primary, #4fc3f7);
   cursor: pointer;
@@ -250,20 +250,20 @@
   gap: 6px;
 }
 
-.robin-faq-link::before {
+.rv-robin-faq-link::before {
   content: '•';
   color: var(--text-dim, #666);
   font-size: 0.625rem;
 }
 
-.robin-faq-link:hover {
+.rv-robin-faq-link:hover {
   opacity: 0.7;
   text-decoration: underline;
 }
 
 /* --- Guide link (top of settings list) --- */
 
-.robin-guide-link {
+.rv-robin-guide-link {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -275,21 +275,21 @@
   transition: color 0.15s, background 0.15s;
 }
 
-.robin-guide-link:hover {
+.rv-robin-guide-link:hover {
   color: var(--robin-primary, #4fc3f7);
   background: rgba(79, 195, 247, 0.05);
 }
 
-.robin-guide-link.active {
+.rv-robin-guide-link.active {
   color: var(--robin-primary, #4fc3f7);
   background: rgba(79, 195, 247, 0.1);
 }
 
-.robin-guide-link .material-symbols-outlined {
+.rv-robin-guide-link .material-symbols-outlined {
   font-size: 18px;
 }
 
-.robin-list-separator {
+.rv-robin-list-separator {
   height: 1px;
   background: var(--robin-border, rgba(79, 195, 247, 0.15));
   margin: 4px 8px 8px;
@@ -297,7 +297,7 @@
 
 /* --- Wiki inline nav (section headings) --- */
 
-.robin-wiki-nav {
+.rv-robin-wiki-nav {
   display: flex;
   gap: 16px;
   padding-bottom: 16px;
@@ -305,7 +305,7 @@
   border-bottom: 1px solid var(--robin-border, rgba(79, 195, 247, 0.15));
 }
 
-.robin-wiki-nav-link {
+.rv-robin-wiki-nav-link {
   font-size: 0.8rem;
   color: var(--text-dim, rgba(255, 255, 255, 0.5));
   cursor: pointer;
@@ -313,11 +313,11 @@
   white-space: nowrap;
 }
 
-.robin-wiki-nav-link:hover {
+.rv-robin-wiki-nav-link:hover {
   color: var(--robin-primary, #4fc3f7);
 }
 
-.robin-wiki-nav-link.active {
+.rv-robin-wiki-nav-link.active {
   color: var(--robin-primary, #4fc3f7);
   border-bottom: 1px solid var(--robin-primary, #4fc3f7);
   padding-bottom: 2px;
@@ -325,7 +325,7 @@
 
 /* --- Tab bar --- */
 
-.robin-settings-tabs {
+.rv-robin-settings-tabs {
   display: flex;
   gap: 6px;
   padding: 16px 24px;
@@ -333,7 +333,7 @@
   flex-shrink: 0;
 }
 
-.robin-settings-tab {
+.rv-robin-settings-tab {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--robin-border, #282828);
   border-radius: 20px;
@@ -349,25 +349,25 @@
   gap: 6px;
 }
 
-.robin-settings-tab:hover {
+.rv-robin-settings-tab:hover {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-secondary, #aaa);
 }
 
-.robin-settings-tab.active {
+.rv-robin-settings-tab.active {
   background: rgba(79, 195, 247, 0.12);
   border-color: rgba(79, 195, 247, 0.25);
   color: var(--robin-primary, #4fc3f7);
   font-weight: 600;
 }
 
-.robin-settings-tab .material-symbols-outlined {
+.rv-robin-settings-tab .material-symbols-outlined {
   font-size: 16px;
 }
 
 /* --- Split: list + detail --- */
 
-.robin-settings-split {
+.rv-robin-settings-split {
   flex: 1;
   display: grid;
   grid-template-columns: 300px 1fr;
@@ -378,7 +378,7 @@
    SETTINGS LIST
    ========================================================== */
 
-.robin-settings-list {
+.rv-robin-settings-list {
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--robin-border, #1e1e1e);
@@ -387,7 +387,7 @@
   gap: 8px;
 }
 
-.robin-settings-section-divider {
+.rv-robin-settings-section-divider {
   font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -397,11 +397,11 @@
   margin-top: 8px;
 }
 
-.robin-settings-section-divider:first-child {
+.rv-robin-settings-section-divider:first-child {
   margin-top: 0;
 }
 
-.robin-setting-item {
+.rv-robin-setting-item {
   background: var(--robin-card-bg, #161616);
   border: 1px solid var(--robin-border, #282828);
   border-radius: 10px;
@@ -413,39 +413,39 @@
   gap: 10px;
 }
 
-.robin-setting-item:hover {
+.rv-robin-setting-item:hover {
   border-color: rgba(79, 195, 247, 0.25);
   background: var(--robin-card-hover, #1c1c1c);
 }
 
-.robin-setting-item.active {
+.rv-robin-setting-item.active {
   border-color: var(--robin-primary, #4fc3f7);
   background: rgba(79, 195, 247, 0.05);
 }
 
-.robin-setting-item-icon {
+.rv-robin-setting-item-icon {
   padding-top: 1px;
   flex-shrink: 0;
 }
 
-.robin-setting-item-icon .material-symbols-outlined {
+.rv-robin-setting-item-icon .material-symbols-outlined {
   font-size: 18px;
   color: var(--robin-primary, #4fc3f7);
 }
 
-.robin-setting-item-text {
+.rv-robin-setting-item-text {
   flex: 1;
   min-width: 0;
 }
 
-.robin-setting-item-name {
+.rv-robin-setting-item-name {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-primary, #e0e0e0);
   margin-bottom: 2px;
 }
 
-.robin-setting-item-desc {
+.rv-robin-setting-item-desc {
   font-size: 0.6875rem;
   color: var(--text-dim, #666);
   line-height: 1.4;
@@ -455,7 +455,7 @@
   overflow: hidden;
 }
 
-.robin-setting-item-badge {
+.rv-robin-setting-item-badge {
   font-size: 0.5625rem;
   padding: 2px 7px;
   border-radius: 8px;
@@ -466,32 +466,32 @@
   margin-top: 2px;
 }
 
-.robin-setting-item-badge.on { color: #4caf50; background: rgba(76, 175, 80, 0.12); }
-.robin-setting-item-badge.off { color: var(--text-dim, #666); background: rgba(255, 255, 255, 0.04); }
-.robin-setting-item-badge.value { color: var(--robin-primary, #4fc3f7); background: rgba(79, 195, 247, 0.12); }
+.rv-robin-setting-item-badge.on { color: #4caf50; background: rgba(76, 175, 80, 0.12); }
+.rv-robin-setting-item-badge.off { color: var(--text-dim, #666); background: rgba(255, 255, 255, 0.04); }
+.rv-robin-setting-item-badge.value { color: var(--robin-primary, #4fc3f7); background: rgba(79, 195, 247, 0.12); }
 
 /* ==========================================================
    WIKI DETAIL PANEL
    ========================================================== */
 
-.robin-detail {
+.rv-robin-detail {
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-.robin-detail-scroll {
+.rv-robin-detail-scroll {
   flex: 1;
   overflow-y: auto;
   padding: 32px 32px 60px;
   max-width: 720px;
 }
 
-.robin-detail-header {
+.rv-robin-detail-header {
   margin-bottom: 32px;
 }
 
-.robin-detail-breadcrumb {
+.rv-robin-detail-breadcrumb {
   font-size: 0.6875rem;
   color: var(--text-dim, #666);
   margin-bottom: 8px;
@@ -500,12 +500,12 @@
   gap: 4px;
 }
 
-.robin-detail-breadcrumb span {
+.rv-robin-detail-breadcrumb span {
   color: var(--robin-primary, #4fc3f7);
   cursor: pointer;
 }
 
-.robin-detail-title {
+.rv-robin-detail-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary, #e0e0e0);
@@ -515,12 +515,12 @@
   gap: 10px;
 }
 
-.robin-detail-title .material-symbols-outlined {
+.rv-robin-detail-title .material-symbols-outlined {
   font-size: 28px;
   color: var(--robin-primary, #4fc3f7);
 }
 
-.robin-detail-subtitle {
+.rv-robin-detail-subtitle {
   font-size: 0.875rem;
   color: var(--text-secondary, #aaa);
   line-height: 1.6;
@@ -528,7 +528,7 @@
 
 /* Meta strip */
 
-.robin-detail-meta {
+.rv-robin-detail-meta {
   display: flex;
   gap: 24px;
   margin-top: 16px;
@@ -538,13 +538,13 @@
   border-radius: 10px;
 }
 
-.robin-detail-meta-item {
+.rv-robin-detail-meta-item {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.robin-detail-meta-label {
+.rv-robin-detail-meta-label {
   font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -552,17 +552,17 @@
   color: var(--text-dim, #666);
 }
 
-.robin-detail-meta-value {
+.rv-robin-detail-meta-value {
   font-size: 0.8125rem;
   color: var(--text-primary, #e0e0e0);
   font-weight: 500;
 }
 
-.robin-detail-meta-value.highlight {
+.rv-robin-detail-meta-value.highlight {
   color: var(--robin-primary, #4fc3f7);
 }
 
-.robin-detail-meta-value code {
+.rv-robin-detail-meta-value code {
   background: rgba(255, 255, 255, 0.06);
   padding: 1px 5px;
   border-radius: 3px;
@@ -572,7 +572,7 @@
 
 /* Toggle row */
 
-.robin-detail-toggle-row {
+.rv-robin-detail-toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -583,19 +583,19 @@
   border-radius: 10px;
 }
 
-.robin-detail-toggle-label {
+.rv-robin-detail-toggle-label {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-primary, #e0e0e0);
 }
 
-.robin-detail-toggle-desc {
+.rv-robin-detail-toggle-desc {
   font-size: 0.75rem;
   color: var(--text-dim, #666);
   margin-top: 2px;
 }
 
-.robin-toggle {
+.rv-robin-toggle {
   position: relative;
   width: 40px;
   height: 22px;
@@ -606,11 +606,11 @@
   flex-shrink: 0;
 }
 
-.robin-toggle.on {
+.rv-robin-toggle.on {
   background: var(--robin-primary, #4fc3f7);
 }
 
-.robin-toggle::after {
+.rv-robin-toggle::after {
   content: '';
   position: absolute;
   top: 3px;
@@ -622,17 +622,17 @@
   transition: left 200ms;
 }
 
-.robin-toggle.on::after {
+.rv-robin-toggle.on::after {
   left: 21px;
 }
 
 /* Wiki body */
 
-.robin-detail-body {
+.rv-robin-detail-body {
   margin-top: 32px;
 }
 
-.robin-detail-body h2 {
+.rv-robin-detail-body h2 {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary, #e0e0e0);
@@ -642,18 +642,33 @@
   border-bottom: 1px solid var(--robin-border, #1e1e1e);
 }
 
-.robin-detail-body h2:first-child {
+.rv-robin-detail-body h2:first-child {
   margin-top: 0;
 }
 
-.robin-detail-body p {
+.rv-robin-detail-body h3 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary, #e0e0e0);
+  margin-top: 16px;
+  margin-bottom: 6px;
+}
+
+.rv-robin-detail-body p {
   font-size: 0.8125rem;
   color: var(--text-secondary, #aaa);
   line-height: 1.7;
   margin-bottom: 16px;
 }
 
-.robin-detail-body code {
+.rv-robin-detail-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+
+.rv-robin-detail-body code {
   background: rgba(255, 255, 255, 0.06);
   padding: 2px 6px;
   border-radius: 3px;
@@ -662,7 +677,7 @@
   color: var(--robin-primary, #4fc3f7);
 }
 
-.robin-detail-body pre {
+.rv-robin-detail-body pre {
   background: var(--robin-card-bg, #161616);
   border: 1px solid var(--robin-border, #282828);
   border-radius: 6px;
@@ -675,31 +690,31 @@
   margin-bottom: 16px;
 }
 
-.robin-detail-body ul {
+.rv-robin-detail-body ul {
   margin-bottom: 16px;
   padding-left: 24px;
 }
 
-.robin-detail-body li {
+.rv-robin-detail-body li {
   font-size: 0.8125rem;
   color: var(--text-secondary, #aaa);
   line-height: 1.7;
   margin-bottom: 4px;
 }
 
-.robin-detail-body li code {
+.rv-robin-detail-body li code {
   font-size: 0.7rem;
 }
 
 /* Related links */
 
-.robin-detail-related {
+.rv-robin-detail-related {
   margin-top: 32px;
   padding-top: 24px;
   border-top: 1px solid var(--robin-border, #1e1e1e);
 }
 
-.robin-detail-related-title {
+.rv-robin-detail-related-title {
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -708,13 +723,13 @@
   margin-bottom: 8px;
 }
 
-.robin-detail-related-links {
+.rv-robin-detail-related-links {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.robin-detail-related-link {
+.rv-robin-detail-related-link {
   font-size: 0.75rem;
   color: var(--robin-primary, #4fc3f7);
   background: rgba(79, 195, 247, 0.12);
@@ -728,11 +743,11 @@
   gap: 4px;
 }
 
-.robin-detail-related-link:hover {
+.rv-robin-detail-related-link:hover {
   background: rgba(79, 195, 247, 0.18);
 }
 
-.robin-detail-related-link .material-symbols-outlined {
+.rv-robin-detail-related-link .material-symbols-outlined {
   font-size: 14px;
 }
 
@@ -740,7 +755,7 @@
    ADD BUTTON (in settings list)
    ========================================================== */
 
-.robin-add-btn {
+.rv-robin-add-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -759,20 +774,20 @@
   transition: all 150ms;
 }
 
-.robin-add-btn:hover {
+.rv-robin-add-btn:hover {
   border-color: rgba(79, 195, 247, 0.25);
   color: var(--robin-primary, #4fc3f7);
   background: rgba(79, 195, 247, 0.05);
 }
 
-.robin-add-btn.active {
+.rv-robin-add-btn.active {
   border-color: var(--robin-primary, #4fc3f7);
   border-style: solid;
   color: var(--robin-primary, #4fc3f7);
   background: rgba(79, 195, 247, 0.08);
 }
 
-.robin-add-btn .material-symbols-outlined {
+.rv-robin-add-btn .material-symbols-outlined {
   font-size: 18px;
 }
 
@@ -780,19 +795,19 @@
    CLI REGISTRY (replaces wiki detail)
    ========================================================== */
 
-.robin-registry {
+.rv-robin-registry {
   display: flex;
   flex-direction: column;
 }
 
-.robin-registry-list {
+.rv-robin-registry-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-top: 24px;
 }
 
-.robin-registry-item {
+.rv-robin-registry-item {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -803,47 +818,47 @@
   transition: border-color 150ms;
 }
 
-.robin-registry-item:hover {
+.rv-robin-registry-item:hover {
   border-color: rgba(79, 195, 247, 0.25);
 }
 
-.robin-registry-item-info {
+.rv-robin-registry-item-info {
   flex: 1;
   min-width: 0;
 }
 
-.robin-registry-item-top {
+.rv-robin-registry-item-top {
   display: flex;
   align-items: baseline;
   gap: 8px;
   margin-bottom: 2px;
 }
 
-.robin-registry-item-name {
+.rv-robin-registry-item-name {
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-primary, #e0e0e0);
 }
 
-.robin-registry-item-version {
+.rv-robin-registry-item-version {
   font-size: 0.6875rem;
   color: var(--text-dim, #666);
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
-.robin-registry-item-by {
+.rv-robin-registry-item-by {
   font-size: 0.6875rem;
   color: var(--text-dim, #666);
   margin-bottom: 4px;
 }
 
-.robin-registry-item-desc {
+.rv-robin-registry-item-desc {
   font-size: 0.8125rem;
   color: var(--text-secondary, #aaa);
   line-height: 1.5;
 }
 
-.robin-registry-add-btn {
+.rv-robin-registry-add-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -860,11 +875,11 @@
   flex-shrink: 0;
 }
 
-.robin-registry-add-btn:hover {
+.rv-robin-registry-add-btn:hover {
   background: rgba(79, 195, 247, 0.2);
 }
 
-.robin-registry-add-btn .material-symbols-outlined {
+.rv-robin-registry-add-btn .material-symbols-outlined {
   font-size: 16px;
 }
 
@@ -872,7 +887,7 @@
    ROBIN ICON BUTTON (in the app header)
    ========================================================== */
 
-.robin-icon-btn {
+.rv-robin-icon-btn {
   width: 40px;
   height: 40px;
   display: flex;
@@ -886,11 +901,11 @@
   transition: all 200ms;
 }
 
-.robin-icon-btn:hover {
+.rv-robin-icon-btn:hover {
   background: rgba(79, 195, 247, 0.08);
 }
 
-.robin-icon-btn .material-symbols-outlined {
+.rv-robin-icon-btn .material-symbols-outlined {
   font-size: 24px;
 }
 
@@ -898,7 +913,7 @@
    CUSTOMIZATION TAB
    ========================================================== */
 
-.robin-color-picker {
+.rv-robin-color-picker {
   background: var(--robin-card-bg, #161616);
   border: 1px solid var(--robin-border, #282828);
   border-radius: 10px;
@@ -906,12 +921,12 @@
   margin: 16px 0;
 }
 
-.robin-color-picker.disabled {
+.rv-robin-color-picker.disabled {
   opacity: 0.4;
   pointer-events: none;
 }
 
-.robin-color-picker-label {
+.rv-robin-color-picker-label {
   font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -920,14 +935,14 @@
   margin-bottom: 12px;
 }
 
-.robin-color-swatches {
+.rv-robin-color-swatches {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 16px;
 }
 
-.robin-color-swatch {
+.rv-robin-color-swatch {
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -936,22 +951,22 @@
   transition: all 150ms;
 }
 
-.robin-color-swatch:hover {
+.rv-robin-color-swatch:hover {
   transform: scale(1.15);
 }
 
-.robin-color-swatch.active {
+.rv-robin-color-swatch.active {
   border-color: var(--text-primary, #e0e0e0);
   box-shadow: 0 0 0 2px var(--robin-card-bg, #161616), 0 0 0 4px rgba(255, 255, 255, 0.3);
 }
 
-.robin-color-current {
+.rv-robin-color-current {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.robin-color-current-dot {
+.rv-robin-color-current-dot {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -959,7 +974,7 @@
   flex-shrink: 0;
 }
 
-.robin-color-hex-input {
+.rv-robin-color-hex-input {
   width: 90px;
   padding: 6px 10px;
   background: var(--robin-input-bg, #0d0d0d);
@@ -971,18 +986,18 @@
   outline: none;
 }
 
-.robin-color-hex-input:focus {
+.rv-robin-color-hex-input:focus {
   border-color: rgba(79, 195, 247, 0.25);
 }
 
-.robin-workspace-dot {
+.rv-robin-workspace-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.robin-apply-btn {
+.rv-robin-apply-btn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -998,24 +1013,24 @@
   transition: all 150ms;
 }
 
-.robin-apply-btn:hover {
+.rv-robin-apply-btn:hover {
   background: rgba(79, 195, 247, 0.2);
 }
 
-.robin-inherit-row {
+.rv-robin-inherit-row {
   display: flex;
   align-items: center;
   gap: 12px;
   margin: 16px 0;
 }
 
-.robin-inherit-label {
+.rv-robin-inherit-label {
   font-size: 0.8125rem;
   color: var(--text-primary, #e0e0e0);
   font-weight: 500;
 }
 
-.robin-diverged-card {
+.rv-robin-diverged-card {
   background: var(--robin-card-bg, #161616);
   border: 1px solid rgba(255, 152, 0, 0.3);
   border-radius: 10px;
@@ -1026,19 +1041,19 @@
   gap: 12px;
 }
 
-.robin-diverged-card-text {
+.rv-robin-diverged-card-text {
   font-size: 0.8125rem;
   color: var(--text-secondary, #aaa);
   line-height: 1.5;
 }
 
-.robin-preset-selector {
+.rv-robin-preset-selector {
   display: flex;
   gap: 6px;
   margin: 8px 0;
 }
 
-.robin-preset-btn {
+.rv-robin-preset-btn {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--robin-border, #282828);
   border-radius: 8px;
@@ -1051,12 +1066,12 @@
   font-family: inherit;
 }
 
-.robin-preset-btn:hover {
+.rv-robin-preset-btn:hover {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-secondary, #aaa);
 }
 
-.robin-preset-btn.active {
+.rv-robin-preset-btn.active {
   background: rgba(79, 195, 247, 0.12);
   border-color: rgba(79, 195, 247, 0.25);
   color: var(--robin-primary, #4fc3f7);
@@ -1064,17 +1079,71 @@
 }
 
 /* ==========================================================
+   WIKI INDEX (system wiki left panel)
+   ========================================================== */
+
+.rv-robin-wiki-index {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
+}
+
+.rv-robin-wiki-index-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 150ms;
+}
+
+.rv-robin-wiki-index-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rv-robin-wiki-index-item.active {
+  background: rgba(79, 195, 247, 0.08);
+}
+
+.rv-robin-wiki-index-title {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary, #e0e0e0);
+  line-height: 1.4;
+}
+
+.rv-robin-wiki-index-item.active .rv-robin-wiki-index-title {
+  color: var(--robin-primary, #4fc3f7);
+}
+
+.rv-robin-wiki-index-desc {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--text-dim, #666);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+
+/* ==========================================================
    WIKI CONTEXT TOGGLE
    ========================================================== */
 
-.robin-wiki-content {
+.rv-robin-wiki-content {
   position: relative;
 }
 
-.robin-wiki-context-toggle {
+.rv-robin-wiki-toolbar {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: -28px;
+  right: 0;
+  z-index: var(--z-content, 1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rv-robin-wiki-toolbar button {
   background: transparent;
   border: none;
   color: var(--text-dim, #666);
@@ -1088,26 +1157,31 @@
   justify-content: center;
 }
 
-.robin-wiki-context-toggle:hover {
+.rv-robin-wiki-toolbar button:hover {
   opacity: 0.8;
   background: rgba(255, 255, 255, 0.04);
 }
 
-.robin-wiki-context-toggle.active {
+.rv-robin-wiki-toolbar button .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.rv-robin-wiki-context-toggle.active {
   opacity: 1;
   color: var(--robin-primary, #4fc3f7);
 }
 
-.robin-wiki-context-toggle .material-symbols-outlined {
-  font-size: 18px;
+.rv-robin-wiki-link-btn.copied {
+  opacity: 1;
+  color: var(--robin-primary, #4fc3f7);
 }
 
-.robin-wiki-context-view {
+.rv-robin-wiki-context-view {
   border-left: 2px solid rgba(79, 195, 247, 0.2);
   padding-left: 16px;
 }
 
-.robin-wiki-context-label {
+.rv-robin-wiki-context-label {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1120,10 +1194,10 @@
   margin-bottom: 16px;
 }
 
-.robin-wiki-context-label .material-symbols-outlined {
+.rv-robin-wiki-context-label .material-symbols-outlined {
   font-size: 14px;
 }
 
-.robin-wiki-context-content {
+.rv-robin-wiki-context-content {
   opacity: 0.85;
 }

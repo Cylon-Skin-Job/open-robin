@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import '../styles/animations.css';
 
 interface OrbProps {
   /** Set to true when the first token arrives — triggers disposal */
@@ -62,19 +63,13 @@ export function Orb({ disposing, onDone }: OrbProps) {
   }, [disposing, onDone]);
 
   // CSS class determines animation state:
-  //   blur-sphere         → expand (1.5s) then breathe (loop)
-  //   blur-sphere disposing → collapse from current state (500ms)
-  const className = `material-symbols-outlined blur-sphere${disposing ? ' disposing' : ''}`;
+  //   rv-blur-sphere         → expand (1.5s) then breathe (loop)
+  //   rv-blur-sphere disposing → collapse from current state (500ms)
+  const className = `material-symbols-outlined rv-blur-sphere${disposing ? ' disposing' : ''}`;
 
   return (
-    <div style={{ padding: '4px 0' }}>
-      <span
-        className={className}
-        style={{
-          fontSize: '16px',
-          color: 'var(--theme-primary)',
-        }}
-      >
+    <div className="rv-orb-wrapper">
+      <span className={`${className} rv-orb-icon`}>
         lens_blur
       </span>
     </div>

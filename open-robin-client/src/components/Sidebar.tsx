@@ -360,14 +360,14 @@ export function Sidebar({ panel }: SidebarProps) {
 
       {/* Confirmation Modal */}
       {confirmModal.show && (
-        <div className="modal-overlay" onClick={confirmModal.onCancel}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <p className="modal-message">{confirmModal.message}</p>
-            <div className="modal-buttons">
-              <button className="modal-btn modal-btn-secondary" onClick={confirmModal.onCancel}>
+        <div className="rv-confirm-modal-overlay" onClick={confirmModal.onCancel}>
+          <div className="rv-confirm-modal-content" onClick={(e) => e.stopPropagation()}>
+            <p className="rv-confirm-modal-message">{confirmModal.message}</p>
+            <div className="rv-confirm-modal-buttons">
+              <button className="rv-confirm-modal-btn rv-confirm-modal-btn-secondary" onClick={confirmModal.onCancel}>
                 Cancel
               </button>
-              <button className="modal-btn modal-btn-primary" onClick={confirmModal.onConfirm}>
+              <button className="rv-confirm-modal-btn rv-confirm-modal-btn-primary" onClick={confirmModal.onConfirm}>
                 Create Anyway
               </button>
             </div>

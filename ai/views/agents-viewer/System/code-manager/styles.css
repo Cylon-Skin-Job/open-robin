@@ -1,0 +1,9 @@
+/* code-manager agent display */
+.agent-tile--code-manager::before {
+  font-family: 'Material Symbols Outlined';
+  content: 'code';
+}
+
+.agent-tile--code-manager {
+  --agent-color: #f97316;
+}

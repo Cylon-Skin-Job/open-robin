@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 
 test('wiki floating chat', async ({ page }) => {
-  await page.goto('http://localhost:5173');
+  await page.goto('/');
   await page.waitForTimeout(2000);
 
   // Navigate to wiki

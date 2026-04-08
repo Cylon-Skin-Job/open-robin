@@ -1,13 +1,13 @@
 /* HarnessSelector Modal Styles */
 
-.harness-modal-overlay {
+.rv-harness-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal, 1003);
   animation: fadeIn 0.2s ease;
 }
 
@@ -16,7 +16,7 @@
   to { opacity: 1; }
 }
 
-.harness-modal-content {
+.rv-harness-modal-content {
   background: var(--bg-primary, #1e1e1e);
   border-radius: 12px;
   padding: 24px;
@@ -40,7 +40,7 @@
   }
 }
 
-.harness-modal-close {
+.rv-harness-modal-close {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -58,12 +58,12 @@
   transition: all 0.2s;
 }
 
-.harness-modal-close:hover {
+.rv-harness-modal-close:hover {
   background: var(--bg-secondary, #2d2d2d);
   color: var(--text-primary, #fff);
 }
 
-.harness-modal-title {
+.rv-harness-modal-title {
   margin: 0 0 8px 0;
   font-size: 20px;
   font-weight: 600;
@@ -71,7 +71,7 @@
   color: var(--text-primary, #fff);
 }
 
-.harness-modal-subtitle {
+.rv-harness-modal-subtitle {
   margin: 0 0 24px 0;
   font-size: 14px;
   text-align: center;
@@ -79,14 +79,14 @@
 }
 
 /* Loading and Error States */
-.harness-loading {
+.rv-harness-loading {
   text-align: center;
   padding: 20px;
   color: var(--text-secondary, #888);
   font-size: 14px;
 }
 
-.harness-error {
+.rv-harness-error {
   background: rgba(244, 67, 54, 0.1);
   border: 1px solid rgba(244, 67, 54, 0.3);
   border-radius: 8px;
@@ -99,7 +99,7 @@
   gap: 12px;
 }
 
-.harness-retry-btn {
+.rv-harness-retry-btn {
   background: transparent;
   border: 1px solid currentColor;
   border-radius: 4px;
@@ -110,18 +110,18 @@
   align-self: flex-start;
 }
 
-.harness-retry-btn:hover {
+.rv-harness-retry-btn:hover {
   background: rgba(244, 67, 54, 0.1);
 }
 
-.harness-grid {
+.rv-harness-grid {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-bottom: 20px;
 }
 
-.harness-card {
+.rv-harness-card {
   background: var(--bg-secondary, #2d2d2d);
   border: 2px solid transparent;
   border-radius: 10px;
@@ -135,39 +135,39 @@
   gap: 8px;
 }
 
-.harness-card:hover:not(:disabled) {
+.rv-harness-card:hover:not(:disabled) {
   border-color: var(--theme-primary, #a78bfa);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.harness-card.disabled {
+.rv-harness-card.disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.harness-card.coming-soon {
+.rv-harness-card.coming-soon {
   border-style: dashed;
 }
 
-.harness-card.needs-install {
+.rv-harness-card.needs-install {
   border-style: dashed;
   border-color: var(--warning, #ff9800);
 }
 
-.harness-card-header {
+.rv-harness-card-header {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
 }
 
-.harness-card-icon {
+.rv-harness-card-icon {
   font-size: 24px;
   line-height: 1;
 }
 
-.harness-card-name {
+.rv-harness-card-name {
   margin: 0;
   flex: 1;
   font-size: 16px;
@@ -175,7 +175,7 @@
   color: var(--text-primary, #fff);
 }
 
-.harness-card-badge {
+.rv-harness-card-badge {
   background: var(--bg-tertiary, #3d3d3d);
   color: var(--text-secondary, #888);
   padding: 3px 10px;
@@ -186,27 +186,27 @@
   letter-spacing: 0.5px;
 }
 
-.harness-card-badge.recommended {
+.rv-harness-card-badge.recommended {
   background: var(--success, #4caf50);
   color: white;
 }
 
-.harness-card-badge.soon {
+.rv-harness-card-badge.soon {
   background: var(--warning, #ff9800);
   color: white;
 }
 
-.harness-card-badge.installed {
+.rv-harness-card-badge.installed {
   background: #2196f3;
   color: white;
 }
 
-.harness-card-badge.builtin {
+.rv-harness-card-badge.builtin {
   background: #9c27b0;
   color: white;
 }
 
-.harness-card-description {
+.rv-harness-card-description {
   color: var(--text-secondary, #888);
   margin: 0;
   font-size: 13px;
@@ -214,7 +214,7 @@
   padding-left: 36px;
 }
 
-.harness-card-version {
+.rv-harness-card-version {
   margin: 0;
   font-size: 11px;
   color: var(--text-tertiary, #666);
@@ -222,14 +222,14 @@
   font-family: monospace;
 }
 
-.harness-card-details {
+.rv-harness-card-details {
   display: flex;
   gap: 8px;
   padding-left: 36px;
   flex-wrap: wrap;
 }
 
-.harness-detail-pill {
+.rv-harness-detail-pill {
   background: var(--bg-tertiary, #3d3d3d);
   padding: 3px 10px;
   border-radius: 4px;
@@ -238,14 +238,14 @@
   text-transform: lowercase;
 }
 
-.harness-card-features {
+.rv-harness-card-features {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   padding-left: 36px;
 }
 
-.harness-feature-tag {
+.rv-harness-feature-tag {
   background: rgba(var(--theme-primary-rgb, 167, 139, 250), 0.15);
   color: var(--theme-primary, #a78bfa);
   padding: 2px 8px;
@@ -257,7 +257,7 @@
 }
 
 /* Install Section */
-.harness-install-section {
+.rv-harness-install-section {
   padding-left: 36px;
   margin-top: 8px;
   padding: 12px;
@@ -269,7 +269,7 @@
   gap: 8px;
 }
 
-.harness-install-command {
+.rv-harness-install-command {
   font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
   font-size: 12px;
   background: rgba(0, 0, 0, 0.3);
@@ -279,7 +279,7 @@
   word-break: break-all;
 }
 
-.harness-copy-btn {
+.rv-harness-copy-btn {
   align-self: flex-start;
   background: transparent;
   border: 1px solid var(--theme-border, #555);
@@ -291,19 +291,19 @@
   transition: all 0.2s;
 }
 
-.harness-copy-btn:hover {
+.rv-harness-copy-btn:hover {
   background: var(--bg-tertiary, #3d3d3d);
   color: var(--text-primary, #fff);
 }
 
-.harness-install-hint {
+.rv-harness-install-hint {
   margin: 0;
   font-size: 11px;
   color: var(--text-tertiary, #777);
   font-style: italic;
 }
 
-.harness-select-indicator {
+.rv-harness-select-indicator {
   position: absolute;
   bottom: 16px;
   right: 16px;
@@ -314,16 +314,16 @@
   transition: opacity 0.2s;
 }
 
-.harness-card:hover .harness-select-indicator {
+.rv-harness-card:hover .rv-harness-select-indicator {
   opacity: 1;
 }
 
-.harness-select-indicator.disabled {
+.rv-harness-select-indicator.disabled {
   opacity: 1;
   color: var(--text-tertiary, #666);
 }
 
-.harness-cancel-btn {
+.rv-harness-cancel-btn {
   width: 100%;
   padding: 12px;
   background: transparent;
@@ -336,7 +336,7 @@
   transition: all 0.2s;
 }
 
-.harness-cancel-btn:hover {
+.rv-harness-cancel-btn:hover {
   background: var(--bg-secondary, #2d2d2d);
   color: var(--text-primary, #fff);
   border-color: var(--text-secondary, #888);

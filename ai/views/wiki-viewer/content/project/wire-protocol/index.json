@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "id": "wire-protocol",
+  "label": "Wire Protocol & CLI Interpreters",
+  "description": "Canonical event format, tool name/arg mapping, CLI interpreter architecture. Multi-CLI future.",
+  "type": "page",
+  "rank": 6,
+  "icon": "cable",
+  "color": null,
+  "created": "2026-03-29T00:00:00Z",
+  "updated": "2026-03-29T00:00:00Z",
+  "frozen": false,
+  "children": null,
+  "edges_out": ["chat-panel-architecture", "turn-lifecycle"],
+  "edges_in": null,
+  "sources": null,
+  "settings": {}
+}

@@ -1,0 +1,12 @@
+{
+  "chatPosition": "popup",
+  "chatWidth": null,
+  "threadListWidth": null,
+  "threadListVisible": false,
+  "popup": {
+    "x": null,
+    "y": null,
+    "width": 380,
+    "height": 500
+  }
+}

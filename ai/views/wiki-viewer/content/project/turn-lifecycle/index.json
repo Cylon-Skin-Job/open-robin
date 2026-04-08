@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "id": "turn-lifecycle",
+  "label": "Turn Lifecycle & Finalization",
+  "description": "How turns flow from first token to history. Race conditions, invariants, known bugs.",
+  "type": "page",
+  "rank": 4,
+  "icon": "sync_alt",
+  "color": null,
+  "created": "2026-03-29T00:00:00Z",
+  "updated": "2026-03-29T00:00:00Z",
+  "frozen": true,
+  "children": null,
+  "edges_out": ["code-standards", "database-architecture"],
+  "edges_in": null,
+  "sources": null,
+  "settings": {}
+}

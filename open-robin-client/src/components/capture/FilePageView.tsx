@@ -43,16 +43,16 @@ export function FilePageView({
   }, [file.path]);
 
   return (
-    <div className="file-page-view">
+    <div className="rv-file-page-view">
       {/* Top bar — back arrow + filename + toggle */}
-      <div className="file-page-topbar">
-        <button className="file-page-back" onClick={onBack} title="Back to tiles">
+      <div className="rv-file-page-topbar">
+        <button className="rv-file-page-back" onClick={onBack} title="Back to tiles">
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <span className="file-page-filename">{file.name}</span>
-        <div className="file-page-actions">
+        <span className="rv-file-page-filename">{file.name}</span>
+        <div className="rv-file-page-actions">
           <button
-            className="file-page-action"
+            className="rv-file-page-action"
             onClick={() => copyResourcePath('capture-viewer', file.path)}
             title="Copy file path"
           >
@@ -60,7 +60,7 @@ export function FilePageView({
           </button>
           {isMarkdown && (
             <button
-              className="file-page-action"
+              className="rv-file-page-action"
               onClick={() => setViewMode(viewMode === 'code' ? 'markdown' : 'code')}
               title={viewMode === 'code' ? 'Switch to document view' : 'Switch to code view'}
             >
@@ -74,13 +74,13 @@ export function FilePageView({
 
       {/* Content area — fills remaining space; document-surface unifies padding with file explorer + wiki */}
       <div
-        className={`file-page-content${!isImage ? ' document-surface' : ''}${!isImage && !(isMarkdown && viewMode === 'markdown') ? ' file-page-document' : ''}`}
+        className={`rv-file-page-content${!isImage ? ' rv-document-surface' : ''}${!isImage && !(isMarkdown && viewMode === 'markdown') ? ' rv-file-page-document' : ''}`}
       >
         {isImage ? (
           <img
             src={`/api/panel-file/${panel}/${folder}/${encodeURIComponent(file.name)}`}
             alt={file.name}
-            className="file-page-image"
+            className="rv-file-page-image"
           />
         ) : (
           <CodeView content={file.content} extension={file.extension} mode={isMarkdown ? viewMode : 'code'} />
@@ -88,8 +88,8 @@ export function FilePageView({
       </div>
 
       {/* Bottom ribbon — sibling tiles */}
-      <div className="file-page-ribbon">
-        <div className="file-page-ribbon-scroll">
+      <div className="rv-file-page-ribbon">
+        <div className="rv-file-page-ribbon-scroll">
           {siblings.map((sib) => (
             <DocumentTile
               key={sib.path}

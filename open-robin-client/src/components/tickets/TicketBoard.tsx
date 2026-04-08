@@ -48,19 +48,19 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
 
   return (
     <div
-      className={`ticket-card ${activeTicket === ticket.id ? 'active' : ''}`}
+      className={`rv-ticket-card ${activeTicket === ticket.id ? 'active' : ''}`}
       onClick={() => setActive(activeTicket === ticket.id ? null : ticket.id)}
     >
-      <div className="ticket-card-id">{ticket.id}</div>
-      <div className="ticket-card-title">{ticket.title}</div>
-      <div className="ticket-card-meta">
-        <span className={`ticket-card-assignee ${bot ? 'ticket-card-bot' : ''}`}>
+      <div className="rv-ticket-card-id">{ticket.id}</div>
+      <div className="rv-ticket-card-title">{ticket.title}</div>
+      <div className="rv-ticket-card-meta">
+        <span className={`rv-ticket-card-assignee ${bot ? 'rv-ticket-card-bot' : ''}`}>
           <span className="material-symbols-outlined">
             {bot ? 'smart_toy' : 'person'}
           </span>
           {ticket.assignee}
         </span>
-        <span className="ticket-card-time">{formatTime(ticket.created)}</span>
+        <span className="rv-ticket-card-time">{formatTime(ticket.created)}</span>
       </div>
     </div>
   );
@@ -70,31 +70,31 @@ function TicketDetail({ ticket }: { ticket: Ticket }) {
   const setActive = useTicketStore((s) => s.setActiveTicket);
 
   return (
-    <div className="ticket-detail" style={{ position: 'relative' }}>
-      <button className="ticket-detail-close" onClick={() => setActive(null)}>
+    <div className="rv-ticket-detail" style={{ position: 'relative' }}>
+      <button className="rv-ticket-detail-close" onClick={() => setActive(null)}>
         <span className="material-symbols-outlined">close</span>
       </button>
-      <div className="ticket-detail-header">
-        <div className="ticket-detail-id">{ticket.id}</div>
-        <div className="ticket-detail-title">{ticket.title}</div>
-        <div className="ticket-detail-fields">
-          <span className="ticket-detail-label">Assignee</span>
-          <span className="ticket-detail-value">{ticket.assignee}</span>
-          <span className="ticket-detail-label">State</span>
-          <span className="ticket-detail-value">{ticket.state}</span>
-          <span className="ticket-detail-label">Author</span>
-          <span className="ticket-detail-value">{ticket.author}</span>
-          <span className="ticket-detail-label">Created</span>
-          <span className="ticket-detail-value">{ticket.created}</span>
+      <div className="rv-ticket-detail-header">
+        <div className="rv-ticket-detail-id">{ticket.id}</div>
+        <div className="rv-ticket-detail-title">{ticket.title}</div>
+        <div className="rv-ticket-detail-fields">
+          <span className="rv-ticket-detail-label">Assignee</span>
+          <span className="rv-ticket-detail-value">{ticket.assignee}</span>
+          <span className="rv-ticket-detail-label">State</span>
+          <span className="rv-ticket-detail-value">{ticket.state}</span>
+          <span className="rv-ticket-detail-label">Author</span>
+          <span className="rv-ticket-detail-value">{ticket.author}</span>
+          <span className="rv-ticket-detail-label">Created</span>
+          <span className="rv-ticket-detail-value">{ticket.created}</span>
           {ticket.gitlab_iid && (
             <>
-              <span className="ticket-detail-label">GitLab</span>
-              <span className="ticket-detail-value">#{ticket.gitlab_iid}</span>
+              <span className="rv-ticket-detail-label">GitLab</span>
+              <span className="rv-ticket-detail-value">#{ticket.gitlab_iid}</span>
             </>
           )}
         </div>
       </div>
-      <div className="ticket-detail-body">
+      <div className="rv-ticket-detail-body">
         {ticket.body || '(no description)'}
       </div>
     </div>
@@ -103,17 +103,17 @@ function TicketDetail({ ticket }: { ticket: Ticket }) {
 
 function Column({ title, tickets, icon }: { title: string; tickets: Ticket[]; icon: string }) {
   return (
-    <div className="ticket-column">
-      <div className="ticket-column-header">
-        <span className="ticket-column-title">
-          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{icon}</span>
+    <div className="rv-ticket-column">
+      <div className="rv-ticket-column-header">
+        <span className="rv-ticket-column-title">
+          <span className="material-symbols-outlined">{icon}</span>
           {title}
         </span>
-        <span className="ticket-column-count">{tickets.length}</span>
+        <span className="rv-ticket-column-count">{tickets.length}</span>
       </div>
-      <div className="ticket-column-items">
+      <div className="rv-ticket-column-items">
         {tickets.length === 0 ? (
-          <div className="ticket-column-empty">No tickets</div>
+          <div className="rv-ticket-column-empty">No tickets</div>
         ) : (
           tickets.map((t) => <TicketCard key={t.id} ticket={t} />)
         )}
@@ -167,7 +167,7 @@ export function TicketBoard() {
 
   if (!loaded) {
     return (
-      <div className="ticket-board-loading">
+      <div className="rv-ticket-board-loading">
         <span style={{ color: 'var(--text-dim)' }}>Loading tickets...</span>
       </div>
     );
@@ -182,7 +182,7 @@ export function TicketBoard() {
     : null;
 
   return (
-    <div className="ticket-board">
+    <div className="rv-ticket-board">
       <Column title="Inbox" tickets={inbox} icon="inbox" />
       <Column title="Open" tickets={open} icon="play_circle" />
       {activeTicket ? (

@@ -25,27 +25,27 @@ export function CodeView({ content, extension, mode = 'code' }: CodeViewProps) {
   const lines = useMemo(() => highlighted.split('\n'), [highlighted]);
   const codeHtml = useMemo(() => {
     return lines
-      .map((line) => `<span class="code-line">${line || ' '}</span>`)
+      .map((line) => `<span class="rv-code-line">${line || ' '}</span>`)
       .join('');
   }, [lines]);
 
   if (mode === 'markdown') {
     return (
       <div
-        className="wiki-page-content"
+        className="rv-wiki-page-content"
         dangerouslySetInnerHTML={{ __html: markdownHtml }}
       />
     );
   }
 
   return (
-    <div className="code-editor">
-      <div className="code-gutter">
+    <div className="rv-code-editor">
+      <div className="rv-code-gutter">
         {lines.map((_, i) => (
-          <span key={i} className="line-number">{i + 1}</span>
+          <span key={i} className="rv-line-number">{i + 1}</span>
         ))}
       </div>
-      <div className="code-content">
+      <div className="rv-code-content">
         <pre>
           <code dangerouslySetInnerHTML={{ __html: codeHtml }} />
         </pre>

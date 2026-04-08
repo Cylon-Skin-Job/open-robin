@@ -20,10 +20,10 @@ if lsof -ti:3001 >/dev/null 2>&1; then
 fi
 
 # Build frontend (fails loudly if TypeScript errors)
-cd ~/projects/kimi-claude/open-robin-client && npm run build
+cd ~/projects/open-robin/open-robin-client && npm run build
 
 # Start server from the MAIN project directory (not a worktree)
-cd ~/projects/kimi-claude/open-robin-server && node server.js &
+cd ~/projects/open-robin/open-robin-server && node server.js &
 sleep 2
 
 # Verify server started and is serving correct bundle

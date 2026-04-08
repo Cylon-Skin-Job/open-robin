@@ -117,42 +117,42 @@ export function HarnessSelector({ isOpen, onSelect, onCancel }: HarnessSelectorP
 
   return (
     <div 
-      className="harness-modal-overlay"
+      className="rv-harness-modal-overlay"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="harness-selector-title"
+      aria-labelledby="rv-harness-selector-title"
     >
-      <div className="harness-modal-content">
+      <div className="rv-harness-modal-content">
         <button 
-          className="harness-modal-close"
+          className="rv-harness-modal-close"
           onClick={onCancel}
           aria-label="Close"
         >
           ×
         </button>
         
-        <h2 id="harness-selector-title" className="harness-modal-title">
+        <h2 id="rv-harness-selector-title" className="rv-harness-modal-title">
           Choose AI Backend
         </h2>
-        <p className="harness-modal-subtitle">
+        <p className="rv-harness-modal-subtitle">
           Select the assistant identity for this conversation
         </p>
         
         {isLoading && (
-          <div className="harness-loading">Checking available backends...</div>
+          <div className="rv-harness-loading">Checking available backends...</div>
         )}
         
         {error && (
-          <div className="harness-error">
+          <div className="rv-harness-error">
             {error}
-            <button onClick={fetchHarnessStatus} className="harness-retry-btn">
+            <button onClick={fetchHarnessStatus} className="rv-harness-retry-btn">
               Retry
             </button>
           </div>
         )}
         
-        <div className="harness-grid">
+        <div className="rv-harness-grid">
           {HARNESS_OPTIONS.map((option) => {
             const status = harnessStatuses[option.id];
             const isEnabled = getIsEnabled(option);
@@ -163,78 +163,78 @@ export function HarnessSelector({ isOpen, onSelect, onCancel }: HarnessSelectorP
             return (
               <button
                 key={option.id}
-                className={`harness-card ${!isEnabled ? 'disabled' : ''} ${option.comingSoon ? 'coming-soon' : ''} ${needsInstall ? 'needs-install' : ''}`}
+                className={`rv-harness-card ${!isEnabled ? 'disabled' : ''} ${option.comingSoon ? 'coming-soon' : ''} ${needsInstall ? 'needs-install' : ''}`}
                 onClick={() => handleSelect(option)}
                 disabled={!isEnabled}
                 aria-label={`Select ${option.name}`}
               >
-                <div className="harness-card-header">
-                  <span className="harness-card-icon" role="img" aria-label={option.name}>
+                <div className="rv-harness-card-header">
+                  <span className="rv-harness-card-icon" role="img" aria-label={option.name}>
                     {option.icon}
                   </span>
-                  <h3 className="harness-card-name">{option.name}</h3>
+                  <h3 className="rv-harness-card-name">{option.name}</h3>
                   {option.recommended && (
-                    <span className="harness-card-badge recommended">Recommended</span>
+                    <span className="rv-harness-card-badge recommended">Recommended</span>
                   )}
                   {option.comingSoon && (
-                    <span className="harness-card-badge soon">Soon</span>
+                    <span className="rv-harness-card-badge soon">Soon</span>
                   )}
                   {isInstalled && !isBuiltIn && (
-                    <span className="harness-card-badge installed">Installed</span>
+                    <span className="rv-harness-card-badge installed">Installed</span>
                   )}
                   {isBuiltIn && (
-                    <span className="harness-card-badge builtin">Built-in</span>
+                    <span className="rv-harness-card-badge builtin">Built-in</span>
                   )}
                 </div>
                 
-                <p className="harness-card-description">{option.description}</p>
+                <p className="rv-harness-card-description">{option.description}</p>
                 
                 {status?.version && (
-                  <p className="harness-card-version">{status.version}</p>
+                  <p className="rv-harness-card-version">{status.version}</p>
                 )}
                 
-                <div className="harness-card-details">
-                  <span className="harness-detail-pill">{option.details.provider}</span>
-                  <span className="harness-detail-pill">{option.details.model}</span>
+                <div className="rv-harness-card-details">
+                  <span className="rv-harness-detail-pill">{option.details.provider}</span>
+                  <span className="rv-harness-detail-pill">{option.details.model}</span>
                 </div>
                 
-                <div className="harness-card-features">
+                <div className="rv-harness-card-features">
                   {option.details.features.map((feature) => (
-                    <span key={feature} className="harness-feature-tag">
+                    <span key={feature} className="rv-harness-feature-tag">
                       {feature}
                     </span>
                   ))}
                 </div>
                 
                 {needsInstall && status?.installCommand && (
-                  <div className="harness-install-section">
-                    <code className="harness-install-command">{status.installCommand}</code>
+                  <div className="rv-harness-install-section">
+                    <code className="rv-harness-install-command">{status.installCommand}</code>
                     <button
-                      className="harness-copy-btn"
+                      className="rv-harness-copy-btn"
                       onClick={(e) => copyInstallCommand(e, status.installCommand!)}
                       title="Copy install command"
                     >
                       Copy
                     </button>
-                    <p className="harness-install-hint">
+                    <p className="rv-harness-install-hint">
                       Run this command to install, then refresh
                     </p>
                   </div>
                 )}
                 
                 {isEnabled && (
-                  <span className="harness-select-indicator">Select →</span>
+                  <span className="rv-harness-select-indicator">Select →</span>
                 )}
                 
                 {!isEnabled && needsInstall && (
-                  <span className="harness-select-indicator disabled">Not Installed</span>
+                  <span className="rv-harness-select-indicator disabled">Not Installed</span>
                 )}
               </button>
             );
           })}
         </div>
         
-        <button className="harness-cancel-btn" onClick={onCancel}>
+        <button className="rv-harness-cancel-btn" onClick={onCancel}>
           Cancel
         </button>
       </div>

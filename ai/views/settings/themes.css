@@ -1,0 +1,42 @@
+:root {
+  /* Accent color */
+  --color-primary: #81c784;
+  --color-primary-rgb: 129, 199, 132;
+  --color-primary-ghost: rgba(129, 199, 132, 0.05);
+  --color-primary-fill: rgba(129, 199, 132, 0.08);
+  --color-primary-dim: rgba(129, 199, 132, 0.12);
+  --color-primary-border: rgba(129, 199, 132, 0.25);
+
+  /* Background scale */
+  --bg-void: #f5f5f5;
+  --bg-inset: #eeeeee;
+  --bg-base: #ffffff;
+  --bg-card: #fafafa;
+  --bg-hover: #f0f0f0;
+
+  /* Borders */
+  --border-subtle: #e0e0e0;
+  --border-default: #d0d0d0;
+
+  /* Text */
+  --text-primary: #1a1a1a;
+  --text-secondary: #555555;
+  --text-dim: #999999;
+
+  /* Scrollbar */
+  --scrollbar-thumb: #d0d0d0;
+  --scrollbar-thumb-hover: rgba(129, 199, 132, 0.33);
+
+  /* Shadows */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+  /* Transitions */
+  --transition-fast: 150ms;
+
+  /* Status */
+  --status-on: #4caf50;
+  --status-off: #666666;
+  --status-error: #f44336;
+  --status-warn: #ff9800;
+}

@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robin System Panel — Mockup</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1" />
+<style>
+  /* === Reset + Dark Base === */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    line-height: 1.5;
+  }
+
+  /* === Design Tokens === */
+  :root {
+    --robin-primary: #4fc3f7;
+    --robin-primary-dim: rgba(79, 195, 247, 0.12);
+    --robin-primary-border: rgba(79, 195, 247, 0.25);
+    --robin-primary-glow: rgba(79, 195, 247, 0.3);
+    --bg-page: #0a0a0a;
+    --bg-surface: #111111;
+    --bg-card: #161616;
+    --bg-card-hover: #1c1c1c;
+    --bg-input: #0d0d0d;
+    --text-primary: #e8e8e8;
+    --text-secondary: #aaa;
+    --text-dim: #666;
+    --border-subtle: #1e1e1e;
+    --border-card: #282828;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+  }
+
+  /* ==========================================================
+     FAKE APP HEADER (simulates the real app behind the overlay)
+     ========================================================== */
+  .fake-app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-page);
+  }
+
+  .fake-header {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+    background: var(--bg-surface);
+  }
+
+  .fake-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .fake-header-left .material-symbols-outlined {
+    color: var(--text-dim);
+    font-size: 22px;
+    cursor: pointer;
+  }
+
+  .fake-project-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .fake-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .fake-status {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  /* Robin icon button in the header */
+  .robin-icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 200ms, background 200ms;
+  }
+
+  .robin-icon-btn:hover {
+    color: var(--robin-primary);
+    background: var(--robin-primary-dim);
+  }
+
+  .robin-icon-btn .material-symbols-outlined {
+    font-size: 24px;
+  }
+
+  .fake-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 0.875rem;
+  }
+
+  /* ==========================================================
+     ROBIN OVERLAY (full-screen, sits on top of everything)
+     ========================================================== */
+  .robin-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: var(--bg-page);
+    display: flex;
+    flex-direction: column;
+    animation: robin-slide-in 300ms ease-out;
+  }
+
+  @keyframes robin-slide-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* --- Overlay Header --- */
+  .robin-overlay-header {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+
+  .robin-overlay-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .robin-overlay-header-icon {
+    font-size: 26px;
+    color: var(--robin-primary);
+  }
+
+  .robin-overlay-header-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--robin-primary);
+  }
+
+  .robin-overlay-header-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-left: 8px;
+  }
+
+  .robin-exit-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-card);
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 150ms;
+  }
+
+  .robin-exit-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  /* --- Overlay Body: Chat (left) + Settings (right) --- */
+  .robin-overlay-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    overflow: hidden;
+  }
+
+  /* ==========================================================
+     LEFT: ROBIN'S CHAT
+     ========================================================== */
+  .robin-chat {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+  }
+
+  .robin-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* System message (gray, centered) */
+  .robin-msg-system {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: var(--space-sm) 0;
+    font-style: italic;
+  }
+
+  /* Robin's message */
+  .robin-msg-robin {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .robin-msg-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--robin-primary-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .robin-msg-avatar .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--robin-primary);
+  }
+
+  .robin-msg-bubble {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+    max-width: 85%;
+  }
+
+  .robin-msg-bubble code {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* User's message */
+  .robin-msg-user {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .robin-msg-user .robin-msg-bubble {
+    background: var(--robin-primary-dim);
+    border-color: var(--robin-primary-border);
+  }
+
+  /* Chat input */
+  .robin-chat-input {
+    padding: var(--space-md);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .robin-chat-input textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    min-height: 44px;
+  }
+
+  .robin-chat-input textarea:focus {
+    border-color: var(--robin-primary-border);
+  }
+
+  .robin-chat-input textarea::placeholder {
+    color: var(--text-dim);
+  }
+
+  /* ==========================================================
+     RIGHT: SETTINGS PANEL
+     ========================================================== */
+  .robin-settings {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* --- Settings tab bar --- */
+  .robin-settings-tabs {
+    display: flex;
+    gap: 6px;
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+
+  .robin-settings-tab {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-card);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 150ms;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .robin-settings-tab:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+  }
+
+  .robin-settings-tab.active {
+    background: var(--robin-primary-dim);
+    border-color: var(--robin-primary-border);
+    color: var(--robin-primary);
+    font-weight: 600;
+  }
+
+  .robin-settings-tab .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  /* --- Settings content area --- */
+  .robin-settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg);
+  }
+
+  /* --- Settings section --- */
+  .robin-settings-section {
+    margin-bottom: var(--space-xl);
+  }
+
+  .robin-settings-section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .robin-settings-section-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+  }
+
+  /* --- Settings card grid --- */
+  .robin-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-md);
+  }
+
+  /* --- Individual setting card --- */
+  .robin-setting-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+
+  .robin-setting-card:hover {
+    border-color: var(--robin-primary-border);
+    box-shadow: 0 0 12px var(--robin-primary-dim);
+  }
+
+  .robin-setting-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+  }
+
+  .robin-setting-card-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .robin-setting-card-name .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--robin-primary);
+  }
+
+  .robin-setting-card-desc {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: var(--space-sm);
+  }
+
+  .robin-setting-card-meta {
+    font-size: 0.6875rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  /* Toggle switch */
+  .robin-toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: var(--border-card);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 200ms;
+  }
+
+  .robin-toggle.on {
+    background: var(--robin-primary);
+  }
+
+  .robin-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: left 200ms;
+  }
+
+  .robin-toggle.on::after {
+    left: 18px;
+  }
+
+  /* Status badge */
+  .robin-status-badge {
+    font-size: 0.625rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .robin-status-badge.active {
+    color: #4caf50;
+    background: rgba(76, 175, 80, 0.12);
+  }
+
+  .robin-status-badge.inactive {
+    color: var(--text-dim);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  /* --- Danger zone (the bad idea button) --- */
+  .robin-danger-section {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid rgba(239, 68, 68, 0.15);
+  }
+
+  .robin-danger-card {
+    background: rgba(239, 68, 68, 0.04);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+  }
+
+  .robin-danger-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+  }
+
+  .robin-danger-card-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .robin-danger-card-name .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  .robin-danger-card-desc {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+
+  .robin-danger-card-note {
+    font-size: 0.6875rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .robin-danger-toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: rgba(239, 68, 68, 0.2);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .robin-danger-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #888;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     FAKE APP (behind the overlay, dimmed)
+     ============================================================ -->
+<div class="fake-app" style="filter: blur(2px); opacity: 0.3;">
+  <div class="fake-header">
+    <div class="fake-header-left">
+      <span class="material-symbols-outlined">menu</span>
+      <span class="fake-project-name">kimi-claude</span>
+    </div>
+    <div class="fake-header-right">
+      <span class="fake-status">Connected</span>
+      <button class="robin-icon-btn">
+        <span class="material-symbols-outlined">raven</span>
+      </button>
+    </div>
+  </div>
+  <div class="fake-body">
+    [App content behind overlay]
+  </div>
+</div>
+
+<!-- ============================================================
+     ROBIN OVERLAY (full-screen takeover)
+     ============================================================ -->
+<div class="robin-overlay">
+
+  <!-- --- Overlay Header --- -->
+  <div class="robin-overlay-header">
+    <div class="robin-overlay-header-left">
+      <span class="material-symbols-outlined robin-overlay-header-icon">raven</span>
+      <span class="robin-overlay-header-name">Robin</span>
+      <span class="robin-overlay-header-subtitle">System Panel</span>
+    </div>
+    <button class="robin-exit-btn">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <!-- --- Body: Chat left, Settings right --- -->
+  <div class="robin-overlay-body">
+
+    <!-- LEFT: Robin's Chat -->
+    <div class="robin-chat">
+      <div class="robin-chat-messages">
+
+        <div class="robin-msg-system">Session started</div>
+
+        <div class="robin-msg-robin">
+          <div class="robin-msg-avatar">
+            <span class="material-symbols-outlined">raven</span>
+          </div>
+          <div class="robin-msg-bubble">
+            Hey. Three agents are idle, no pending tickets. The wiki-manager ran a freshness audit overnight — two pages flagged as stale. Want me to pull those up?
+          </div>
+        </div>
+
+        <div class="robin-msg-user">
+          <div class="robin-msg-bubble">Yeah, show me the stale pages</div>
+        </div>
+
+        <div class="robin-msg-robin">
+          <div class="robin-msg-avatar">
+            <span class="material-symbols-outlined">raven</span>
+          </div>
+          <div class="robin-msg-bubble">
+            <strong>database-architecture</strong> — last updated 12 days ago, references the old <code>history.json</code> format (now SQLite).<br><br>
+            <strong>capability-services</strong> — last updated 8 days ago, missing the new skill manifest fields from SPEC-SKILLS.md.<br><br>
+            I can create update tickets for wiki-manager if you want.
+          </div>
+        </div>
+
+        <div class="robin-msg-user">
+          <div class="robin-msg-bubble">Do it. Also, what's the current session count?</div>
+        </div>
+
+        <div class="robin-msg-robin">
+          <div class="robin-msg-avatar">
+            <span class="material-symbols-outlined">raven</span>
+          </div>
+          <div class="robin-msg-bubble">
+            Tickets created. Current state: <strong>2 active sessions</strong> (explorer, agents), <strong>0 background bots</strong>, memory at 142MB. All healthy.
+          </div>
+        </div>
+
+        <div class="robin-msg-system">wiki-manager: 2 tickets queued</div>
+
+      </div>
+
+      <div class="robin-chat-input">
+        <textarea rows="2" placeholder="Ask Robin anything..."></textarea>
+      </div>
+    </div>
+
+    <!-- RIGHT: Settings Panel -->
+    <div class="robin-settings">
+
+      <!-- Tab Bar -->
+      <div class="robin-settings-tabs">
+        <button class="robin-settings-tab active">
+          <span class="material-symbols-outlined">tune</span>
+          General
+        </button>
+        <button class="robin-settings-tab">
+          <span class="material-symbols-outlined">dynamic_form</span>
+          Skills
+        </button>
+        <button class="robin-settings-tab">
+          <span class="material-symbols-outlined">link</span>
+          Connectors
+        </button>
+        <button class="robin-settings-tab">
+          <span class="material-symbols-outlined">person</span>
+          Profiles
+        </button>
+        <button class="robin-settings-tab">
+          <span class="material-symbols-outlined">bolt</span>
+          Triggers
+        </button>
+        <button class="robin-settings-tab">
+          <span class="material-symbols-outlined">palette</span>
+          Appearance
+        </button>
+      </div>
+
+      <!-- Settings Content -->
+      <div class="robin-settings-content">
+
+        <!-- Section: System -->
+        <div class="robin-settings-section">
+          <div class="robin-settings-section-header">
+            <span class="robin-settings-section-label">System</span>
+          </div>
+          <div class="robin-settings-grid">
+
+            <div class="robin-setting-card">
+              <div class="robin-setting-card-top">
+                <span class="robin-setting-card-name">
+                  <span class="material-symbols-outlined">memory</span>
+                  Session Limit
+                </span>
+                <span class="robin-status-badge active">20 max</span>
+              </div>
+              <div class="robin-setting-card-desc">
+                Maximum concurrent CLI sessions across all workspaces. Oldest idle sessions are evicted first.
+              </div>
+              <div class="robin-setting-card-meta">
+                <span>Currently: 2 active</span>
+              </div>
+            </div>
+
+            <div class="robin-setting-card">
+              <div class="robin-setting-card-top">
+                <span class="robin-setting-card-name">
+                  <span class="material-symbols-outlined">timer</span>
+                  Idle Timeout
+                </span>
+                <span class="robin-status-badge active">9 min</span>
+              </div>
+              <div class="robin-setting-card-desc">
+                Time before an idle session is suspended. SIGTERM sent, session can be resumed.
+              </div>
+            </div>
+
+            <div class="robin-setting-card">
+              <div class="robin-setting-card-top">
+                <span class="robin-setting-card-name">
+                  <span class="material-symbols-outlined">notifications</span>
+                  Notifications
+                </span>
+                <div class="robin-toggle on"></div>
+              </div>
+              <div class="robin-setting-card-desc">
+                Show toast notifications for agent completions, ticket closures, and cron fires.
+              </div>
+            </div>
+
+            <div class="robin-setting-card">
+              <div class="robin-setting-card-top">
+                <span class="robin-setting-card-name">
+                  <span class="material-symbols-outlined">event_log</span>
+                  Event Log
+                </span>
+                <div class="robin-toggle on"></div>
+              </div>
+              <div class="robin-setting-card-desc">
+                Persist all bus events to <code>ai/system/event-log.json</code> for audit and nightly processing.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Section: Resources -->
+        <div class="robin-settings-section">
+          <div class="robin-settings-section-header">
+            <span class="robin-settings-section-label">Resources</span>
+          </div>
+          <div class="robin-settings-grid">
+
+            <div class="robin-setting-card">
+              <div class="robin-setting-card-top">
+                <span class="robin-setting-card-name">
+                  <span class="material-symbols-outlined">dns</span>
+                  Active Sessions
+                </span>
+                <span class="robin-status-badge active">2</span>
+              </div>
+              <div class="robin-setting-card-desc">
+                explorer (multi-thread, 3 min idle), agents (daily-rolling, 1 min idle)
+              </div>
+              <div class="robin-setting-card-meta">
+                <span>Memory: 142 MB total</span>
+              </div>
+            </div>
+
+            <div class="robin-setting-card">
+              <div class="robin-setting-card-top">
+                <span class="robin-setting-card-name">
+                  <span class="material-symbols-outlined">smart_toy</span>
+                  Background Bots
+                </span>
+                <span class="robin-status-badge inactive">0</span>
+              </div>
+              <div class="robin-setting-card-desc">
+                No background bots running. Bots are dispatched when tickets are claimed.
+              </div>
+            </div>
+
+            <div class="robin-setting-card">
+              <div class="robin-setting-card-top">
+                <span class="robin-setting-card-name">
+                  <span class="material-symbols-outlined">schedule</span>
+                  Cron Jobs
+                </span>
+                <span class="robin-status-badge active">3</span>
+              </div>
+              <div class="robin-setting-card-desc">
+                weekly-test-scan (Mon 6am), weekly-dep-audit (Fri 9am), wiki-freshness (daily 9am)
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Section: Danger Zone -->
+        <div class="robin-danger-section">
+          <div class="robin-settings-section-header">
+            <span class="robin-settings-section-label" style="color: #ef4444;">Danger Zone</span>
+          </div>
+
+          <div class="robin-danger-card">
+            <div class="robin-danger-card-top">
+              <span class="robin-danger-card-name">
+                <span class="material-symbols-outlined">lock_open</span>
+                Allow AI to Edit Settings Folders
+              </span>
+              <div class="robin-danger-toggle"></div>
+            </div>
+            <div class="robin-danger-card-desc">
+              Override the system-wide write-lock on <code>settings/</code> folders. The AI will be able to modify PROMPT.md, SESSION.md, styles, and config files directly.
+            </div>
+            <div class="robin-danger-card-note">(this is a bad idea)</div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

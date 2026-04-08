@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "id": "warmth-settings",
+  "label": "Warmth & Session Management",
+  "description": "FIFO rotation, TTL expiration, and resource management for sessions and workspaces. Planned settings panel integration.",
+  "type": "page",
+  "rank": 5,
+  "icon": "thermostat",
+  "color": null,
+  "created": "2026-03-29T00:00:00Z",
+  "updated": "2026-03-29T00:00:00Z",
+  "frozen": true,
+  "children": null,
+  "edges_out": ["database-architecture", "cascading-settings"],
+  "edges_in": null,
+  "sources": null,
+  "settings": {}
+}

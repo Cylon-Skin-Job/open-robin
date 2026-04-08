@@ -36,7 +36,7 @@ export function ContentArea({ panel }: ContentAreaProps) {
   // Priority 1: Runtime-loaded plugin (ui/ folder exists)
   if (config?.hasUiFolder) {
     return (
-      <main className="content-area">
+      <main className="rv-content-area">
         <RuntimeModule panel={panel} config={config} />
       </main>
     );
@@ -46,7 +46,7 @@ export function ContentArea({ panel }: ContentAreaProps) {
   const Component = CONTENT_COMPONENTS[panel];
   if (Component) {
     return (
-      <main className="content-area">
+      <main className="rv-content-area">
         <Component />
       </main>
     );
@@ -54,8 +54,8 @@ export function ContentArea({ panel }: ContentAreaProps) {
 
   // Priority 3: Placeholder
   return (
-    <main className="content-area">
-      <div className="panel-placeholder">
+    <main className="rv-content-area">
+      <div className="rv-panel-placeholder">
         <h3 style={{ color: 'var(--theme-primary)', marginBottom: '16px' }}>
           {config?.name || panel}
         </h3>

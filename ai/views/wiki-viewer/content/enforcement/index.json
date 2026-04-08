@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "id": "enforcement",
+  "label": "Enforcement",
+  "description": "Safety rules, code standards, and constraints for AI behavior",
+  "type": "collection",
+  "rank": 50,
+  "icon": "shield",
+  "color": null,
+  "created": "2026-04-06T00:00:00Z",
+  "updated": "2026-04-06T00:00:00Z",
+  "frozen": false,
+  "children": ["code-standards"],
+  "edges_out": null,
+  "edges_in": null,
+  "sources": null,
+  "settings": {}
+}

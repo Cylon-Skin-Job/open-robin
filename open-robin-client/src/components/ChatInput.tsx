@@ -102,7 +102,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(function ChatI
   };
 
   return (
-    <div className="chat-input-container">
+    <div className="rv-chat-input-container">
       <div className="chat-input-wrapper">
         <textarea
           ref={textareaRef}

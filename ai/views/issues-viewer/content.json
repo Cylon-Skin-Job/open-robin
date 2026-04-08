@@ -1,0 +1,7 @@
+{
+  "display": "tabbed",
+  "chat": {
+    "type": "rolling-daily",
+    "position": "right"
+  }
+}

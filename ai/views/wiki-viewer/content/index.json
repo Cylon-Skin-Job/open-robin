@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "id": "wiki",
+  "label": "Wiki",
+  "description": "Knowledge graph — system documentation and project documentation",
+  "type": "root",
+  "rank": 1,
+  "icon": "full_coverage",
+  "color": null,
+  "created": "2026-03-27T00:00:00Z",
+  "updated": "2026-03-27T21:00:00Z",
+  "frozen": false,
+  "children": ["project", "enforcement"],
+  "edges_out": null,
+  "edges_in": null,
+  "sources": null,
+  "settings": {}
+}

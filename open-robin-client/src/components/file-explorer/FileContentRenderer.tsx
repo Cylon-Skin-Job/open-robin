@@ -8,7 +8,7 @@ interface FileContentRendererProps {
 
 export function FileContentRenderer({ content, extension }: FileContentRendererProps) {
   return (
-    <div className="file-content-renderer document-surface">
+    <div className="rv-file-content-renderer rv-document-surface">
       <CodeView content={content} extension={extension} />
     </div>
   );

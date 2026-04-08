@@ -1,10 +1,10 @@
 /* ── Tile Row ─────────────────────────────────────────────── */
 
-.tile-row {
+.rv-tile-row {
   margin-bottom: 28px;
 }
 
-.tile-row-header {
+.rv-tile-row-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -12,7 +12,7 @@
   margin-bottom: 12px;
 }
 
-.tile-row-label {
+.rv-tile-row-label {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -20,7 +20,7 @@
   color: #a78bfa;
 }
 
-.tile-row-count {
+.rv-tile-row-count {
   font-size: 0.6875rem;
   font-weight: 500;
   color: var(--text-secondary, #aaa);
@@ -29,7 +29,7 @@
   border-radius: 8px;
 }
 
-.tile-row-scroll {
+.rv-tile-row-scroll {
   display: flex;
   gap: 12px;
   padding: 0 20px 8px;
@@ -40,20 +40,20 @@
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
-.tile-row-scroll::-webkit-scrollbar {
+.rv-tile-row-scroll::-webkit-scrollbar {
   height: 4px;
 }
 
-.tile-row-scroll::-webkit-scrollbar-track {
+.rv-tile-row-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.tile-row-scroll::-webkit-scrollbar-thumb {
+.rv-tile-row-scroll::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
 
-.tile-row-empty {
+.rv-tile-row-empty {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,7 +69,7 @@
 
 /* ── Document Tile ───────────────────────────────────────── */
 
-.doc-tile {
+.rv-doc-tile {
   position: relative;
   width: 140px;
   height: 180px;
@@ -82,42 +82,42 @@
   transition: border-color 200ms, transform 200ms, box-shadow 200ms;
 }
 
-.doc-tile:hover {
+.rv-doc-tile:hover {
   border-color: #a78bfa;
   transform: translateY(-2px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.doc-tile.active {
+.rv-doc-tile.active {
   border-color: #a78bfa;
 }
 
 /* Small variant — used in ribbon strips */
-.doc-tile.doc-tile-small {
+.rv-doc-tile.rv-doc-tile-small {
   width: 100px;
   height: 80px;
 }
 
-.doc-tile.doc-tile-small .doc-tile-preview {
+.rv-doc-tile.rv-doc-tile-small .rv-doc-tile-preview {
   width: 560px;
   height: 380px;
   transform: scale(0.178);
 }
 
-.doc-tile.doc-tile-small .doc-tile-footer {
+.rv-doc-tile.rv-doc-tile-small .rv-doc-tile-footer {
   padding: 4px 6px;
 }
 
-.doc-tile.doc-tile-small .doc-tile-icon {
+.rv-doc-tile.rv-doc-tile-small .rv-doc-tile-icon {
   font-size: 11px;
 }
 
-.doc-tile.doc-tile-small .doc-tile-name {
+.rv-doc-tile.rv-doc-tile-small .rv-doc-tile-name {
   font-size: 0.5625rem;
 }
 
 /* The preview area — renders full-size content, scaled down */
-.doc-tile-preview {
+.rv-doc-tile-preview {
   width: 560px;
   height: 580px;
   transform: scale(0.25);
@@ -137,23 +137,23 @@
 }
 
 /* Code view inside tile preview — adjust gutter for scaled context */
-.doc-tile-preview .code-editor {
+.rv-doc-tile-preview .rv-code-editor {
   font-size: 13px;
   line-height: 1.5;
   border-radius: 6px;
 }
 
-.doc-tile-preview .code-gutter {
+.rv-doc-tile-preview .rv-code-gutter {
   padding: 8px 6px 8px 8px;
   min-width: 32px;
 }
 
-.doc-tile-preview .code-content {
+.rv-doc-tile-preview .rv-code-content {
   padding: 8px 10px;
 }
 
 /* Footer label */
-.doc-tile-footer {
+.rv-doc-tile-footer {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -165,12 +165,12 @@
   gap: 6px;
 }
 
-.doc-tile-icon {
+.rv-doc-tile-icon {
   font-size: 14px;
   color: #a78bfa;
 }
 
-.doc-tile-name {
+.rv-doc-tile-name {
   font-size: 0.6875rem;
   font-weight: 500;
   color: #aaa;
@@ -182,7 +182,7 @@
 
 /* ── Tile Grid Container ─────────────────────────────────── */
 
-.tile-grid {
+.rv-tile-grid {
   padding: 20px;
   overflow-y: auto;
   width: 100%;
@@ -190,7 +190,7 @@
   box-sizing: border-box;
 }
 
-.tile-grid-title {
+.rv-tile-grid-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: #fff;
@@ -200,7 +200,7 @@
   gap: 10px;
 }
 
-.tile-grid-title .material-symbols-outlined {
+.rv-tile-grid-title .material-symbols-outlined {
   font-size: 22px;
   color: #a78bfa;
 }

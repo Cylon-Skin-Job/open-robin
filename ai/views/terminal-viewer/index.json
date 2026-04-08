@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "id": "terminal-viewer",
+  "folderName": "terminal-viewer",
+  "label": "Terminal",
+  "description": "Integrated terminal — shell sessions, CLI tools, split panes",
+  "type": "tool",
+  "icon": "terminal",
+  "rank": 2,
+  "sort": "manual",
+  "created": "2026-03-26T00:00:00-07:00",
+  "settings": {
+    "layout": "full",
+    "theme": {
+      "primary": "#4ade80",
+      "sidebar_bg": "#0a1a0d",
+      "content_bg": "#000000",
+      "panel_border": "#4ade8033"
+    }
+  }
+}

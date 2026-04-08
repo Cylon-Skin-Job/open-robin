@@ -1,0 +1,108 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-03-26T16:00:26.811Z",
+  "tickets": {
+    "KIMI-0005": {
+      "title": "Review ticketing spec with Claude",
+      "assignee": "rccurtrightjr",
+      "created": "2026-03-21T21:56:23.464Z",
+      "author": "local",
+      "state": "open",
+      "body": "Walk through TICKETING-SPEC.md and validate the dispatch model, folder layout, and sync strategy before building further."
+    },
+    "KIMI-0006": {
+      "title": "Rotate GitLab deploy token",
+      "assignee": "rccurtrightjr",
+      "created": "2026-03-21T21:56:23.506Z",
+      "author": "local",
+      "state": "open",
+      "body": "The deploy token expires 2026-04-01. Generate a new one and update Keychain via setup-secrets.js."
+    },
+    "KIMI-0007": {
+      "title": "Update secrets page token expiry",
+      "assignee": "kimi-wiki",
+      "created": "2026-03-21T21:56:23.545Z",
+      "author": "local",
+      "state": "open",
+      "body": "The secrets page lists token expiry as 2026-03-22 but it was rotated to 2026-06-20. Update PAGE.md to reflect the new date."
+    },
+    "KIMI-0008": {
+      "title": "Refresh model-config wiki page",
+      "assignee": "kimi-wiki",
+      "created": "2026-03-21T21:56:23.586Z",
+      "author": "local",
+      "state": "open",
+      "body": "The model-config page still references claude-3-sonnet. Update to reflect current model lineup (claude-4.5/4.6 family)."
+    },
+    "KIMI-0009": {
+      "title": "Fix circular import in event-bus",
+      "assignee": "kimi-code",
+      "created": "2026-03-21T21:56:23.626Z",
+      "author": "local",
+      "state": "open",
+      "body": "The event-bus module has a circular dependency with app-state. Refactor to break the cycle without changing the public API."
+    },
+    "KIMI-0001": {
+      "title": "Test ticket — verify creation flow",
+      "assignee": "rccurtrightjr",
+      "created": "2026-03-21T21:44:10.762Z",
+      "author": "local",
+      "state": "closed",
+      "body": "This is a test ticket to verify the create-ticket script works correctly. Safe to close."
+    },
+    "KIMI-0002": {
+      "title": "Review the new dispatch watcher",
+      "assignee": "rccurtrightjr",
+      "created": "2026-03-21T21:49:45.525Z",
+      "author": "local",
+      "state": "closed",
+      "body": "Manual review of the dispatch module before merging."
+    },
+    "KIMI-0003": {
+      "title": "Update secrets page token expiry",
+      "assignee": "kimi-wiki",
+      "created": "2026-03-21T21:49:46.096Z",
+      "author": "local",
+      "state": "closed",
+      "body": "The secrets page lists token expiry as 2026-03-22 but it was rotated to 2026-06-20. Update PAGE.md to reflect the new date."
+    },
+    "KIMI-0004": {
+      "title": "Fix broken import in event-bus",
+      "assignee": "kimi-code",
+      "created": "2026-03-21T21:49:46.677Z",
+      "author": "local",
+      "state": "closed",
+      "body": "The event-bus module has a circular import with app-state. Refactor to break the cycle."
+    },
+    "KIMI-0010": {
+      "title": "Server lib inventory drift: wiki-sources.js renamed",
+      "assignee": "local",
+      "created": "2026-03-25T02:53:30.938Z",
+      "author": "local",
+      "state": "open",
+      "body": "A module was renamed at `kimi-ide-server/lib/watcher/filters/wiki-sources.js`. The Server-Lib-Modules wiki page may need updating.\\n\\nParent folder `kimi-ide-server/lib/watcher/filters` now has 4 files and 0 folders.\\n\\nWiki: https://gitlab.com/Cylon-Skin-Job/kimi-claude/-/wikis/Server-Lib-Modules",
+      "blocks": null,
+      "blocked_by": null
+    },
+    "KIMI-0011": {
+      "title": "Server lib inventory drift: hold-registry.js created",
+      "assignee": "local",
+      "created": "2026-03-25T03:23:36.858Z",
+      "author": "local",
+      "state": "open",
+      "body": "A module was created at `kimi-ide-server/lib/triggers/hold-registry.js`. The Server-Lib-Modules wiki page may need updating.\\n\\nParent folder `kimi-ide-server/lib/triggers` now has 5 files and 0 folders.\\n\\nWiki: https://gitlab.com/Cylon-Skin-Job/kimi-claude/-/wikis/Server-Lib-Modules",
+      "blocks": null,
+      "blocked_by": null
+    },
+    "KIMI-0012": {
+      "title": "Scheduled: daily-freshness",
+      "assignee": "kimi-wiki",
+      "created": "2026-03-26T16:00:26.811Z",
+      "author": "local",
+      "state": "open",
+      "body": "Cron trigger: daily-freshness",
+      "blocks": null,
+      "blocked_by": null
+    }
+  }
+}

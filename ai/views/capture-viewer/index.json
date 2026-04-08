@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "id": "capture-viewer",
+  "folderName": "capture-viewer",
+  "label": "Capture",
+  "description": "Scratch space for ideas, mockups, specs, and todos that emerge from conversation",
+  "type": "file-explorer",
+  "icon": "open_run",
+  "rank": 0,
+  "sort": "created",
+  "created": "2026-03-23T12:00:00-07:00",
+  "settings": {
+    "layout": "sidebar-chat-content",
+    "wikiExempt": true,
+    "theme": {
+      "primary": "#a78bfa",
+      "sidebar_bg": "#12101a",
+      "content_bg": "#0d0d0d",
+      "panel_border": "#a78bfa33"
+    },
+    "folders": {
+      "captures": "Raw ideas, observations, and fragments caught during conversation",
+      "specs": "Drafted specifications before they move to a domain or project file",
+      "todo": "Tasks and action items that need to happen but don't have tickets yet",
+      "playground": "HTML mockups, visual designs, and UI experiments",
+      "assets": "Reusable files — icons, fonts, color palettes, shared resources",
+      "screenshots": "Visual references, UI snapshots, design inspiration"
+    }
+  }
+}

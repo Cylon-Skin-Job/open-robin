@@ -27,18 +27,18 @@ export function TopicList() {
   });
 
   return (
-    <div className="wiki-topic-list">
-      <div className="wiki-topic-list-header">
+    <div className="rv-wiki-topic-list">
+      <div className="rv-wiki-topic-list-header">
         <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>full_coverage</span>
         <span>Topics</span>
       </div>
-      <div className="wiki-topic-list-items">
+      <div className="rv-wiki-topic-list-items">
         {grouped.map(({ collection, topics: colTopics }) => (
-          <div key={collection.id} className="wiki-collection-group">
-            <div className="wiki-collection-header">
+          <div key={collection.id} className="rv-wiki-collection-group">
+            <div className="rv-wiki-collection-header">
               {collection.label}
               {collection.frozen && (
-                <span className="material-symbols-outlined wiki-frozen-icon" style={{ fontSize: '0.75rem', marginLeft: '4px', opacity: 0.5 }}>lock</span>
+                <span className="material-symbols-outlined rv-wiki-frozen-icon" style={{ fontSize: '0.75rem', marginLeft: '4px', opacity: 0.5 }}>lock</span>
               )}
             </div>
             {colTopics.map(([id, meta]: [string, TopicMeta]) => {
@@ -46,11 +46,11 @@ export function TopicList() {
               return (
                 <button
                   key={id}
-                  className={`wiki-topic-item ${isActive ? 'active' : ''}`}
+                  className={`rv-wiki-topic-item ${isActive ? 'active' : ''}`}
                   onClick={() => navigateToTopic(meta.slug)}
                 >
-                  <span className="wiki-topic-indicator">{isActive ? '\u25C9' : '\u25CB'}</span>
-                  <span className="wiki-topic-name">{meta.slug}</span>
+                  <span className="rv-wiki-topic-indicator">{isActive ? '\u25C9' : '\u25CB'}</span>
+                  <span className="rv-wiki-topic-name">{meta.slug}</span>
                 </button>
               );
             })}

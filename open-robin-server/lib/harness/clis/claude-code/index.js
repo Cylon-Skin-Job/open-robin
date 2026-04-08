@@ -1,5 +1,5 @@
 const { BaseCLIHarness } = require('../base-cli-harness');
-const { AcpWireParser } = require('../gemini/acp-wire-parser');
+const { AcpWireParser } = require('./acp-wire-parser');
 const { ClaudeAcpEventTranslator } = require('./acp-event-translator');
 const { ClaudeSessionState } = require('./session-state');
 const { PassThrough } = require('stream');

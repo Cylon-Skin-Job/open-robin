@@ -1,0 +1,16 @@
+{
+  "workspace": "wiki",
+  "description": "Fast model for wiki updates — speed over depth, pages are short",
+  "model": {
+    "provider": "managed:kimi-code",
+    "model": "kimi-for-coding",
+    "thinking": false,
+    "max_context_size": 131072
+  },
+  "overrides": {
+    "default_thinking": false,
+    "loop_control.max_steps_per_turn": 50,
+    "loop_control.max_retries_per_step": 2
+  },
+  "notes": "Wiki edits are short, targeted writes. Thinking mode adds latency for no gain. Reduced context window since wiki pages are small. Reduced max steps since runs are focused."
+}

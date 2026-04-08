@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "id": "issues-viewer",
+  "folderName": "issues-viewer",
+  "label": "Issues",
+  "description": "Ticket router — receives tickets from all panels, routes to agents by type and domain",
+  "type": "ticket-board",
+  "icon": "business_messages",
+  "rank": 3,
+  "sort": "created",
+  "created": "2026-03-20T20:00:00-07:00",
+  "settings": {
+    "layout": "chat-content",
+    "theme": {
+      "primary": "#facc15",
+      "sidebar_bg": "#1a1808",
+      "content_bg": "#0d0d0d",
+      "panel_border": "#facc1533"
+    }
+  }
+}

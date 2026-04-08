@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "id": "wiki-viewer",
+  "folderName": "wiki-viewer",
+  "label": "Wiki",
+  "description": "Living reference layer — browse topics, read pages, create update tickets",
+  "type": "wiki-viewer",
+  "icon": "full_coverage",
+  "rank": 4,
+  "sort": "ranked",
+  "created": "2026-03-20T14:00:00-07:00",
+  "settings": {
+    "layout": "full",
+    "theme": {
+      "primary": "#ec4899",
+      "sidebar_bg": "#1a1020",
+      "content_bg": "#0d0d0d",
+      "panel_border": "#ec489933"
+    },
+    "syncTarget": "gitlab",
+    "gitlabProjectId": 80453361,
+    "gitlabNamespace": "Cylon-Skin-Job/kimi-claude",
+    "repoDir": ".wiki-repo",
+    "contentDir": "ai/views/wiki-viewer/content/project",
+    "systemWikiDir": "ai/views/wiki-viewer/content/system"
+  }
+}

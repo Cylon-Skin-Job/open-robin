@@ -1,0 +1,283 @@
+/*
+ * code-viewer panel layout + chrome (file explorer + viewer).
+ * ai/views/code-viewer/settings/styles/layout.css
+ *
+ * Structural borders use neutral chrome (--file-viewer-chrome-border), not the
+ * workspace accent (--theme-border), so splits match chat/workspace separators.
+ *
+ * File-picker column background: --sidebar-surface-bg (variables.css; default #161616),
+ * same paradigm as .sidebar / .chat-area in views.css.
+ */
+
+/* Split layout: viewer left, tree right */
+.file-explorer-layout {
+  --file-viewer-chrome-border: var(--neutral-chrome-border, rgba(255, 255, 255, 0.12));
+  /* Viewer header / tab strip / nav — same as --panel-chrome-bg (variables.css) */
+  --file-tree-sidebar-bg: var(--panel-chrome-bg, #1a1a1a);
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.file-explorer-main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Viewer mode, no tab yet — FileViewer returns null; main has no children */
+.file-explorer-main:empty {
+  background: var(--bg-solid);
+}
+
+.file-explorer-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 13px;
+  background: var(--bg-solid);
+}
+
+.file-explorer-empty .material-symbols-outlined {
+  font-size: 32px;
+  opacity: 0.4;
+}
+
+.file-tree-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--file-viewer-chrome-border);
+  overflow-y: auto;
+  background: var(--sidebar-surface-bg, #161616);
+}
+
+.file-explorer {
+  padding: 0.5rem 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.file-explorer-loading,
+.file-explorer-error {
+  padding: 1rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.file-explorer-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-error, #ef4444);
+}
+
+/* ============================================
+   FILE VIEWER - IDE Style
+   ============================================ */
+
+.file-viewer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Open file: same as document code canvas (empty main uses --bg-solid) */
+  background: var(--document-code-bg, #161616);
+}
+
+.file-viewer-content.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Full top row: same rail as file tree + tab strip (nav padding / actions gutter included) */
+.file-viewer-header {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  background: var(--file-tree-sidebar-bg, #1a1a1a);
+  border-bottom: none;
+  position: relative;
+  z-index: 0;
+}
+
+.file-viewer-nav {
+  display: flex;
+  align-items: center;
+  padding: 0 4px 0 6px;
+  gap: 2px;
+}
+
+.file-viewer-nav .nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--file-tree-sidebar-bg, #1a1a1a);
+  border: none;
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.file-viewer-nav .nav-btn:hover:not(:disabled) {
+  color: var(--text-white);
+}
+
+.file-viewer-nav .nav-btn:disabled {
+  cursor: default;
+}
+
+/* Dim glyph only — never opacity on the button (would wash out background) */
+.file-viewer-nav .nav-btn:disabled .material-symbols-outlined {
+  opacity: 0.35;
+}
+
+.file-viewer-nav .nav-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* Same rail as .file-viewer-header (redundant fill; keeps flex column explicit) */
+.file-viewer-tabs {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  align-items: stretch;
+  padding-left: 4px;
+  background: var(--file-tree-sidebar-bg, #1a1a1a);
+}
+
+/* Inactive = same rail as header; .active overrides below — do not change .active */
+.file-viewer-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px calc(5px + 1px);
+  margin-bottom: -1px;
+  border-left: 1px solid var(--file-viewer-chrome-border);
+  border-right: 1px solid var(--file-viewer-chrome-border);
+  border-bottom: none;
+  box-sizing: border-box;
+  background-color: var(--file-tree-sidebar-bg, #1a1a1a);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+  max-width: 200px;
+  min-width: 120px;
+  position: relative;
+  z-index: 2;
+}
+
+.file-viewer-tab:not(.active) {
+  transform: translateY(-2px);
+}
+
+.file-viewer-tab:not(.active) .tab-name {
+  color: var(--text-dim);
+}
+
+.file-viewer-tab.active {
+  transform: translateY(0);
+  background-color: var(--document-code-bg, #161616);
+}
+
+.file-viewer-tab .tab-icon {
+  font-size: 16px;
+  color: var(--text-dim);
+}
+
+.file-viewer-tab .tab-name {
+  font-size: 13px;
+  color: var(--text-white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.file-viewer-tab .tab-close {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  color: var(--text-dim);
+  opacity: 0;
+  transition: all 0.15s ease;
+  pointer-events: none;
+}
+
+.file-viewer-tab:hover .tab-close,
+.file-viewer-tab:focus-within .tab-close {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.file-viewer-tab .tab-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-white);
+}
+
+.file-viewer-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.file-viewer-actions .action-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.file-viewer-actions .action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-white);
+}
+
+.file-viewer-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 16px;
+  background: var(--document-code-bg, #161616);
+  border-top: none;
+  border-bottom: 1px solid var(--file-viewer-chrome-border);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.file-viewer-info .info-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.file-viewer-info .info-item .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* Fills tab under header + info bar; inner .code-content / markdown scrolls (see document.css) */
+.file-viewer-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--document-code-bg, #161616);
+}

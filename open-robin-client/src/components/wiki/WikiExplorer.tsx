@@ -62,8 +62,8 @@ export function WikiExplorer() {
 
   if (!indexLoaded) {
     return (
-      <div className="wiki-explorer">
-        <div className="wiki-loading">
+      <div className="rv-wiki-explorer">
+        <div className="rv-wiki-loading">
           <span style={{ color: 'var(--text-dim)' }}>Loading wiki...</span>
         </div>
       </div>
@@ -71,11 +71,11 @@ export function WikiExplorer() {
   }
 
   return (
-    <div className="wiki-explorer">
+    <div className="rv-wiki-explorer">
       <TopicList />
       <PageViewer />
       <EdgePanel />
-      <FloatingChat panel="wiki-viewer" />
+      <FloatingChat panel="rv-wiki-viewer" />
     </div>
   );
 }

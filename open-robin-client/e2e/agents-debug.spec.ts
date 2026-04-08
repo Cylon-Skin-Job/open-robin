@@ -4,7 +4,7 @@ test('agents workspace debug', async ({ page }) => {
   const logs: string[] = [];
   page.on('console', (msg) => logs.push(`[${msg.type()}] ${msg.text()}`));
 
-  await page.goto('http://localhost:5173');
+  await page.goto('/');
   await page.waitForTimeout(2000);
 
   // Click agents tab (smart_toy icon)

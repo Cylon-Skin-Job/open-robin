@@ -1,13 +1,13 @@
 /* Wiki panel layout — three columns */
 
-.wiki-explorer {
+.rv-wiki-explorer {
   display: grid;
   grid-template-columns: 200px 1fr 220px;
   height: 100%;
   overflow: hidden;
 }
 
-.wiki-loading {
+.rv-wiki-loading {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
@@ -17,7 +17,7 @@
 
 /* --- Topic List (left sidebar) --- */
 
-.wiki-topic-list {
+.rv-wiki-topic-list {
   background: var(--ws-sidebar-bg, #111);
   border-right: 1px solid var(--ws-panel-border, #333);
   overflow-y: auto;
@@ -25,7 +25,7 @@
   flex-direction: column;
 }
 
-.wiki-topic-list-header {
+.rv-wiki-topic-list-header {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -37,13 +37,13 @@
   letter-spacing: 0.05em;
 }
 
-.wiki-topic-list-items {
+.rv-wiki-topic-list-items {
   display: flex;
   flex-direction: column;
   padding: 0 4px;
 }
 
-.wiki-topic-item {
+.rv-wiki-topic-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -59,32 +59,32 @@
   transition: background 150ms, color 150ms;
 }
 
-.wiki-topic-item:hover {
+.rv-wiki-topic-item:hover {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary, #eee);
 }
 
-.wiki-topic-item.active {
+.rv-wiki-topic-item.active {
   background: rgba(236, 72, 153, 0.1);
   color: var(--ws-primary, #ec4899);
 }
 
-.wiki-topic-indicator {
+.rv-wiki-topic-indicator {
   font-size: 0.625rem;
   line-height: 1;
 }
 
-.wiki-topic-name {
+.rv-wiki-topic-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.wiki-collection-group {
+.rv-wiki-collection-group {
   margin-bottom: 4px;
 }
 
-.wiki-collection-header {
+.rv-wiki-collection-header {
   display: flex;
   align-items: center;
   padding: 8px 12px 4px;
@@ -95,24 +95,24 @@
   letter-spacing: 0.05em;
 }
 
-.wiki-collection-group:first-child .wiki-collection-header {
+.rv-wiki-collection-group:first-child .rv-wiki-collection-header {
   padding-top: 4px;
 }
 
-.wiki-frozen-icon {
+.rv-wiki-frozen-icon {
   color: var(--text-dim, #666);
 }
 
 /* --- Page Viewer (center) --- */
 
-.wiki-page-viewer {
+.rv-wiki-page-viewer {
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background: var(--ws-content-bg, #0d0d0d);
 }
 
-.wiki-page-empty {
+.rv-wiki-page-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -123,7 +123,7 @@
   font-size: 0.875rem;
 }
 
-.wiki-page-nav {
+.rv-wiki-page-nav {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -131,7 +131,7 @@
   border-bottom: 1px solid var(--ws-panel-border, #333);
 }
 
-.wiki-nav-btn {
+.rv-wiki-nav-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,42 +145,42 @@
   padding: 0;
 }
 
-.wiki-nav-btn:hover:not(:disabled) {
+.rv-wiki-nav-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary, #eee);
 }
 
-.wiki-nav-btn:disabled {
+.rv-wiki-nav-btn:disabled {
   opacity: 0.3;
   cursor: default;
 }
 
-.wiki-nav-btn .material-symbols-outlined {
+.rv-wiki-nav-btn .material-symbols-outlined {
   font-size: 1.125rem;
 }
 
-.wiki-breadcrumb {
+.rv-wiki-breadcrumb {
   margin-left: 8px;
   color: var(--ws-primary, #ec4899);
   font-size: 0.8125rem;
   font-weight: 500;
 }
 
-.wiki-nav-actions {
+.rv-wiki-nav-actions {
   display: flex;
   align-items: center;
   gap: 4px;
   margin-left: auto;
 }
 
-.wiki-tab-bar {
+.rv-wiki-tab-bar {
   display: flex;
   gap: 0;
   padding: 0 16px;
   border-bottom: 1px solid var(--ws-panel-border, #333);
 }
 
-.wiki-tab {
+.rv-wiki-tab {
   padding: 8px 16px;
   border: none;
   background: none;
@@ -191,18 +191,18 @@
   transition: color 150ms, border-color 150ms;
 }
 
-.wiki-tab:hover {
+.rv-wiki-tab:hover {
   color: var(--text-primary, #eee);
 }
 
-.wiki-tab.active {
+.rv-wiki-tab.active {
   color: var(--ws-primary, #ec4899);
   border-bottom-color: var(--ws-primary, #ec4899);
 }
 
-/* Prose for rendered PAGE/LOG lives in src/styles/document.css (.wiki-page-content) */
+/* Prose for rendered PAGE/LOG lives in src/styles/document.css (.rv-wiki-page-content) */
 
-.wiki-page-error {
+.rv-wiki-page-error {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -211,7 +211,7 @@
   font-size: 0.8125rem;
 }
 
-.wiki-page-loading {
+.rv-wiki-page-loading {
   padding: 24px 32px;
   color: var(--text-dim, #888);
   font-size: 0.875rem;
@@ -219,18 +219,18 @@
 
 /* --- Edge Panel (right column) --- */
 
-.wiki-edge-panel {
+.rv-wiki-edge-panel {
   background: var(--ws-sidebar-bg, #111);
   border-left: 1px solid var(--ws-panel-border, #333);
   overflow-y: auto;
   padding: 12px;
 }
 
-.wiki-edge-section {
+.rv-wiki-edge-section {
   margin-bottom: 16px;
 }
 
-.wiki-edge-heading {
+.rv-wiki-edge-heading {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -242,7 +242,7 @@
   margin-bottom: 6px;
 }
 
-.wiki-edge-link {
+.rv-wiki-edge-link {
   display: block;
   width: 100%;
   padding: 4px 8px;
@@ -256,11 +256,11 @@
   transition: background 150ms;
 }
 
-.wiki-edge-link:hover {
+.rv-wiki-edge-link:hover {
   background: rgba(236, 72, 153, 0.1);
 }
 
-.wiki-edge-empty {
+.rv-wiki-edge-empty {
   color: var(--text-dim, #666);
   font-size: 0.75rem;
   text-align: center;

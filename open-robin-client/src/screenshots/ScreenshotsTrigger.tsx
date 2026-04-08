@@ -214,7 +214,7 @@ export function ScreenshotsTrigger({ onInsert }: ScreenshotsTriggerProps) {
               {visibleItems.map((item, index) => (
                 <div
                   key={item.path}
-                  className={`hover-icon-modal-row ${index === selectedIndex ? 'selected' : ''}`}
+                  className={`rv-hover-icon-modal-row ${index === selectedIndex ? 'selected' : ''}`}
                   onClick={() => handleItemClick(item)}
                   onMouseEnter={(e) => handleMouseEnter(item, index, e)}
                   onMouseLeave={() => setHoveredItem(null)}

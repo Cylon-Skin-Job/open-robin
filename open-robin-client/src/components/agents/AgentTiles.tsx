@@ -30,22 +30,22 @@ function AgentCard({ agent }: { agent: Agent }) {
 
   return (
     <div
-      className="agent-tile"
+      className="rv-agent-tile"
       style={{ '--tile-color': agent.color } as React.CSSProperties}
       onClick={() => setExpanded(agent.id)}
     >
-      <div className="agent-tile-top">
-        <div className="agent-tile-icon">
+      <div className="rv-agent-tile-top">
+        <div className="rv-agent-tile-icon">
           <span className="material-symbols-outlined">{agent.icon}</span>
         </div>
-        <div className="agent-tile-info">
-          <div className="agent-tile-name">{formatId(agent.id)}</div>
-          <div className="agent-tile-desc">{agent.description}</div>
+        <div className="rv-agent-tile-info">
+          <div className="rv-agent-tile-name">{formatId(agent.id)}</div>
+          <div className="rv-agent-tile-desc">{agent.description}</div>
         </div>
       </div>
-      <div className="agent-tile-footer">
-        <div className="agent-tile-meta">
-          <span className="agent-tile-bot">{agent.bot_name}</span>
+      <div className="rv-agent-tile-footer">
+        <div className="rv-agent-tile-meta">
+          <span className="rv-agent-tile-bot">{agent.bot_name}</span>
           {agent.schedule && (
             <span title={agent.schedule}>
               <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>schedule</span>
@@ -56,7 +56,7 @@ function AgentCard({ agent }: { agent: Agent }) {
             <span>{agent.pending_tickets} pending</span>
           )}
         </div>
-        <span className={`agent-tile-status ${agent.status}`}>
+        <span className={`rv-agent-tile-status ${agent.status}`}>
           {agent.status}
         </span>
       </div>
@@ -165,30 +165,30 @@ function AgentDetail({ agent, request }: { agent: Agent; request: (path: string)
   const isWorkflow = activeFile ? workflows.includes(activeFile) : false;
 
   return (
-    <div className="agent-detail-fullscreen" style={{ '--tile-color': agent.color } as React.CSSProperties}>
+    <div className="rv-agent-detail-fullscreen" style={{ '--tile-color': agent.color } as React.CSSProperties}>
       {/* Header: bot name + exit */}
-      <div className="agent-detail-header">
-        <span className="material-symbols-outlined agent-detail-header-icon">{agent.icon}</span>
-        <span className="agent-detail-header-name">{formatId(agent.id)}</span>
-        <span className={`agent-tile-status ${agent.status}`}>{agent.status}</span>
+      <div className="rv-agent-detail-header">
+        <span className="material-symbols-outlined rv-agent-detail-header-icon">{agent.icon}</span>
+        <span className="rv-agent-detail-header-name">{formatId(agent.id)}</span>
+        <span className={`rv-agent-tile-status ${agent.status}`}>{agent.status}</span>
         <button
-          className="file-page-action"
+          className="rv-file-page-action"
           onClick={() => copyResourcePath('agents-viewer', `System/${agent.id}/`)}
           title="Copy agent path"
         >
           <span className="material-symbols-outlined">link_2</span>
         </button>
-        <button className="agent-detail-exit" onClick={() => setExpanded(null)}>
+        <button className="rv-agent-detail-exit" onClick={() => setExpanded(null)}>
           <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span>
         </button>
       </div>
 
       {/* Pill tabs */}
-      <div className="agent-detail-pill-bar">
+      <div className="rv-agent-detail-pill-bar">
         {(['workflows', 'runs', 'settings'] as const).map(tab => (
           <button
             key={tab}
-            className={`agent-detail-pill${activeTab === tab ? ' active' : ''}`}
+            className={`rv-agent-detail-pill${activeTab === tab ? ' active' : ''}`}
             onClick={() => setActiveTab(tab)}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -197,45 +197,45 @@ function AgentDetail({ agent, request }: { agent: Agent; request: (path: string)
       </div>
 
       {/* Card container: sidebar + content + chat */}
-      <div className="agent-detail-card">
-        <div className="agent-detail-content">
+      <div className="rv-agent-detail-card">
+        <div className="rv-agent-detail-content">
 
         {/* Left: Sidebar + Content */}
-        <div className="agent-detail-main">
+        <div className="rv-agent-detail-main">
 
           {/* Sidebar + Content split */}
-          <div className="agent-detail-split">
+          <div className="rv-agent-detail-split">
             {/* Sidebar: cards with name + description */}
-            <div className="agent-detail-card-sidebar">
+            <div className="rv-agent-detail-card-sidebar">
               {sidebarItems.map((item) => {
                 const content = fileCache[item.name];
                 const desc = content ? content.split('\n').filter(l => l.trim() && !l.startsWith('#')).slice(0, 3).join(' ').slice(0, 200) : '';
                 return (
                   <div
                     key={item.name}
-                    className={`agent-detail-card-item${item.name === activeFile ? ' active' : ''}`}
+                    className={`rv-agent-detail-card-item${item.name === activeFile ? ' active' : ''}`}
                     onClick={() => setActiveFile(item.name)}
                   >
-                    <div className="agent-card-item-icon">
+                    <div className="rv-agent-card-item-icon">
                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{item.icon}</span>
                     </div>
-                    <div className="agent-card-item-text">
-                      <div className="agent-card-item-name">{item.displayName}</div>
-                      {desc && <div className="agent-card-item-desc">{desc}{desc.length >= 100 ? '...' : ''}</div>}
+                    <div className="rv-agent-card-item-text">
+                      <div className="rv-agent-card-item-name">{item.displayName}</div>
+                      {desc && <div className="rv-agent-card-item-desc">{desc}{desc.length >= 100 ? '...' : ''}</div>}
                     </div>
                   </div>
                 );
               })}
               {activeTab === 'runs' && (
-                <div className="agent-detail-runs-empty">No runs yet</div>
+                <div className="rv-agent-detail-runs-empty">No runs yet</div>
               )}
               {activeTab === 'settings' && (
-                <div className="agent-detail-runs-empty">Settings coming soon</div>
+                <div className="rv-agent-detail-runs-empty">Settings coming soon</div>
               )}
             </div>
 
             {/* Content area */}
-            <div className="agent-detail-viewer">
+            <div className="rv-agent-detail-viewer">
               {selectedContent ? (
                 <PromptCardView
                   content={selectedContent}
@@ -254,14 +254,14 @@ function AgentDetail({ agent, request }: { agent: Agent; request: (path: string)
         </div>
 
           {/* Right: Chat */}
-          <div className="agent-detail-chat">
-            <div className="agent-detail-chat-inner">
-              <div className="agent-detail-chat-messages">
-                <div className="agent-detail-chat-empty">
+          <div className="rv-agent-detail-chat">
+            <div className="rv-agent-detail-chat-inner">
+              <div className="rv-agent-detail-chat-messages">
+                <div className="rv-agent-detail-chat-empty">
                   Send a message to interact with this bot
                 </div>
               </div>
-              <div className="agent-detail-chat-input">
+              <div className="rv-agent-detail-chat-input">
                 <textarea
                   rows={2}
                   placeholder={`Message ${formatId(agent.id)}...`}
@@ -318,7 +318,7 @@ export function AgentTiles() {
 
   if (!loaded) {
     return (
-      <div className="agent-tiles-loading">
+      <div className="rv-agent-tiles-loading">
         <span>Loading agents...</span>
       </div>
     );
@@ -331,7 +331,7 @@ export function AgentTiles() {
   }
 
   return (
-    <div className="agent-tiles">
+    <div className="rv-agent-tiles">
       {agents.map((agent) => (
         <AgentCard key={agent.id} agent={agent} />
       ))}

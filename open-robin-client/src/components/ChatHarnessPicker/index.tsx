@@ -9,11 +9,11 @@
  * .chat-messages so it stays within the chat column.
  */
 
-import { useEffect, useCallback, useState } from 'react';
+import { useState } from 'react';
 import { HARNESS_OPTIONS, type HarnessOption } from '../../config/harness';
 import './ChatHarnessPicker.css';
 
-interface HarnessStatus {
+export interface HarnessStatus {
   id: string;
   installed: boolean;
   builtIn: boolean;
@@ -24,31 +24,12 @@ interface HarnessStatus {
 
 interface ChatHarnessPickerProps {
   onSelect: (harnessId: string) => void;
+  statuses: Record<string, HarnessStatus>;
+  isLoading: boolean;
 }
 
-export function ChatHarnessPicker({ onSelect }: ChatHarnessPickerProps) {
-  const [statuses, setStatuses] = useState<Record<string, HarnessStatus>>({});
-  const [isLoading, setIsLoading] = useState(false);
+export function ChatHarnessPicker({ onSelect, statuses, isLoading }: ChatHarnessPickerProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const fetchStatuses = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/harnesses');
-      if (!res.ok) return;
-      const list: HarnessStatus[] = await res.json();
-      const map = list.reduce((acc, s) => { acc[s.id] = s; return acc; }, {} as Record<string, HarnessStatus>);
-      setStatuses(map);
-    } catch {
-      // silent — show local config as fallback
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchStatuses();
-  }, [fetchStatuses]);
 
   const isSelectable = (option: HarnessOption): boolean => {
     const s = statuses[option.id];
@@ -64,17 +45,17 @@ export function ChatHarnessPicker({ onSelect }: ChatHarnessPickerProps) {
   };
 
   return (
-    <div className="chat-harness-picker" role="dialog" aria-label="Choose AI backend">
-      <div className="chp-header">
-        <h2 className="chp-title">Choose your AI</h2>
-        <p className="chp-subtitle">Select a backend to start the conversation</p>
+    <div className="rv-chat-harness-picker" role="dialog" aria-label="Choose AI backend">
+      <div className="rv-chp-header">
+        <h2 className="rv-chp-title">Choose your AI</h2>
+        <p className="rv-chp-subtitle">Select a backend to start the conversation</p>
       </div>
 
       {isLoading && (
-        <div className="chp-loading">Checking installed backends…</div>
+        <div className="rv-chp-loading">Checking installed backends…</div>
       )}
 
-      <div className="chp-list">
+      <div className="rv-chp-list">
         {HARNESS_OPTIONS.map((option) => {
           const s = statuses[option.id];
           const selectable = isSelectable(option);
@@ -85,39 +66,39 @@ export function ChatHarnessPicker({ onSelect }: ChatHarnessPickerProps) {
           return (
             <button
               key={option.id}
-              className={`chp-card ${!selectable ? 'chp-card--disabled' : ''} ${needsInstall ? 'chp-card--needs-install' : ''}`}
+              className={`rv-chp-card ${!selectable ? 'rv-chp-card--disabled' : ''} ${needsInstall ? 'rv-chp-card--needs-install' : ''}`}
               onClick={() => selectable && onSelect(option.id)}
               disabled={!selectable}
               aria-label={`Start chat with ${option.name}`}
             >
-              <div className="chp-card-left">
-                <span className="chp-icon">{option.icon}</span>
+              <div className="rv-chp-card-left">
+                <span className="rv-chp-icon">{option.icon}</span>
               </div>
 
-              <div className="chp-card-body">
-                <div className="chp-card-title-row">
-                  <span className="chp-name">{option.name}</span>
-                  {option.recommended && <span className="chp-badge chp-badge--recommended">Recommended</span>}
-                  {isBuiltIn && <span className="chp-badge chp-badge--builtin">Built-in</span>}
-                  {isInstalled && <span className="chp-badge chp-badge--installed">Installed</span>}
-                  {needsInstall && <span className="chp-badge chp-badge--install">Not installed</span>}
+              <div className="rv-chp-card-body">
+                <div className="rv-chp-card-title-row">
+                  <span className="rv-chp-name">{option.name}</span>
+                  {option.recommended && <span className="rv-chp-badge rv-chp-badge--recommended">Recommended</span>}
+                  {isBuiltIn && <span className="rv-chp-badge rv-chp-badge--builtin">Built-in</span>}
+                  {isInstalled && <span className="rv-chp-badge rv-chp-badge--installed">Installed</span>}
+                  {needsInstall && <span className="rv-chp-badge rv-chp-badge--install">Not installed</span>}
                 </div>
 
-                <p className="chp-description">{option.description}</p>
+                <p className="rv-chp-description">{option.description}</p>
 
-                <div className="chp-pills">
-                  <span className="chp-pill">{option.details.provider}</span>
-                  <span className="chp-pill">{option.details.model}</span>
+                <div className="rv-chp-pills">
+                  <span className="rv-chp-pill">{option.details.provider}</span>
+                  <span className="rv-chp-pill">{option.details.model}</span>
                   {option.details.features.map(f => (
-                    <span key={f} className="chp-pill chp-pill--feature">{f}</span>
+                    <span key={f} className="rv-chp-pill rv-chp-pill--feature">{f}</span>
                   ))}
                 </div>
 
                 {needsInstall && s?.installCommand && (
-                  <div className="chp-install">
-                    <code className="chp-install-cmd">{s.installCommand}</code>
+                  <div className="rv-chp-install">
+                    <code className="rv-chp-install-cmd">{s.installCommand}</code>
                     <button
-                      className="chp-install-copy"
+                      className="rv-chp-install-copy"
                       onClick={(e) => copyInstall(e, s.installCommand!, option.id)}
                     >
                       {copiedId === option.id ? 'Copied!' : 'Copy'}
@@ -127,8 +108,8 @@ export function ChatHarnessPicker({ onSelect }: ChatHarnessPickerProps) {
               </div>
 
               {selectable && (
-                <div className="chp-card-right">
-                  <span className="material-symbols-outlined chp-arrow">arrow_forward</span>
+                <div className="rv-chp-card-right">
+                  <span className="material-symbols-outlined rv-chp-arrow">arrow_forward</span>
                 </div>
               )}
             </button>

@@ -165,7 +165,7 @@ export function RecentFilesTrigger({ onInsert }: RecentFilesTriggerProps) {
             {files.map((file, index) => (
               <div
                 key={file.path}
-                className={`hover-icon-modal-row ${index === selectedIndex ? 'selected' : ''}`}
+                className={`rv-hover-icon-modal-row ${index === selectedIndex ? 'selected' : ''}`}
                 onClick={() => handleItemClick(file)}
                 onMouseEnter={() => handleItemHover(index)}
               >

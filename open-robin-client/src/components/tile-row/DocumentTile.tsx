@@ -48,13 +48,13 @@ export function DocumentTile({ name, content, extension, panel, folderPath, onCl
   const ext = extension || name.split('.').pop()?.toLowerCase() || '';
   const icon = ICON_MAP[ext] || 'draft';
   const isImage = IMAGE_EXTENSIONS.has(ext);
-  const classes = ['doc-tile'];
-  if (size === 'small') classes.push('doc-tile-small');
+  const classes = ['rv-doc-tile'];
+  if (size === 'small') classes.push('rv-doc-tile-small');
   if (active) classes.push('active');
 
   return (
     <div className={classes.join(' ')} onClick={onClick} title={name}>
-      <div className="doc-tile-preview">
+      <div className="rv-doc-tile-preview">
         {isImage ? (
           <img
             src={`/api/panel-file/${panel}/${folderPath}/${encodeURIComponent(name)}`}
@@ -66,9 +66,9 @@ export function DocumentTile({ name, content, extension, panel, folderPath, onCl
           <CodeView content={content} extension={ext} />
         )}
       </div>
-      <div className="doc-tile-footer">
-        <span className="material-symbols-outlined doc-tile-icon">{icon}</span>
-        <span className="doc-tile-name">{name}</span>
+      <div className="rv-doc-tile-footer">
+        <span className="material-symbols-outlined rv-doc-tile-icon">{icon}</span>
+        <span className="rv-doc-tile-name">{name}</span>
       </div>
     </div>
   );

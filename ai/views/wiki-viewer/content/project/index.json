@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "id": "project",
+  "label": "Project",
+  "description": "Per-project living documentation maintained by agents",
+  "type": "collection",
+  "rank": 1,
+  "icon": "folder_open",
+  "color": null,
+  "created": "2026-03-20T14:00:00Z",
+  "updated": "2026-03-27T21:00:00Z",
+  "frozen": false,
+  "children": ["home", "background-agents", "chat-panel-architecture", "wire-protocol", "gitlab", "hooks", "model-config", "path-resolution", "progressive-disclosure", "run-auditing", "screenshot-capture", "session-scoping", "setup-wizard", "ticket-routing", "turn-lifecycle", "warmth-settings", "wiki-interface", "wiki-system", "workspace-agent-model", "workspace-index", "workspaces"],
+  "edges_out": null,
+  "edges_in": null,
+  "sources": null,
+  "settings": {
+    "syncTarget": "gitlab",
+    "gitlabProjectId": 80453361
+  }
+}

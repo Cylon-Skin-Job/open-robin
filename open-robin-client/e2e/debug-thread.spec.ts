@@ -16,7 +16,7 @@ test('debug new thread click', async ({ page }) => {
     console.log(text);
   });
   
-  await page.goto('http://localhost:5173');
+  await page.goto('/');
   await page.waitForTimeout(3000);
   
   console.log('=== Page loaded, clicking button ===');

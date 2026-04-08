@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "id": "calendar-viewer",
+  "folderName": "calendar-viewer",
+  "label": "Calendar",
+  "description": "Time-based view for scheduling, deadlines, and events",
+  "type": "calendar",
+  "icon": "calendar_month",
+  "rank": 8,
+  "sort": "manual",
+  "created": "2026-04-03T00:00:00-07:00",
+  "settings": {
+    "layout": "full",
+    "theme": {
+      "primary": "#f97316",
+      "sidebar_bg": "#1a100a",
+      "content_bg": "#0d0d0d",
+      "panel_border": "#f9731633"
+    }
+  }
+}

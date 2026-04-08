@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "id": "workspace-index",
+  "label": "Workspace-Index",
+  "description": null,
+  "type": "page",
+  "rank": 10,
+  "icon": "article",
+  "color": null,
+  "created": "2026-03-20T14:00:00Z",
+  "updated": "2026-03-27T21:00:00Z",
+  "frozen": false,
+  "children": null,
+  "edges_out": ["Workspaces", "Session-Scoping"],
+  "edges_in": ["Workspaces"],
+  "sources": [],
+  "settings": {}
+}

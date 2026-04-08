@@ -34,18 +34,18 @@ export function TileRow({ label, panel, folder, onFileClick, onFileSelect }: Til
   const { files, loading } = useFolderFiles(panel, folder);
 
   return (
-    <div className="tile-row">
-      <div className="tile-row-header">
-        <span className="tile-row-label">{label}</span>
-        <span className="tile-row-count">
+    <div className="rv-tile-row">
+      <div className="rv-tile-row-header">
+        <span className="rv-tile-row-label">{label}</span>
+        <span className="rv-tile-row-count">
           {loading ? '...' : files.length > 0 ? `${files.length}` : ''}
         </span>
       </div>
-      <div className="tile-row-scroll">
+      <div className="rv-tile-row-scroll">
         {loading ? (
-          <div className="tile-row-empty">Loading...</div>
+          <div className="rv-tile-row-empty">Loading...</div>
         ) : files.length === 0 ? (
-          <div className="tile-row-empty">Empty</div>
+          <div className="rv-tile-row-empty">Empty</div>
         ) : (
           files.map((file) => (
             <DocumentTile

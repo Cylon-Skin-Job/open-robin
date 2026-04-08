@@ -1,0 +1,9 @@
+/* ops-manager agent display */
+.agent-tile--ops-manager::before {
+  font-family: 'Material Symbols Outlined';
+  content: 'shield';
+}
+
+.agent-tile--ops-manager {
+  --agent-color: #eab308;
+}

@@ -15,17 +15,17 @@ export function EdgePanel() {
   if (!activeTopic) return null;
 
   return (
-    <div className="wiki-edge-panel">
+    <div className="rv-wiki-edge-panel">
       {edgesIn.length > 0 && (
-        <div className="wiki-edge-section">
-          <div className="wiki-edge-heading">
+        <div className="rv-wiki-edge-section">
+          <div className="rv-wiki-edge-heading">
             <span className="material-symbols-outlined" style={{ fontSize: '0.875rem' }}>arrow_back</span>
             <span>Incoming</span>
           </div>
           {edgesIn.map((slug) => (
             <button
               key={slug}
-              className="wiki-edge-link"
+              className="rv-wiki-edge-link"
               onClick={() => navigateToTopic(slug)}
             >
               {slug}
@@ -34,15 +34,15 @@ export function EdgePanel() {
         </div>
       )}
       {edgesOut.length > 0 && (
-        <div className="wiki-edge-section">
-          <div className="wiki-edge-heading">
+        <div className="rv-wiki-edge-section">
+          <div className="rv-wiki-edge-heading">
             <span className="material-symbols-outlined" style={{ fontSize: '0.875rem' }}>arrow_forward</span>
             <span>Outgoing</span>
           </div>
           {edgesOut.map((slug) => (
             <button
               key={slug}
-              className="wiki-edge-link"
+              className="rv-wiki-edge-link"
               onClick={() => navigateToTopic(slug)}
             >
               {slug}
@@ -51,7 +51,7 @@ export function EdgePanel() {
         </div>
       )}
       {edgesIn.length === 0 && edgesOut.length === 0 && (
-        <div className="wiki-edge-empty">No edges</div>
+        <div className="rv-wiki-edge-empty">No edges</div>
       )}
     </div>
   );

@@ -2,13 +2,13 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Thread Management', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173');
+    await page.goto('/');
     // Wait for WebSocket connection
     await page.waitForTimeout(2000);
   });
 
   test('create new thread', async ({ page }) => {
-    await page.goto('http://localhost:5173');
+    await page.goto('/');
     await page.waitForTimeout(3000);
     
     // Get sidebar

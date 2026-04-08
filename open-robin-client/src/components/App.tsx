@@ -108,29 +108,23 @@ function App() {
 
   if (loading) {
     return (
-      <div ref={containerRef} className="app-container">
-        <header className="header">
-          <div className="header-left">
-            <button className="menu-btn">
+      <div ref={containerRef} className="rv-app-container">
+        <header className="rv-header">
+          <div className="rv-header-left">
+            <button className="rv-menu-btn">
               <span className="material-symbols-outlined">menu</span>
             </button>
-            <div className={`connection-status ${isConnected ? 'connected' : ''}`}>
+            <div className={`rv-connection-status ${isConnected ? 'connected' : ''}`}>
               {isConnected ? 'Connected' : 'Connecting...'}
             </div>
           </div>
-          <div className="header-right">
-            <button className="robin-icon-btn" onClick={() => setRobinOpen(true)}>
+          <div className="rv-header-right">
+            <button className="rv-robin-icon-btn" onClick={() => setRobinOpen(true)}>
               <span className="material-symbols-outlined">raven</span>
             </button>
           </div>
         </header>
-        <div className="panel-container" style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--text-dim, #555)',
-          fontSize: '0.875rem',
-        }}>
+        <div className="rv-panel-container rv-panel-container--loading">
           Discovering panels...
         </div>
       </div>
@@ -138,20 +132,20 @@ function App() {
   }
 
   return (
-    <div ref={containerRef} className="app-container">
+    <div ref={containerRef} className="rv-app-container">
       {/* Header */}
-      <header className="header">
-        <div className="header-left">
-          <button className="menu-btn">
+      <header className="rv-header">
+        <div className="rv-header-left">
+          <button className="rv-menu-btn">
             <span className="material-symbols-outlined">menu</span>
           </button>
-          <div className={`connection-status ${isConnected ? 'connected' : ''}`}>
+          <div className={`rv-connection-status ${isConnected ? 'connected' : ''}`}>
             {isConnected ? 'Connected' : 'Disconnected'}
           </div>
         </div>
 
-        <div className="header-right">
-          <button className="robin-icon-btn" onClick={() => setRobinOpen(true)}>
+        <div className="rv-header-right">
+          <button className="rv-robin-icon-btn" onClick={() => setRobinOpen(true)}>
             <span className="material-symbols-outlined">raven</span>
           </button>
         </div>
@@ -164,7 +158,7 @@ function App() {
       />
 
       {/* Panel Container */}
-      <div className="panel-container">
+      <div className="rv-panel-container">
         {configs.map((config) => {
           const layout = config.layout || (config.hasChat ? 'sidebar-chat-content' : 'full');
 
@@ -172,7 +166,7 @@ function App() {
             <div
               key={config.id}
               data-panel={config.id}
-              className={`panel layout-${layout} ${currentPanel === config.id ? 'active' : ''}`}
+              className={`rv-panel rv-layout-${layout} ${currentPanel === config.id ? 'active' : ''}`}
             >
               <PanelContent panel={config.id} layout={layout} />
             </div>

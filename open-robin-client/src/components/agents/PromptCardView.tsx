@@ -130,20 +130,20 @@ function renderFullContent(content: string): ReactElement {
       {lines.map((line, i) => {
         if (line.match(/^evaluate:/i)) {
           return (
-            <div key={i} className="wf-evaluate">
+            <div key={i} className="rv-wf-evaluate">
               <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>checklist</span>
-              <span className="wf-evaluate-label">Evaluate:</span>
+              <span className="rv-wf-evaluate-label">Evaluate:</span>
               <span>{line.replace(/^evaluate:\s*/i, '')}</span>
             </div>
           );
         }
         if (line.match(/instruct\s*(it\s*)?to:/i)) {
-          return <div key={i} className="wf-instruct-label">{line}</div>;
+          return <div key={i} className="rv-wf-instruct-label">{line}</div>;
         }
         if (line.trim().startsWith('- ')) {
           return (
-            <div key={i} className="wf-bullet">
-              <span className="wf-bullet-dot" />
+            <div key={i} className="rv-wf-bullet">
+              <span className="rv-wf-bullet-dot" />
               {line.trim().slice(2)}
             </div>
           );
@@ -151,7 +151,7 @@ function renderFullContent(content: string): ReactElement {
         if (line.trim() === '') {
           return <div key={i} style={{ height: '8px' }} />;
         }
-        return <div key={i} className="wf-text-line">{line}</div>;
+        return <div key={i} className="rv-wf-text-line">{line}</div>;
       })}
     </>
   );
@@ -168,22 +168,22 @@ export function PromptCardView({ content, fileName, agentColor }: PromptCardView
   const workflow = parseWorkflow(content);
 
   return (
-    <div className="wf-container" style={{ '--agent-color': agentColor } as React.CSSProperties}>
+    <div className="rv-wf-container" style={{ '--agent-color': agentColor } as React.CSSProperties}>
       {/* Steps panel — heading/description shown on sidebar card, not repeated here */}
-      <div className="wf-panels">
+      <div className="rv-wf-panels">
         {/* Left: step cards */}
-        <div className="wf-step-list">
+        <div className="rv-wf-step-list">
           {workflow.steps.map((step, i) => (
             <div key={i}>
-              {i > 0 && <div className="wf-connector" />}
+              {i > 0 && <div className="rv-wf-connector" />}
               <div
-                className={`wf-step-card${i === activeStep ? ' active' : ''}`}
+                className={`rv-wf-step-card${i === activeStep ? ' active' : ''}`}
                 onClick={() => setActiveStep(i)}
               >
-                {step.number && <div className="wf-step-num">{step.number}</div>}
-                <div className="wf-step-info">
-                  <div className="wf-step-title">{step.title}</div>
-                  <div className="wf-step-summary">{step.summary}</div>
+                {step.number && <div className="rv-wf-step-num">{step.number}</div>}
+                <div className="rv-wf-step-info">
+                  <div className="rv-wf-step-title">{step.title}</div>
+                  <div className="rv-wf-step-summary">{step.summary}</div>
                 </div>
               </div>
             </div>
@@ -191,21 +191,21 @@ export function PromptCardView({ content, fileName, agentColor }: PromptCardView
         </div>
 
         {/* Connector line from active card to detail */}
-        <div className="wf-bridge">
-          <div className="wf-bridge-line" />
+        <div className="rv-wf-bridge">
+          <div className="rv-wf-bridge-line" />
         </div>
 
         {/* Right: full detail of selected step */}
-        <div className="wf-detail">
+        <div className="rv-wf-detail">
           {workflow.steps[activeStep] && (
             <>
-              <div className="wf-detail-title">
+              <div className="rv-wf-detail-title">
                 {workflow.steps[activeStep].number && (
-                  <span className="wf-detail-num">{workflow.steps[activeStep].number}.</span>
+                  <span className="rv-wf-detail-num">{workflow.steps[activeStep].number}.</span>
                 )}
                 {workflow.steps[activeStep].title}
               </div>
-              <div className="wf-detail-body">
+              <div className="rv-wf-detail-body">
                 {renderFullContent(workflow.steps[activeStep].fullContent)}
               </div>
             </>

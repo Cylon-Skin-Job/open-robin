@@ -3,8 +3,10 @@
  * @role Universal hover-triggered icon modal system
  */
 
+export { useHoverIconModal } from './useHoverIconModal';
+export type { ModalState, UseHoverIconModalOptions, UseHoverIconModalReturn } from './useHoverIconModal';
+
 export {
-  useHoverIconModal,
   HoverIconTrigger,
   HoverIconModalContainer,
   HoverIconModalHeader,
@@ -16,11 +18,6 @@ export {
   HoverIconModalEmpty,
   HoverIconModalHint,
   HoverIconModalPreview,
-} from './HoverIconModal';
+} from './HoverIconModalParts';
 
 export { useListNavigation } from './useListNavigation';
-
-export type { ModalState } from './HoverIconModal';
-
-// Import CSS automatically when importing components
-import './HoverIconModal.css';

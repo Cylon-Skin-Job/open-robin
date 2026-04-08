@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robin System Panel v3 — Tabs + List/Detail Split</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1" />
+<style>
+  /* === Reset + Dark Base === */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    line-height: 1.5;
+  }
+
+  /* === Design Tokens === */
+  :root {
+    --robin-primary: #4fc3f7;
+    --robin-primary-dim: rgba(79, 195, 247, 0.12);
+    --robin-primary-border: rgba(79, 195, 247, 0.25);
+    --robin-primary-glow: rgba(79, 195, 247, 0.3);
+    --bg-page: #0a0a0a;
+    --bg-surface: #111111;
+    --bg-card: #161616;
+    --bg-card-hover: #1c1c1c;
+    --bg-input: #0d0d0d;
+    --text-primary: #e8e8e8;
+    --text-secondary: #aaa;
+    --text-dim: #666;
+    --border-subtle: #1e1e1e;
+    --border-card: #282828;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+  }
+
+  /* ==========================================================
+     ROBIN OVERLAY
+     ========================================================== */
+  .robin-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: var(--bg-page);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* --- Header --- */
+  .robin-overlay-header {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+
+  .robin-overlay-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .robin-overlay-header-icon { font-size: 26px; color: var(--robin-primary); }
+
+  .robin-overlay-header-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--robin-primary);
+  }
+
+  .robin-overlay-header-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-left: 8px;
+  }
+
+  .robin-exit-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-card);
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 150ms;
+  }
+
+  .robin-exit-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  /* --- Body: Chat left, Settings right --- */
+  .robin-overlay-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    overflow: hidden;
+  }
+
+  /* ==========================================================
+     LEFT: ROBIN'S CHAT
+     ========================================================== */
+  .robin-chat {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+  }
+
+  .robin-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .robin-msg-system {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: var(--space-sm) 0;
+    font-style: italic;
+  }
+
+  .robin-msg-robin {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .robin-msg-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--robin-primary-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .robin-msg-avatar .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--robin-primary);
+  }
+
+  .robin-msg-bubble {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+    max-width: 90%;
+  }
+
+  .robin-msg-bubble code {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  .robin-msg-user {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .robin-msg-user .robin-msg-bubble {
+    background: var(--robin-primary-dim);
+    border-color: var(--robin-primary-border);
+  }
+
+  .robin-chat-input {
+    padding: var(--space-md);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .robin-chat-input textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    min-height: 44px;
+  }
+
+  .robin-chat-input textarea:focus { border-color: var(--robin-primary-border); }
+  .robin-chat-input textarea::placeholder { color: var(--text-dim); }
+
+  /* ==========================================================
+     RIGHT: SETTINGS AREA (tabs on top, list+detail below)
+     ========================================================== */
+  .robin-settings {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* --- Horizontal tab bar (from v1) --- */
+  .robin-settings-tabs {
+    display: flex;
+    gap: 6px;
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+
+  .robin-settings-tab {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-card);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 150ms;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .robin-settings-tab:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+  }
+
+  .robin-settings-tab.active {
+    background: var(--robin-primary-dim);
+    border-color: var(--robin-primary-border);
+    color: var(--robin-primary);
+    font-weight: 600;
+  }
+
+  .robin-settings-tab .material-symbols-outlined { font-size: 16px; }
+
+  /* --- Split container: list + detail --- */
+  .robin-settings-split {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    overflow: hidden;
+  }
+
+  /* ==========================================================
+     SETTINGS LIST (left column of the split)
+     ========================================================== */
+  .robin-settings-list {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-subtle);
+    overflow-y: auto;
+    padding: var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .robin-settings-section-divider {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    padding: var(--space-sm) var(--space-xs);
+    margin-top: var(--space-sm);
+  }
+
+  .robin-settings-section-divider:first-child { margin-top: 0; }
+
+  .robin-setting-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: border-color 150ms, background 150ms;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .robin-setting-item:hover {
+    border-color: var(--robin-primary-border);
+    background: var(--bg-card-hover);
+  }
+
+  .robin-setting-item.active {
+    border-color: var(--robin-primary);
+    background: rgba(79, 195, 247, 0.05);
+  }
+
+  .robin-setting-item-icon { padding-top: 1px; flex-shrink: 0; }
+
+  .robin-setting-item-icon .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--robin-primary);
+  }
+
+  .robin-setting-item-text { flex: 1; min-width: 0; }
+
+  .robin-setting-item-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+
+  .robin-setting-item-desc {
+    font-size: 0.6875rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .robin-setting-item-badge {
+    font-size: 0.5625rem;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .robin-setting-item-badge.on { color: #4caf50; background: rgba(76, 175, 80, 0.12); }
+  .robin-setting-item-badge.off { color: var(--text-dim); background: rgba(255, 255, 255, 0.04); }
+  .robin-setting-item-badge.value { color: var(--robin-primary); background: var(--robin-primary-dim); }
+
+  /* ==========================================================
+     WIKI DETAIL PANEL (right column of the split)
+     ========================================================== */
+  .robin-detail {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-page);
+  }
+
+  .robin-detail-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-xl) var(--space-xl) 60px;
+    max-width: 720px;
+  }
+
+  .robin-detail-header { margin-bottom: var(--space-xl); }
+
+  .robin-detail-breadcrumb {
+    font-size: 0.6875rem;
+    color: var(--text-dim);
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .robin-detail-breadcrumb span {
+    color: var(--robin-primary);
+    cursor: pointer;
+  }
+
+  .robin-detail-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .robin-detail-title .material-symbols-outlined {
+    font-size: 28px;
+    color: var(--robin-primary);
+  }
+
+  .robin-detail-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* Meta strip */
+  .robin-detail-meta {
+    display: flex;
+    gap: var(--space-lg);
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+  }
+
+  .robin-detail-meta-item { display: flex; flex-direction: column; gap: 2px; }
+
+  .robin-detail-meta-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+  }
+
+  .robin-detail-meta-value {
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .robin-detail-meta-value.highlight { color: var(--robin-primary); }
+
+  /* Toggle row */
+  .robin-detail-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--space-lg);
+    padding: var(--space-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+  }
+
+  .robin-detail-toggle-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .robin-detail-toggle-desc {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .robin-toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    background: var(--border-card);
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background 200ms;
+    flex-shrink: 0;
+  }
+
+  .robin-toggle.on { background: var(--robin-primary); }
+
+  .robin-toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: left 200ms;
+  }
+
+  .robin-toggle.on::after { left: 21px; }
+
+  /* Wiki body */
+  .robin-detail-body { margin-top: var(--space-xl); }
+
+  .robin-detail-body h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+    margin-top: var(--space-xl);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .robin-detail-body h2:first-child { margin-top: 0; }
+
+  .robin-detail-body p {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--space-md);
+  }
+
+  .robin-detail-body code {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--robin-primary);
+  }
+
+  .robin-detail-body pre {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    font-size: 0.75rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    overflow-x: auto;
+    margin-bottom: var(--space-md);
+  }
+
+  .robin-detail-body ul {
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-lg);
+  }
+
+  .robin-detail-body li {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--space-xs);
+  }
+
+  .robin-detail-body li code { font-size: 0.7rem; }
+
+  /* Related links */
+  .robin-detail-related {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .robin-detail-related-title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: var(--space-sm);
+  }
+
+  .robin-detail-related-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .robin-detail-related-link {
+    font-size: 0.75rem;
+    color: var(--robin-primary);
+    background: var(--robin-primary-dim);
+    border: 1px solid var(--robin-primary-border);
+    border-radius: 14px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: background 150ms;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .robin-detail-related-link:hover {
+    background: rgba(79, 195, 247, 0.18);
+  }
+
+  .robin-detail-related-link .material-symbols-outlined { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="robin-overlay">
+
+  <!-- ========== Header ========== -->
+  <div class="robin-overlay-header">
+    <div class="robin-overlay-header-left">
+      <span class="material-symbols-outlined robin-overlay-header-icon">raven</span>
+      <span class="robin-overlay-header-name">Robin</span>
+      <span class="robin-overlay-header-subtitle">System Panel</span>
+    </div>
+    <button class="robin-exit-btn">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <!-- ========== Body: Chat | Settings ========== -->
+  <div class="robin-overlay-body">
+
+    <!-- LEFT: Chat -->
+    <div class="robin-chat">
+      <div class="robin-chat-messages">
+
+        <div class="robin-msg-system">Session started</div>
+
+        <div class="robin-msg-robin">
+          <div class="robin-msg-avatar">
+            <span class="material-symbols-outlined">raven</span>
+          </div>
+          <div class="robin-msg-bubble">
+            All systems nominal. 2 active sessions, no background bots. The event log has 847 entries since last rotation.
+          </div>
+        </div>
+
+        <div class="robin-msg-user">
+          <div class="robin-msg-bubble">Tell me about the settings enforcement</div>
+        </div>
+
+        <div class="robin-msg-robin">
+          <div class="robin-msg-avatar">
+            <span class="material-symbols-outlined">raven</span>
+          </div>
+          <div class="robin-msg-bubble">
+            Any folder named <code>settings/</code> is write-locked for AI — all cases, dot-prefixed variants too. It's hardcoded in <code>lib/enforcement.js</code>. I've pulled up the page for you →
+          </div>
+        </div>
+
+        <div class="robin-msg-system">Viewing: Settings Enforcement</div>
+
+      </div>
+
+      <div class="robin-chat-input">
+        <textarea rows="2" placeholder="Ask Robin anything..."></textarea>
+      </div>
+    </div>
+
+    <!-- RIGHT: Settings Area -->
+    <div class="robin-settings">
+
+      <!-- Horizontal tab bar across the top -->
+      <div class="robin-settings-tabs">
+        <button class="robin-settings-tab active">
+          <span class="material-symbols-outlined">tune</span>
+          General
+        </button>
+        <button class="robin-settings-tab">
+          <span class="material-symbols-outlined">dynamic_form</span>
+          Skills
+        </button>
+        <button class="robin-settings-tab">
+          <span class="material-symbols-outlined">link</span>
+          Connectors
+        </button>
+        <button class="robin-settings-tab">
+          <span class="material-symbols-outlined">person</span>
+          Profiles
+        </button>
+        <button class="robin-settings-tab">
+          <span class="material-symbols-outlined">bolt</span>
+          Triggers
+        </button>
+        <button class="robin-settings-tab">
+          <span class="material-symbols-outlined">palette</span>
+          Appearance
+        </button>
+      </div>
+
+      <!-- Split: list on left, wiki detail on right -->
+      <div class="robin-settings-split">
+
+        <!-- Settings list -->
+        <div class="robin-settings-list">
+
+          <div class="robin-settings-section-divider">System</div>
+
+          <div class="robin-setting-item">
+            <div class="robin-setting-item-icon">
+              <span class="material-symbols-outlined">memory</span>
+            </div>
+            <div class="robin-setting-item-text">
+              <div class="robin-setting-item-name">Session Limit</div>
+              <div class="robin-setting-item-desc">Max concurrent CLI sessions</div>
+            </div>
+            <span class="robin-setting-item-badge value">20</span>
+          </div>
+
+          <div class="robin-setting-item">
+            <div class="robin-setting-item-icon">
+              <span class="material-symbols-outlined">timer</span>
+            </div>
+            <div class="robin-setting-item-text">
+              <div class="robin-setting-item-name">Idle Timeout</div>
+              <div class="robin-setting-item-desc">Time before session suspend</div>
+            </div>
+            <span class="robin-setting-item-badge value">9m</span>
+          </div>
+
+          <div class="robin-setting-item">
+            <div class="robin-setting-item-icon">
+              <span class="material-symbols-outlined">notifications</span>
+            </div>
+            <div class="robin-setting-item-text">
+              <div class="robin-setting-item-name">Notifications</div>
+              <div class="robin-setting-item-desc">Toast alerts for events</div>
+            </div>
+            <span class="robin-setting-item-badge on">on</span>
+          </div>
+
+          <div class="robin-setting-item">
+            <div class="robin-setting-item-icon">
+              <span class="material-symbols-outlined">event_log</span>
+            </div>
+            <div class="robin-setting-item-text">
+              <div class="robin-setting-item-name">Event Log</div>
+              <div class="robin-setting-item-desc">Persist bus events to SQLite</div>
+            </div>
+            <span class="robin-setting-item-badge on">on</span>
+          </div>
+
+          <div class="robin-settings-section-divider">Security</div>
+
+          <div class="robin-setting-item active">
+            <div class="robin-setting-item-icon">
+              <span class="material-symbols-outlined">shield</span>
+            </div>
+            <div class="robin-setting-item-text">
+              <div class="robin-setting-item-name">Settings Enforcement</div>
+              <div class="robin-setting-item-desc">Write-lock on settings/ for AI</div>
+            </div>
+            <span class="robin-setting-item-badge on">on</span>
+          </div>
+
+          <div class="robin-setting-item">
+            <div class="robin-setting-item-icon">
+              <span class="material-symbols-outlined">drag_pan</span>
+            </div>
+            <div class="robin-setting-item-text">
+              <div class="robin-setting-item-name">Deploy Modals</div>
+              <div class="robin-setting-item-desc">Drag-to-deploy for config files</div>
+            </div>
+            <span class="robin-setting-item-badge on">on</span>
+          </div>
+
+          <div class="robin-setting-item">
+            <div class="robin-setting-item-icon">
+              <span class="material-symbols-outlined">archive</span>
+            </div>
+            <div class="robin-setting-item-text">
+              <div class="robin-setting-item-name">Settings Archive</div>
+              <div class="robin-setting-item-desc">Auto-archive on replacement</div>
+            </div>
+            <span class="robin-setting-item-badge on">on</span>
+          </div>
+
+          <div class="robin-settings-section-divider">Resources</div>
+
+          <div class="robin-setting-item">
+            <div class="robin-setting-item-icon">
+              <span class="material-symbols-outlined">dns</span>
+            </div>
+            <div class="robin-setting-item-text">
+              <div class="robin-setting-item-name">Active Sessions</div>
+              <div class="robin-setting-item-desc">explorer, agents</div>
+            </div>
+            <span class="robin-setting-item-badge value">2</span>
+          </div>
+
+          <div class="robin-setting-item">
+            <div class="robin-setting-item-icon">
+              <span class="material-symbols-outlined">smart_toy</span>
+            </div>
+            <div class="robin-setting-item-text">
+              <div class="robin-setting-item-name">Background Bots</div>
+              <div class="robin-setting-item-desc">Dispatched on ticket claim</div>
+            </div>
+            <span class="robin-setting-item-badge off">0</span>
+          </div>
+
+          <div class="robin-setting-item">
+            <div class="robin-setting-item-icon">
+              <span class="material-symbols-outlined">schedule</span>
+            </div>
+            <div class="robin-setting-item-text">
+              <div class="robin-setting-item-name">Cron Jobs</div>
+              <div class="robin-setting-item-desc">Scheduled triggers</div>
+            </div>
+            <span class="robin-setting-item-badge value">3</span>
+          </div>
+
+        </div>
+
+        <!-- Wiki detail panel -->
+        <div class="robin-detail">
+          <div class="robin-detail-scroll">
+
+            <div class="robin-detail-header">
+              <div class="robin-detail-breadcrumb">
+                <span>General</span> / <span>Security</span> / Settings Enforcement
+              </div>
+
+              <div class="robin-detail-title">
+                <span class="material-symbols-outlined">shield</span>
+                Settings Enforcement
+              </div>
+
+              <div class="robin-detail-subtitle">
+                System-wide write-lock preventing AI from modifying any folder named <code>settings/</code>. This is the primary human-in-the-loop gate — the AI can read settings but never write to them directly.
+              </div>
+
+              <div class="robin-detail-meta">
+                <div class="robin-detail-meta-item">
+                  <span class="robin-detail-meta-label">Status</span>
+                  <span class="robin-detail-meta-value highlight">Active</span>
+                </div>
+                <div class="robin-detail-meta-item">
+                  <span class="robin-detail-meta-label">Type</span>
+                  <span class="robin-detail-meta-value">Hardcoded</span>
+                </div>
+                <div class="robin-detail-meta-item">
+                  <span class="robin-detail-meta-label">Source</span>
+                  <span class="robin-detail-meta-value"><code>lib/enforcement.js</code></span>
+                </div>
+                <div class="robin-detail-meta-item">
+                  <span class="robin-detail-meta-label">Bounces today</span>
+                  <span class="robin-detail-meta-value">0</span>
+                </div>
+              </div>
+
+              <div class="robin-detail-toggle-row">
+                <div>
+                  <div class="robin-detail-toggle-label">Enforcement Active</div>
+                  <div class="robin-detail-toggle-desc">Disable to allow AI write access to settings/ folders</div>
+                </div>
+                <div class="robin-toggle on"></div>
+              </div>
+            </div>
+
+            <div class="robin-detail-body">
+
+              <h2>How It Works</h2>
+              <p>
+                Every <code>write_file</code> and <code>edit_file</code> tool call passes through
+                <code>checkSettingsBounce()</code> in the server's wire message handler. The function
+                splits the file path into segments and tests each one against the pattern
+                <code>/^\.?settings$/i</code>.
+              </p>
+              <p>
+                If any segment matches, the tool call is bounced — the server sends a
+                <code>tool_result</code> with <code>isError: true</code> back to the wire, and the AI
+                sees a restriction message. A <code>system:tool_bounced</code> event fires on the
+                event bus for auditing.
+              </p>
+
+              <h2>What's Protected</h2>
+              <ul>
+                <li><code>settings/</code> — standard folder name</li>
+                <li><code>.settings/</code> — dot-prefixed variant</li>
+                <li><code>Settings/</code>, <code>.Settings/</code> — case variants</li>
+                <li>Any depth: <code>ai/panels/code/chat/settings/PROMPT.md</code></li>
+                <li>All files inside, not just PROMPT.md and SESSION.md</li>
+              </ul>
+
+              <h2>Deploy Flow</h2>
+              <p>
+                Since the AI can't write to settings/ directly, it drops generated files into the
+                parent folder. A TRIGGERS.md-driven file watcher detects the new file and shows a
+                drag-to-deploy modal overlay. The user physically drags the file into the settings/
+                target to activate it.
+              </p>
+              <pre>AI generates PROMPT.md → drops in chat/
+  → trigger fires → modal appears
+  → user drags to settings/
+  → prior copy archived → new file deployed</pre>
+
+              <h2>Configuration</h2>
+              <p>
+                This rule is hardcoded and not configurable through TRIGGERS.md or any settings file.
+                The override toggle above writes to <code>system.jsonc</code> — if you disable it,
+                all settings/ folders become writable by AI.
+              </p>
+              <pre>{
+  "enforcement": {
+    "settings_write_lock": true
+  }
+}</pre>
+
+              <div class="robin-detail-related">
+                <div class="robin-detail-related-title">Related</div>
+                <div class="robin-detail-related-links">
+                  <a class="robin-detail-related-link">
+                    <span class="material-symbols-outlined">drag_pan</span>
+                    Deploy Modals
+                  </a>
+                  <a class="robin-detail-related-link">
+                    <span class="material-symbols-outlined">archive</span>
+                    Settings Archive
+                  </a>
+                  <a class="robin-detail-related-link">
+                    <span class="material-symbols-outlined">bolt</span>
+                    System Triggers
+                  </a>
+                  <a class="robin-detail-related-link">
+                    <span class="material-symbols-outlined">description</span>
+                    VIEW-CHAT.md
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

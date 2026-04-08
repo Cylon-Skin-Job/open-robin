@@ -1,6 +1,6 @@
 /* ── File Page View ─────────────────────────────────────── */
 
-.file-page-view {
+.rv-file-page-view {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -9,7 +9,7 @@
 }
 
 /* Top bar — back arrow + filename */
-.file-page-topbar {
+.rv-file-page-topbar {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -18,7 +18,7 @@
   flex-shrink: 0;
 }
 
-.file-page-back {
+.rv-file-page-back {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -32,15 +32,15 @@
   transition: background 150ms;
 }
 
-.file-page-back:hover {
+.rv-file-page-back:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
-.file-page-back .material-symbols-outlined {
+.rv-file-page-back .material-symbols-outlined {
   font-size: 18px;
 }
 
-.file-page-filename {
+.rv-file-page-filename {
   flex: 1;
   font-size: 0.8125rem;
   font-weight: 500;
@@ -50,14 +50,14 @@
   text-overflow: ellipsis;
 }
 
-.file-page-actions {
+.rv-file-page-actions {
   display: flex;
   align-items: center;
   gap: 4px;
   margin-left: auto;
 }
 
-.file-page-action {
+.rv-file-page-action {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,16 +69,16 @@
   transition: color 150ms;
 }
 
-.file-page-action:hover {
+.rv-file-page-action:hover {
   color: var(--text-primary, #e0e0e0);
 }
 
-.file-page-action .material-symbols-outlined {
+.rv-file-page-action .material-symbols-outlined {
   font-size: 20px;
 }
 
 /* Content area — fills remaining space, scrolls */
-.file-page-content {
+.rv-file-page-content {
   flex: 1;
   overflow: auto;
   padding: 20px 24px;
@@ -86,28 +86,28 @@
   scrollbar-width: none;
 }
 
-.file-page-content::-webkit-scrollbar {
+.rv-file-page-content::-webkit-scrollbar {
   display: none;
 }
 
 /* Document page treatment — gray page on dark background */
-.file-page-content.file-page-document {
+.rv-file-page-content.rv-file-page-document {
   padding: 20px;
 }
 
-.file-page-content.file-page-document .code-editor {
+.rv-file-page-content.rv-file-page-document .rv-code-editor {
   background: #1e1e1e;
   width: 100%;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
   overflow: visible;
 }
 
-.file-page-content.file-page-document .code-content {
+.rv-file-page-content.rv-file-page-document .rv-code-content {
   overflow-x: auto;
   overflow-y: visible;
 }
 
-.file-page-text {
+.rv-file-page-text {
   margin: 0;
   font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace);
   font-size: 13px;
@@ -117,11 +117,11 @@
   word-break: break-word;
 }
 
-.file-page-text code {
+.rv-file-page-text code {
   font-family: inherit;
 }
 
-.file-page-image {
+.rv-file-page-image {
   max-width: 100%;
   height: auto;
   border-radius: 6px;
@@ -129,14 +129,14 @@
 
 /* ── Bottom Ribbon ─────────────────────────────────────── */
 
-.file-page-ribbon {
+.rv-file-page-ribbon {
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.03);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding: 8px 0;
 }
 
-.file-page-ribbon-scroll {
+.rv-file-page-ribbon-scroll {
   display: flex;
   gap: 8px;
   padding: 0 16px;
@@ -145,15 +145,15 @@
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
-.file-page-ribbon-scroll::-webkit-scrollbar {
+.rv-file-page-ribbon-scroll::-webkit-scrollbar {
   height: 4px;
 }
 
-.file-page-ribbon-scroll::-webkit-scrollbar-track {
+.rv-file-page-ribbon-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.file-page-ribbon-scroll::-webkit-scrollbar-thumb {
+.rv-file-page-ribbon-scroll::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }

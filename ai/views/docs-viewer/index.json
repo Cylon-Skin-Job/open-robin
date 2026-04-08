@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "id": "docs-viewer",
+  "folderName": "docs-viewer",
+  "label": "Docs",
+  "description": "Document authoring and markdown editing workspace",
+  "type": "tiled-rows",
+  "icon": "article",
+  "rank": 10,
+  "sort": "manual",
+  "created": "2026-04-03T00:00:00-07:00",
+  "settings": {
+    "layout": "sidebar-chat-content",
+    "theme": {
+      "primary": "#c084fc",
+      "sidebar_bg": "#14101a",
+      "content_bg": "#0d0d0d",
+      "panel_border": "#c084fc33"
+    }
+  }
+}

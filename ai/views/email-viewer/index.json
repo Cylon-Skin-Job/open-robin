@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "id": "email-viewer",
+  "folderName": "email-viewer",
+  "label": "Email",
+  "description": "Email client with inbox navigation and message reading",
+  "type": "navigation",
+  "icon": "mail",
+  "rank": 9,
+  "sort": "manual",
+  "created": "2026-04-03T00:00:00-07:00",
+  "settings": {
+    "layout": "sidebar-chat-content",
+    "theme": {
+      "primary": "#34d399",
+      "sidebar_bg": "#0a1a14",
+      "content_bg": "#0d0d0d",
+      "panel_border": "#34d39933"
+    }
+  }
+}

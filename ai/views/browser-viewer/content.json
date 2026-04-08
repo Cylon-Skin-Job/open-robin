@@ -1,0 +1,7 @@
+{
+  "display": "browser",
+  "chat": {
+    "type": "threaded",
+    "position": "popup"
+  }
+}

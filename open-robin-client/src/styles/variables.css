@@ -26,6 +26,39 @@
   --sidebar-width: 250px;
   --chat-width: 400px;
   
+  /* Z-Index Hierarchy */
+  --z-content: 1;
+  --z-gutter: 2;
+  --z-inline: 10;
+  --z-panel: 600;
+  --z-overlay: 1000;
+  --z-modal: 1003;
+  --z-tooltip: 1004;
+  --z-system: 10000;
+
+  /* Spacing Scale */
+  --space-2xs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+
+  /* Font Size Scale */
+  --font-2xs: 10px;
+  --font-xs: 11px;
+  --font-sm: 12px;
+  --font-md: 13px;
+  --font-lg: 16px;
+  --font-xl: 20px;
+  --font-2xl: 32px;
+
+  /* Border Radius Scale */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
   /* Theme Variables (Dynamic per panel) */
   --theme-primary: #00d4ff;
   --theme-primary-rgb: 0, 212, 255;

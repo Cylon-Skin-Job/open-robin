@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "id": "workspaces",
+  "label": "Workspaces",
+  "description": null,
+  "type": "page",
+  "rank": 10,
+  "icon": "article",
+  "color": null,
+  "created": "2026-03-20T14:00:00Z",
+  "updated": "2026-03-27T21:00:00Z",
+  "frozen": false,
+  "children": null,
+  "edges_out": ["Workspace-Agent-Model", "Ticket-Routing", "Session-Scoping", "Model-Config", "Wiki-Interface", "Background-Agents", "Path-Resolution"],
+  "edges_in": ["Home", "Workspace-Agent-Model", "Ticket-Routing", "Model-Config", "Session-Scoping", "Background-Agents"],
+  "sources": [],
+  "settings": {}
+}

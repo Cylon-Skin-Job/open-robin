@@ -97,8 +97,8 @@ export function PageViewer() {
 
   if (!activeTopic) {
     return (
-      <div className="wiki-page-viewer">
-        <div className="wiki-page-empty">
+      <div className="rv-wiki-page-viewer">
+        <div className="rv-wiki-page-empty">
           <span className="material-symbols-outlined" style={{ fontSize: '2rem', opacity: 0.3 }}>full_coverage</span>
           <p>Select a topic to view</p>
         </div>
@@ -110,11 +110,11 @@ export function PageViewer() {
   const renderedLog = logContent ? markdownToHtml(logContent) : '';
 
   return (
-    <div className="wiki-page-viewer" onClick={handleContentClick}>
+    <div className="rv-wiki-page-viewer" onClick={handleContentClick}>
       {/* Breadcrumb / Nav */}
-      <div className="wiki-page-nav">
+      <div className="rv-wiki-page-nav">
         <button
-          className="wiki-nav-btn"
+          className="rv-wiki-nav-btn"
           onClick={goBack}
           disabled={historyIndex <= 0}
           title="Back"
@@ -122,19 +122,19 @@ export function PageViewer() {
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
         <button
-          className="wiki-nav-btn"
+          className="rv-wiki-nav-btn"
           onClick={goForward}
           disabled={historyIndex >= navigationHistory.length - 1}
           title="Forward"
         >
           <span className="material-symbols-outlined">arrow_forward</span>
         </button>
-        <span className="wiki-breadcrumb">
+        <span className="rv-wiki-breadcrumb">
           {topics[activeTopic]?.slug || activeTopic}
         </span>
-        <div className="wiki-nav-actions">
+        <div className="rv-wiki-nav-actions">
           <button
-            className="file-page-action"
+            className="rv-file-page-action"
             onClick={() => copyResourcePath('wiki-viewer', `${activeTopic}/${activeTab === 'log' ? 'LOG' : 'PAGE'}.md`)}
             title="Copy file path"
           >
@@ -144,21 +144,21 @@ export function PageViewer() {
       </div>
 
       {/* Tab bar */}
-      <div className="wiki-tab-bar">
+      <div className="rv-wiki-tab-bar">
         <button
-          className={`wiki-tab ${activeTab === 'page' ? 'active' : ''}`}
+          className={`rv-wiki-tab ${activeTab === 'page' ? 'active' : ''}`}
           onClick={() => handleTabClick('page')}
         >
           Page
         </button>
         <button
-          className={`wiki-tab ${activeTab === 'log' ? 'active' : ''}`}
+          className={`rv-wiki-tab ${activeTab === 'log' ? 'active' : ''}`}
           onClick={() => handleTabClick('log')}
         >
           Log
         </button>
         <button
-          className={`wiki-tab ${activeTab === 'runs' ? 'active' : ''}`}
+          className={`rv-wiki-tab ${activeTab === 'runs' ? 'active' : ''}`}
           onClick={() => handleTabClick('runs')}
         >
           Runs
@@ -167,32 +167,32 @@ export function PageViewer() {
 
       {/* Content */}
       {error && (
-        <div className="wiki-page-error">
+        <div className="rv-wiki-page-error">
           <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>error</span>
           <span>{error}</span>
         </div>
       )}
 
       {pageLoading && (
-        <div className="wiki-page-loading">Loading...</div>
+        <div className="rv-wiki-page-loading">Loading...</div>
       )}
 
       {activeTab === 'page' && !pageLoading && (
         <div
-          className="wiki-page-content document-surface"
+          className="rv-wiki-page-content rv-document-surface"
           dangerouslySetInnerHTML={{ __html: renderedPage as string }}
         />
       )}
 
       {activeTab === 'log' && (
         <div
-          className="wiki-page-content document-surface"
+          className="rv-wiki-page-content rv-document-surface"
           dangerouslySetInnerHTML={{ __html: renderedLog as string }}
         />
       )}
 
       {activeTab === 'runs' && (
-        <div className="wiki-page-content document-surface">
+        <div className="rv-wiki-page-content rv-document-surface">
           <p style={{ color: 'var(--text-dim)' }}>Run history — coming soon</p>
         </div>
       )}

@@ -18,7 +18,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: 'node ../open-robin-server/server.js',
     url: 'http://localhost:3001',
     reuseExistingServer: true,
   },

@@ -1,0 +1,133 @@
+<div class="ws-term-container">
+  <div class="ws-term-main">
+
+    <!-- Panel Header -->
+    <div class="ws-term-header">
+      <div class="ws-term-header-left">
+        <span class="ws-term-title">Terminal</span>
+        <span class="ws-term-tab-count" data-count="terminals">3</span>
+      </div>
+      <div class="ws-term-actions">
+        <button class="active" title="Single pane" data-action="split-1">
+          <span class="material-symbols-outlined" style="font-size:16px">square</span>
+        </button>
+        <button title="Two panes" data-action="split-2">
+          <span class="material-symbols-outlined" style="font-size:16px">grid_view</span>
+        </button>
+        <button title="Three panes" data-action="split-3">
+          <span class="material-symbols-outlined" style="font-size:16px">view_column_2</span>
+        </button>
+        <div class="ws-term-split-divider"></div>
+        <button title="New terminal" data-action="new-terminal">
+          <span class="material-symbols-outlined" style="font-size:16px">add</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Split Panes -->
+    <div class="ws-term-splits" data-split="2">
+
+      <!-- Pane 1: zsh -->
+      <div class="ws-term-pane">
+        <div class="ws-term-pane-header">
+          <span class="ws-term-pane-label">
+            <span class="ws-term-dot ws-term-dot-active"></span>
+            zsh
+          </span>
+          <button class="ws-term-pane-close">
+            <span class="material-symbols-outlined" style="font-size:14px">close</span>
+          </button>
+        </div>
+        <div class="ws-term-body">
+          <div><span class="path">~/projects/kimi-claude</span></div>
+          <div><span class="prompt">$</span> git status</div>
+          <div class="output">On branch feature/chunk-rendering</div>
+          <div class="output">Changes not staged for commit:</div>
+          <div class="output">&nbsp;&nbsp;modified: kimi-ide-client/src/lib/text/index.ts</div>
+          <div class="output">&nbsp;&nbsp;modified: kimi-ide-client/src/components/LiveSegmentRenderer.tsx</div>
+          <div><span class="prompt">$</span> <span class="ws-term-cursor"></span></div>
+        </div>
+      </div>
+
+      <!-- Pane 2: kimi -->
+      <div class="ws-term-pane">
+        <div class="ws-term-pane-header">
+          <span class="ws-term-pane-label">
+            <span class="ws-term-dot ws-term-dot-active"></span>
+            kimi
+          </span>
+          <button class="ws-term-pane-close">
+            <span class="material-symbols-outlined" style="font-size:14px">close</span>
+          </button>
+        </div>
+        <div class="ws-term-body">
+          <div style="color: var(--theme-primary, #4ade80);">kimi-claude v1.23.0</div>
+          <div class="output">Session active. Context: 12.4%</div>
+          <div>&nbsp;</div>
+          <div><span class="prompt">&gt;</span> Explain how the orb animation works</div>
+          <div>&nbsp;</div>
+          <div class="output">The orb is a dynamic gatekeeper animation...</div>
+          <div class="output">It expands over 1.5s, holds until the first</div>
+          <div class="output">token arrives, then runs a 500ms disposal.</div>
+          <div>&nbsp;</div>
+          <div><span class="prompt">&gt;</span> <span class="ws-term-cursor"></span></div>
+        </div>
+      </div>
+
+      <!-- Pane 3: node (hidden in 2-split) -->
+      <div class="ws-term-pane">
+        <div class="ws-term-pane-header">
+          <span class="ws-term-pane-label">
+            <span class="ws-term-dot ws-term-dot-idle"></span>
+            node
+          </span>
+          <button class="ws-term-pane-close">
+            <span class="material-symbols-outlined" style="font-size:14px">close</span>
+          </button>
+        </div>
+        <div class="ws-term-body">
+          <div class="output">Welcome to Node.js v25.6.1.</div>
+          <div class="output">Type ".help" for more information.</div>
+          <div><span class="prompt">&gt;</span> <span class="ws-term-cursor"></span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Right Sidebar: Terminal List -->
+  <div class="ws-term-sidebar">
+    <div class="ws-term-sidebar-header">
+      <span class="ws-term-sidebar-title">Terminals</span>
+      <button class="ws-term-sidebar-add" title="New terminal" data-action="new-terminal">
+        <span class="material-symbols-outlined" style="font-size:16px">add</span>
+      </button>
+    </div>
+    <div class="ws-term-list" data-list="terminals">
+      <div class="ws-term-list-item active" data-terminal="0">
+        <span class="material-symbols-outlined">terminal</span>
+        <div class="ws-term-list-item-info">
+          <div class="ws-term-list-item-name">zsh</div>
+          <div class="ws-term-list-item-path">~/projects/kimi-claude</div>
+        </div>
+        <span class="ws-term-dot ws-term-dot-active"></span>
+      </div>
+      <div class="ws-term-list-item" data-terminal="1">
+        <span class="material-symbols-outlined">smart_toy</span>
+        <div class="ws-term-list-item-info">
+          <div class="ws-term-list-item-name">kimi</div>
+          <div class="ws-term-list-item-path">coding-agent</div>
+        </div>
+        <span class="ws-term-dot ws-term-dot-active"></span>
+      </div>
+      <div class="ws-term-list-item" data-terminal="2">
+        <span class="material-symbols-outlined">data_object</span>
+        <div class="ws-term-list-item-info">
+          <div class="ws-term-list-item-name">node</div>
+          <div class="ws-term-list-item-path">REPL</div>
+        </div>
+        <span class="ws-term-dot ws-term-dot-idle"></span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "id": "browser-viewer",
+  "folderName": "browser-viewer",
+  "label": "Browser",
+  "description": "Embedded browser for web research and preview",
+  "type": "browser",
+  "icon": "language",
+  "rank": 7,
+  "sort": "manual",
+  "created": "2026-04-03T00:00:00-07:00",
+  "settings": {
+    "layout": "full",
+    "theme": {
+      "primary": "#60a5fa",
+      "sidebar_bg": "#0a1225",
+      "content_bg": "#0d0d0d",
+      "panel_border": "#60a5fa33"
+    }
+  }
+}

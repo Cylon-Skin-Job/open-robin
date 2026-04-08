@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "id": "chat-panel-architecture",
+  "label": "Chat Panel Architecture",
+  "description": "How the chat panel renders, animates, and manages state. Internal dev reference.",
+  "type": "page",
+  "rank": 5,
+  "icon": "chat",
+  "color": null,
+  "created": "2026-03-29T00:00:00Z",
+  "updated": "2026-03-29T00:00:00Z",
+  "frozen": false,
+  "children": null,
+  "edges_out": ["turn-lifecycle"],
+  "edges_in": null,
+  "sources": null,
+  "settings": {}
+}

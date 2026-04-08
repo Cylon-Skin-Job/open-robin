@@ -1,0 +1,21 @@
+# AI Workspace - Git Ignore
+# These files should not be committed to git
+
+# Active session state (transient)
+workspaces/*/sessions/active/
+workspaces/*/sessions/grace-period/
+
+# Checkpoints (can be large)
+workspaces/*/checkpoints/
+
+# Screenshots (symlinked from Desktop)
+screenshots/
+
+# Temporary files
+*.tmp
+*.lock
+
+# But DO commit:
+# - Thread summaries
+# - Suspended session metadata
+# - Workspace configuration
