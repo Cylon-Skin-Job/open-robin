@@ -2,9 +2,12 @@
  * ChatFile - Parser and writer for thread markdown files
  *
  * Writes human-readable chat transcripts to per-user folders:
- *   ai/views/{workspace}/chat/threads/{username}/thread-name.md
+ *   ai/views/{workspace}/chat/threads/{username}/{threadId}.md
  *
- * Falls back to legacy path ({threadDir}/CHAT.md) when viewsDir is not set.
+ * Filenames are the timestamp thread ID (from SPEC-24a) and are IMMUTABLE
+ * for the life of the file. Renaming a thread is a frontmatter rewrite,
+ * not a filesystem move. Display name lives in YAML frontmatter at the
+ * top of the file (SPEC-24b).
  */
 
 const fs = require('fs').promises;
@@ -36,72 +39,45 @@ function getUsername() {
   return _cachedUsername;
 }
 
-/**
- * Convert a thread name to a safe filename.
- * @param {string} name
- * @returns {string}
- */
-function threadNameToFilename(name) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 80) + '.md';
-}
-
 class ChatFile {
   /**
    * @param {object} opts
-   * @param {string} [opts.threadDir] - Legacy: directory containing CHAT.md
-   * @param {string} [opts.viewsDir] - New: ai/views/{workspace}/chat/threads/{username}
-   * @param {string} [opts.threadName] - Thread name (used for filename in views mode)
+   * @param {string} opts.viewsDir - Absolute path to the per-user threads directory
+   *   (e.g. ai/views/code-viewer/chat/threads/rccurtrightjr.).
+   * @param {string} opts.threadId - Timestamp thread ID (YYYY-MM-DDTHH-MM-SS-mmm)
+   *   from SPEC-24a. Becomes the filename: ${threadId}.md — immutable for the
+   *   life of the file. Rename is a frontmatter operation, not a filesystem one.
    */
-  constructor(opts) {
-    if (typeof opts === 'string') {
-      // Legacy: constructor(threadDir)
-      this.threadDir = opts;
-      this.filePath = path.join(opts, 'CHAT.md');
-      this.viewsDir = null;
-      this.threadName = null;
-    } else {
-      this.viewsDir = opts.viewsDir || null;
-      this.threadName = opts.threadName || null;
-      this.threadDir = opts.threadDir || null;
-
-      if (this.viewsDir && this.threadName) {
-        this.filePath = path.join(this.viewsDir, threadNameToFilename(this.threadName));
-      } else if (this.threadDir) {
-        this.filePath = path.join(this.threadDir, 'CHAT.md');
-      } else {
-        this.filePath = null;
-      }
+  constructor({ viewsDir, threadId } = {}) {
+    if (!viewsDir || !threadId) {
+      throw new Error('ChatFile: both viewsDir and threadId are required');
     }
+    this.viewsDir = viewsDir;
+    this.threadId = threadId;
+    this.filePath = path.join(viewsDir, `${threadId}.md`);
   }
 
   /**
    * Ensure the parent directory exists
    */
   async ensureDir() {
-    if (!this.filePath) return;
     await fs.mkdir(path.dirname(this.filePath), { recursive: true });
   }
 
   /**
-   * Parse CHAT.md content
-   * @param {string} content - File content
-   * @returns {{title: string, messages: Array}}
+   * Parse a chat markdown file into frontmatter + messages.
+   * @param {string} content - Full file content
+   * @returns {{name: string|null, messages: Array}}
    */
   parse(content) {
-    const lines = content.split('\n');
+    const { parseFrontmatter } = require('../frontmatter');
+    const { frontmatter, body } = parseFrontmatter(content, 'chat');
 
-    let title = 'New Chat';
-    let startIdx = 0;
+    // name may be null (fresh thread before enrichment), undefined (file has
+    // no frontmatter — treat as null), or a string.
+    const name = frontmatter.name === undefined ? null : frontmatter.name;
 
-    if (lines[0]?.startsWith('# ')) {
-      title = lines[0].slice(2).trim();
-      startIdx = 1;
-    }
-
+    const lines = body.split('\n');
     const messages = [];
     let currentRole = null;
     let currentContent = [];
@@ -125,9 +101,7 @@ class ChatFile {
       currentMetadata = null;
     };
 
-    for (let i = startIdx; i < lines.length; i++) {
-      const line = lines[i];
-
+    for (const line of lines) {
       if (line === 'User') {
         flushMessage();
         currentRole = 'user';
@@ -153,17 +127,21 @@ class ChatFile {
     }
 
     flushMessage();
-    return { title, messages };
+    return { name, messages };
   }
 
   /**
-   * Serialize messages to markdown format
-   * @param {string} title - Thread title
+   * Serialize frontmatter + messages to markdown format.
+   * @param {string|null} name - Display name. null is emitted as `name: null`
+   *   in the frontmatter and round-trips through the parser as JS null.
    * @param {Array} messages
    * @returns {string}
    */
-  serialize(title, messages) {
-    const lines = [`# ${title}`, ''];
+  serialize(name, messages) {
+    const { serializeFrontmatter } = require('../frontmatter');
+    const fm = serializeFrontmatter({ name });
+
+    const lines = [''];  // blank line after frontmatter block
 
     for (const msg of messages) {
       lines.push(msg.role === 'user' ? 'User' : 'Assistant');
@@ -183,15 +161,14 @@ class ChatFile {
       }
     }
 
-    return lines.join('\n');
+    return fm + lines.join('\n');
   }
 
   /**
    * Read and parse the chat file
-   * @returns {Promise<{title: string, messages: Array}|null>}
+   * @returns {Promise<{name: string|null, messages: Array}|null>}
    */
   async read() {
-    if (!this.filePath) return null;
     try {
       const content = await fs.readFile(this.filePath, 'utf-8');
       return this.parse(content);
@@ -203,21 +180,21 @@ class ChatFile {
 
   /**
    * Write messages to file
-   * @param {string} title
+   * @param {string|null} name
    * @param {Array} messages
    */
-  async write(title, messages) {
+  async write(name, messages) {
     await this.ensureDir();
-    const content = this.serialize(title, messages);
+    const content = this.serialize(name, messages);
     await fs.writeFile(this.filePath, content);
   }
 
   /**
    * Append a single message to the file
-   * @param {string} title - Current thread title
+   * @param {string|null} name - Current thread display name
    * @param {object} message
    */
-  async appendMessage(title, message) {
+  async appendMessage(name, message) {
     await this.ensureDir();
 
     let messages = [];
@@ -227,7 +204,7 @@ class ChatFile {
     }
 
     messages.push(message);
-    await this.write(title, messages);
+    await this.write(name, messages);
   }
 
   /**
@@ -235,7 +212,6 @@ class ChatFile {
    * @returns {Promise<boolean>}
    */
   async exists() {
-    if (!this.filePath) return false;
     try {
       await fs.access(this.filePath);
       return true;
@@ -253,28 +229,6 @@ class ChatFile {
     return parsed?.messages.length || 0;
   }
 
-  /**
-   * Rename the file on disk (for thread renames in views mode).
-   * @param {string} newName - New thread name
-   * @returns {Promise<string|null>} New file path, or null if not in views mode
-   */
-  async renameFile(newName) {
-    if (!this.viewsDir || !this.filePath) return null;
-
-    const newPath = path.join(this.viewsDir, threadNameToFilename(newName));
-    if (newPath === this.filePath) return this.filePath;
-
-    try {
-      await fs.rename(this.filePath, newPath);
-    } catch (err) {
-      if (err.code !== 'ENOENT') throw err;
-      // Old file doesn't exist — nothing to rename
-    }
-
-    this.filePath = newPath;
-    this.threadName = newName;
-    return newPath;
-  }
 }
 
-module.exports = { ChatFile, TOOL_CALL_MARKER, getUsername, threadNameToFilename };
+module.exports = { ChatFile, TOOL_CALL_MARKER, getUsername };

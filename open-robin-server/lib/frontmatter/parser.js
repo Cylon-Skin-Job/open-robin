@@ -76,6 +76,8 @@ function parseValue(raw) {
   // Boolean
   if (raw === 'true') return true;
   if (raw === 'false') return false;
+  // Null literal
+  if (raw === 'null') return null;
   // Number
   if (/^\d+$/.test(raw)) return parseInt(raw, 10);
   // Quoted string

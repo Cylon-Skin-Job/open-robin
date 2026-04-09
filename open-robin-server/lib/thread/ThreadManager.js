@@ -88,21 +88,22 @@ class ThreadManager {
   }
 
   /**
-   * Create a ChatFile for the given thread.
-   * Uses per-user views path if projectRoot is set, otherwise legacy UUID dir.
+   * Create a ChatFile for the given thread. Requires a views directory —
+   * if _getViewsDir() returns null (no projectRoot), throws instead of
+   * silently producing a broken ChatFile. Legacy CHAT.md mode was removed
+   * in SPEC-24b.
    * @param {string} threadId
-   * @param {string} threadName
    * @returns {ChatFile}
    */
-  _createChatFile(threadId, threadName) {
+  _createChatFile(threadId) {
     const viewsDir = this._getViewsDir();
-    if (viewsDir) {
-      return new ChatFile({ viewsDir, threadName });
+    if (!viewsDir) {
+      throw new Error(
+        `ThreadManager._createChatFile: no viewsDir available for panel ${this.panelId}. ` +
+        `projectRoot must be set. Legacy CHAT.md mode was removed in SPEC-24b.`
+      );
     }
-    if (this.threadsDir) {
-      return new ChatFile(path.join(this.threadsDir, threadId));
-    }
-    return new ChatFile({ threadDir: null });
+    return new ChatFile({ viewsDir, threadId });
   }
 
   /**
@@ -124,13 +125,13 @@ class ThreadManager {
   /**
    * Create a new thread
    * @param {string} threadId - Thread ID (should be Kimi session ID)
-   * @param {string} [name='New Chat']
+   * @param {string|null} [name=null]
    * @param {object} [options]
    * @param {string} [options.harnessId='kimi']
    * @param {object} [options.harnessConfig]
    * @returns {Promise<{threadId: string, entry: import('./types').ThreadEntry}>}
    */
-  async createThread(threadId, name = 'New Chat', options = {}) {
+  async createThread(threadId, name = null, options = {}) {
     // Check for FIFO eviction
     await this._enforceSessionLimit();
 
@@ -139,10 +140,8 @@ class ThreadManager {
 
     // Create chat markdown file
     await this._ensureThreadsIndex();
-    const chatFile = this._createChatFile(threadId, name);
-    if (chatFile.filePath) {
-      await chatFile.write(name, []);
-    }
+    const chatFile = this._createChatFile(threadId);
+    await chatFile.write(name, []);
 
     return { threadId, entry };
   }
@@ -156,7 +155,7 @@ class ThreadManager {
     if (!entry) return null;
 
     // Get the chat file path for this thread
-    const chatFile = this._createChatFile(threadId, entry.name);
+    const chatFile = this._createChatFile(threadId);
 
     return { threadId, entry, filePath: chatFile.filePath };
   }
@@ -181,18 +180,14 @@ class ThreadManager {
     const entry = await this.index.rename(threadId, newName);
     if (!entry) return null;
 
-    // Update chat markdown: rename file + rewrite title
-    const chatFile = this._createChatFile(threadId, oldEntry.name);
-    if (chatFile.filePath) {
-      if (chatFile.viewsDir) {
-        // Views mode: rename the file, then rewrite with new title
-        await chatFile.renameFile(newName);
-      }
-      const parsed = await chatFile.read();
-      if (parsed) {
-        await chatFile.write(newName, parsed.messages);
-      }
+    // Rewrite the frontmatter name in place — filename is immutable in SPEC-24b.
+    const chatFile = this._createChatFile(threadId);
+    const parsed = await chatFile.read();
+    if (parsed) {
+      await chatFile.write(newName, parsed.messages);
     }
+    // If parsed is null (file doesn't exist yet), there's nothing to rewrite.
+    // SQLite has the name either way — the file will pick it up on first write.
 
     return { threadId, entry };
   }
@@ -205,33 +200,20 @@ class ThreadManager {
     // Kill active session if any
     await this.closeSession(threadId);
 
-    // Get entry before deleting (need name for file path)
-    const entry = await this.index.get(threadId);
-
     // Remove from index (CASCADE deletes exchanges)
     const deleted = await this.index.delete(threadId);
     if (!deleted) return false;
 
-    // Delete chat markdown file
+    // Remove the markdown file. Filename is ${threadId}.md — no need to fetch
+    // the entry or look up the name.
     const fsPromises = require('fs').promises;
-    if (entry) {
-      const chatFile = this._createChatFile(threadId, entry.name);
-      if (chatFile.filePath) {
-        try {
-          await fsPromises.rm(chatFile.filePath, { force: true });
-        } catch (err) {
-          console.error(`Failed to delete chat file for ${threadId}:`, err);
-        }
-      }
-    }
-
-    // Clean up legacy UUID directory if it exists
-    if (this.threadsDir) {
-      const threadPath = path.join(this.threadsDir, threadId);
-      try {
-        await fsPromises.rm(threadPath, { recursive: true, force: true });
-      } catch {
-        // Ignore — may not exist
+    try {
+      const chatFile = this._createChatFile(threadId);
+      await fsPromises.rm(chatFile.filePath, { force: true });
+    } catch (err) {
+      // ENOENT is fine — file may not exist yet for zero-message threads
+      if (err.code !== 'ENOENT') {
+        console.error(`Failed to delete chat file for ${threadId}:`, err);
       }
     }
 
@@ -248,10 +230,8 @@ class ThreadManager {
     if (!entry) throw new Error(`Thread not found: ${threadId}`);
 
     // Append to chat markdown
-    const chatFile = this._createChatFile(threadId, entry.name);
-    if (chatFile.filePath) {
-      await chatFile.appendMessage(entry.name, message);
-    }
+    const chatFile = this._createChatFile(threadId);
+    await chatFile.appendMessage(entry.name, message);
 
     // Update message count
     await this.index.incrementMessageCount(threadId);
@@ -273,11 +253,9 @@ class ThreadManager {
     if (!entry) throw new Error(`Thread not found: ${threadId}`);
 
     // Append to chat markdown (with metadata)
-    const chatFile = this._createChatFile(threadId, entry.name);
-    if (chatFile.filePath) {
-      const messageWithMetadata = metadata ? { ...message, metadata } : message;
-      await chatFile.appendMessage(entry.name, messageWithMetadata);
-    }
+    const chatFile = this._createChatFile(threadId);
+    const messageWithMetadata = metadata ? { ...message, metadata } : message;
+    await chatFile.appendMessage(entry.name, messageWithMetadata);
 
     // Update message count
     await this.index.incrementMessageCount(threadId);
@@ -296,7 +274,7 @@ class ThreadManager {
   async getHistory(threadId) {
     const entry = await this.index.get(threadId);
     if (!entry) return null;
-    const chatFile = this._createChatFile(threadId, entry.name);
+    const chatFile = this._createChatFile(threadId);
     return chatFile.read();
   }
 
