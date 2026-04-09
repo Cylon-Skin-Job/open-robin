@@ -1,0 +1,195 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-03-24T12:00:00Z",
+  "folders": {
+    "Chat Assistants": {
+      "rank": 1,
+      "description": "Conversational agents for interactive assistance",
+      "agents": {
+        "archie": {
+          "bot_name": "Archie",
+          "description": "Plan mode persona. Structures thinking, outlines approaches, and ensures alignment before execution.",
+          "icon": "owl",
+          "color": "#6366f1",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "rocket": {
+          "bot_name": "Rocket",
+          "description": "Launches build pipeline and orchestrates the work. Manages deployment and execution workflows.",
+          "icon": "rocket_launch",
+          "color": "#ef4444",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "donnie": {
+          "bot_name": "Donnie",
+          "description": "Read-only access to codebase, write access to capture viewer. Surfs the file tree, finds the gnarly bits, and shapes your ideas into a radical spec.",
+          "icon": "surfing",
+          "color": "#06b6d4",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "daisy": {
+          "bot_name": "Daisy",
+          "description": "Design agent. Drawn to beauty. Bad UI is a dead flower. Notices and tells you when design is off.",
+          "icon": "emoji_nature",
+          "color": "#ec4899",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        }
+      }
+    },
+    "Expert Helpers": {
+      "rank": 2,
+      "description": "Specialized agents for domain expertise",
+      "agents": {
+        "frank": {
+          "bot_name": "Frank",
+          "description": "Enforcement — fires off when file size exceeds 500 lines, checks that modularity is being adhered to, flags any file with too many domains of concern.",
+          "icon": "skull_list",
+          "color": "#06b6d4",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "ralph": {
+          "bot_name": "Ralph",
+          "description": "Runs after every file edit or create. Decides if 'You're gonna wreck it'. Basically just checks code quality for slop.",
+          "icon": "sports_mma",
+          "color": "#8b5cf6",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "dwight": {
+          "bot_name": "Dwight",
+          "description": "Branch manager. Pops up when you start a new chat while having uncommitted work sitting in the background. Expert tools to traverse chat history and diffs.",
+          "icon": "assignment_ind",
+          "color": "#ec4899",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "cliff": {
+          "bot_name": "Cliff",
+          "description": "Summoned when you need to do side exploration, take notes, summarize context, or find context.",
+          "icon": "sticker",
+          "color": "#f59e0b",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "kitty": {
+          "bot_name": "Kitty",
+          "description": "Shows up, runs scripts, leaves. Generates scripted deterministic tests and runs them autonomously. Works alongside Ralph to verify deterministically.",
+          "icon": "pets",
+          "color": "#d946ef",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "jarvis": {
+          "bot_name": "Jarvis",
+          "description": "System architect. Understands how routes, controllers, backend modules, database, and CRUD all fit together. Internalizes the sort of architectural concerns Frank checks for. Excels at fleshing out spec details for interconnected systems while maintaining awareness of the bigger picture.",
+          "icon": "robot_2",
+          "color": "#3b82f6",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        }
+      }
+    },
+    "Background Workers": {
+      "rank": 3,
+      "description": "Default agents that ship with the app",
+      "reserved": true,
+      "agents": {
+        "wiki-manager": {
+          "bot_name": "John-Wiki",
+          "description": "Manages wiki pages — updates, audits, edge consistency",
+          "icon": "sentiment_content",
+          "color": "#e91e8a",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": "0 9 * * *"
+        },
+        "code-manager": {
+          "bot_name": "Mantis",
+          "description": "Hunts for and kills bugs. Finds behaviorally related runaway processes and silent fails.",
+          "icon": "adb",
+          "color": "#f97316",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "ops-manager": {
+          "bot_name": "I.C.E.",
+          "description": "Manages imports and exports as well as any related race conditions.",
+          "icon": "local_police",
+          "color": "#eab308",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": "0 6 * * 1"
+        },
+        "edna": {
+          "bot_name": "Edna",
+          "description": "Evaluates prompts, workflows, and wikis. Suggests optimizations. Reads chats to look for inefficiencies, loss of context, confusion, and annoyance to suggest improvements to workflows, context, skills, and agent abilities.",
+          "icon": "charger",
+          "color": "#10b981",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "maeve": {
+          "bot_name": "Maeve",
+          "description": "Has access to memory files, lesson files, user profile, and rolling chat history. Updates other agents' memory systems to keep institutional knowledge current and shared.",
+          "icon": "network_intelligence_history",
+          "color": "#8b5cf6",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "mario": {
+          "bot_name": "Mario",
+          "description": "Runs background pipelines. Renames new chats based on the first chat exchange. Manages tagging, indexing, and vectoring of new knowledge added to the system.",
+          "icon": "child_hat",
+          "color": "#14b8a6",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        },
+        "oscar": {
+          "bot_name": "Oscar",
+          "description": "Looks for dead code and stuff to clean up. Keeps the codebase tidy and removes technical debt.",
+          "icon": "trash",
+          "color": "#6b7280",
+          "status": "idle",
+          "last_run": null,
+          "pending_tickets": 0,
+          "schedule": null
+        }
+      }
+    }
+  }
+}
