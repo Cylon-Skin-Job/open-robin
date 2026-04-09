@@ -36,7 +36,6 @@ const files = {
   crud: 'lib/thread/thread-crud.js',
   messages: 'lib/thread/thread-messages.js',
   sessionMgr: 'lib/thread/session-manager.js',
-  autoRename: 'lib/thread/auto-rename.js',
 };
 
 for (const [label, rel] of Object.entries(files)) {
@@ -162,45 +161,6 @@ try {
   fail('SessionManager require failed', err.message);
 }
 
-// Test 6: AutoRename race guard (async — wrapped in IIFE)
-section('SPEC-03: AutoRename race guard');
-
-const raceGuardPromise = (async () => {
-  try {
-    const { AutoRename } = require('../lib/thread/auto-rename');
-    const { SessionManager } = require('../lib/thread/session-manager');
-
-    const sm = new SessionManager({ idleTimeoutMinutes: 9 });
-    let renameCalled = false;
-
-    const ar = new AutoRename(async () => ({
-      messages: [
-        { role: 'user', content: 'hello' },
-        { role: 'assistant', content: 'hi there' }
-      ]
-    }));
-
-    // Mock index that says thread is named "New Chat"
-    const mockIndex = {
-      get: async () => ({ name: 'New Chat', messageCount: 2 }),
-      rename: async () => { renameCalled = true; }
-    };
-
-    // Session is NOT active — rename should be skipped
-    await ar.autoRename('test-thread', mockIndex, sm, async () => { renameCalled = true; });
-
-    if (!renameCalled) {
-      ok('autoRename skips when session not active (race guard works)');
-    } else {
-      fail('autoRename renamed despite inactive session (race guard broken)');
-    }
-  } catch (err) {
-    // autoRename may fail because kimi isn't available — that's fine,
-    // the try/catch in generateSummary should handle it
-    ok('autoRename handles missing kimi gracefully');
-  }
-})();
-
 // ─── SPEC-15: Z-Index Hierarchy ───
 
 section('SPEC-15: Variables defined');
@@ -307,17 +267,15 @@ if (fs.existsSync(connectingCSS) && fs.existsSync(pickerCSS)) {
   }
 }
 
-// ─── Summary (wait for async tests) ───
+// ─── Summary ───
 
-raceGuardPromise.then(() => {
-  section('─── Summary ───');
-  console.log(`  ${passed} passed, ${failed} failed`);
+section('─── Summary ───');
+console.log(`  ${passed} passed, ${failed} failed`);
 
-  if (failed > 0) {
-    console.log(`\n  ${RED} SMOKE TEST FAILED`);
-    process.exit(1);
-  } else {
-    console.log(`\n  ${GREEN} ALL SMOKE TESTS PASSED`);
-    process.exit(0);
-  }
-});
+if (failed > 0) {
+  console.log(`\n  ${RED} SMOKE TEST FAILED`);
+  process.exit(1);
+} else {
+  console.log(`\n  ${GREEN} ALL SMOKE TESTS PASSED`);
+  process.exit(0);
+}

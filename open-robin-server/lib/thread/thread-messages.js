@@ -2,7 +2,7 @@
  * Thread Message Handlers
  *
  * Extracted from ThreadWebSocketHandler.js — handles user message sending
- * and assistant message recording (including auto-rename trigger).
+ * and assistant message recording.
  *
  * Uses a factory pattern so the coordinator can inject the shared wsState Map.
  */
@@ -75,15 +75,6 @@ function createMessageHandlers({ wsState }) {
       await threadManager.addMessageWithMetadata(threadId, message, metadata);
     } else {
       await threadManager.addMessage(threadId, message);
-    }
-
-    // Trigger auto-naming after first assistant response
-    const entry = await threadManager.index.get(threadId);
-    if (entry && entry.name === 'New Chat' && entry.messageCount >= 2) {
-      // Fire and forget
-      threadManager.autoRename(threadId).catch(err => {
-        console.error('[ThreadWS] Auto-rename failed:', err);
-      });
     }
   }
 

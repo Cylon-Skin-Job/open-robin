@@ -92,7 +92,6 @@ class ThreadIndex {
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.messageCount !== undefined) dbUpdates.message_count = updates.messageCount;
     if (updates.resumedAt !== undefined) dbUpdates.resumed_at = updates.resumedAt;
-    if (updates.date !== undefined) dbUpdates.date = updates.date;
     if (updates.updatedAt !== undefined) dbUpdates.updated_at = updates.updatedAt;
 
     if (Object.keys(dbUpdates).length === 0) return this.get(threadId);
@@ -118,15 +117,6 @@ class ThreadIndex {
    */
   async activate(threadId) {
     return this.update(threadId, { status: 'active', updatedAt: Date.now() });
-  }
-
-  /**
-   * Set the date field (daily-rolling strategy)
-   * @param {string} threadId
-   * @param {string} dateString - YYYY-MM-DD
-   */
-  async setDate(threadId, dateString) {
-    return this.update(threadId, { date: dateString });
   }
 
   /**
@@ -198,7 +188,6 @@ class ThreadIndex {
       status: row.status,
     };
     if (row.resumed_at) entry.resumedAt = row.resumed_at;
-    if (row.date) entry.date = row.date;
     if (row.harness_id) entry.harnessId = row.harness_id;
     if (row.harness_config) {
       try {

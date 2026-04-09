@@ -2,7 +2,7 @@
  * ThreadManager - Main thread management orchestrator
  *
  * Combines ThreadIndex and ChatFile to provide full thread lifecycle management.
- * Delegates session management to SessionManager and auto-rename to AutoRename.
+ * Delegates session management to SessionManager.
  * Handles session lifecycle: active → grace-period → suspended
  */
 
@@ -11,7 +11,6 @@ const { ThreadIndex } = require('./ThreadIndex');
 const { ChatFile, getUsername } = require('./ChatFile');
 const { HistoryFile } = require('./HistoryFile');
 const { SessionManager } = require('./session-manager');
-const { AutoRename } = require('./auto-rename');
 
 // Default configuration
 const DEFAULT_CONFIG = {
@@ -45,9 +44,6 @@ class ThreadManager {
       },
       (threadId) => this.index.suspend(threadId)
     );
-
-    /** @type {AutoRename} */
-    this.autoRenamer = new AutoRename((threadId) => this.getHistory(threadId));
   }
 
   /**
@@ -367,20 +363,6 @@ class ThreadManager {
     }
   }
 
-  // ── Auto-rename delegation ──
-
-  /**
-   * Auto-rename thread after first assistant response
-   * @param {string} threadId
-   */
-  async autoRename(threadId) {
-    await this.autoRenamer.autoRename(
-      threadId,
-      this.index,
-      this.sessionManager,
-      (tid, name) => this.renameThread(tid, name)
-    );
-  }
 }
 
 module.exports = { ThreadManager };
