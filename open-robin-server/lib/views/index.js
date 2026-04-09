@@ -158,22 +158,29 @@ function resolveContentPath(projectRoot, viewId, context = {}) {
 }
 
 /**
- * Resolve the chat folder path for a view.
- * Returns null if the view has no chat.
+ * Resolve chat config for a view. Returns null if the view has no chat.
+ *
+ * SPEC-24c: the `chatPath` return field is gone. Chat storage is unified
+ * at ai/views/chat/ — callers no longer need a per-panel path. The
+ * per-panel `<view>/chat/` folder still exists as the "chat enabled"
+ * filesystem marker (no-code panel creation pattern), which this
+ * function verifies before returning success.
  *
  * @param {string} projectRoot
  * @param {string} viewId
- * @returns {{ chatPath: string, chatType: string, chatPosition: string }|null}
+ * @returns {{ chatType: string, chatPosition: string }|null}
  */
 function resolveChatConfig(projectRoot, viewId) {
   const view = loadView(projectRoot, viewId);
   if (!view || !view.content.chat) return null;
 
-  const chatPath = path.join(view.viewRoot, 'chat');
-  if (!fs.existsSync(chatPath)) return null;
+  // Per-panel chat/ folder is the capability marker. Storage happens
+  // elsewhere (SPEC-24c), but the folder's existence still gates whether
+  // this view has chat.
+  const chatMarker = path.join(view.viewRoot, 'chat');
+  if (!fs.existsSync(chatMarker)) return null;
 
   return {
-    chatPath,
     chatType: view.content.chat.type,
     chatPosition: view.layout.chatPosition || view.content.chat.position,
   };

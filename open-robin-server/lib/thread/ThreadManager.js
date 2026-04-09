@@ -22,14 +22,12 @@ class ThreadManager {
   /**
    * @param {string} panelId - Panel identifier (e.g., 'code-viewer', 'agent:bot-name')
    * @param {object} [config]
-   * @param {string} [config.panelPath] - Filesystem path for legacy ChatFile fallback
-   * @param {string} [config.projectRoot] - Project root for per-user views path
+   * @param {string} [config.projectRoot] - Project root — required for the unified chat storage path (SPEC-24c)
    * @param {number} [config.maxActiveSessions]
    * @param {number} [config.idleTimeoutMinutes]
    */
   constructor(panelId, config = {}) {
     this.panelId = panelId;
-    this.panelPath = config.panelPath || null;
     this.projectRoot = config.projectRoot || null;
     this.config = { ...DEFAULT_CONFIG, ...config };
 
@@ -47,19 +45,21 @@ class ThreadManager {
   }
 
   /**
-   * Build the per-user views directory for chat markdown.
-   * Returns null if projectRoot is not set (falls back to legacy UUID dirs).
+   * Build the unified per-user chat directory (SPEC-24c).
+   *
+   * All chats live at ai/views/chat/threads/<username>/ regardless of
+   * which panel initiated them. The sidebar in each panel still scopes
+   * its thread list via SQLite's panel_id column — the filesystem
+   * layout is flat for collaboration-friendly git push/pull.
+   *
+   * Returns null if projectRoot is not set (ChatFile construction
+   * will throw in that case — see _createChatFile).
+   *
    * @returns {string|null}
    */
   _getViewsDir() {
     if (!this.projectRoot) return null;
-    // Use panelPath directly if available (it's already the chat folder path)
-    if (this.panelPath) {
-      return path.join(this.panelPath, 'threads', getUsername());
-    }
-    // Fallback: derive from panelId
-    const workspace = this.panelId.startsWith('agent:') ? 'agents-viewer' : this.panelId;
-    return path.join(this.projectRoot, 'ai', 'views', workspace, 'chat', 'threads', getUsername());
+    return path.join(this.projectRoot, 'ai', 'views', 'chat', 'threads', getUsername());
   }
 
   /**

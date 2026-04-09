@@ -28,16 +28,18 @@ const REORDER_DELAY_MS = 3000;
 
 /**
  * Get or create ThreadManager for a panel.
- * If the manager already exists but panelPath changed, replace it.
+ *
+ * SPEC-24c: cache is keyed purely by panelId. Chat storage is unified
+ * under ai/views/chat/threads/<user>/, so there's no per-panel path to
+ * vary on — the same panelId always maps to the same ThreadManager.
+ *
  * @param {string} panelId
- * @param {object} [config] - Config including panelPath for ChatFile
+ * @param {object} [config] - Config (projectRoot required)
  * @returns {ThreadManager}
  */
 function getThreadManager(panelId, config = {}) {
   const existing = threadManagers.get(panelId);
-  if (existing && existing.panelPath === (config.panelPath || null)) {
-    return existing;
-  }
+  if (existing) return existing;
 
   const manager = new ThreadManager(panelId, config);
   threadManagers.set(panelId, manager);
@@ -49,10 +51,15 @@ function getThreadManager(panelId, config = {}) {
 }
 
 /**
- * Set panel for a WebSocket connection
+ * Set panel for a WebSocket connection.
+ *
+ * SPEC-24c: `config` no longer takes panelPath — chat storage is
+ * unified and derived from projectRoot alone.
+ *
  * @param {import('ws').WebSocket} ws
  * @param {string} panelId - Panel identifier (e.g., 'code-viewer', 'agent:bot-name')
- * @param {object} [config] - Config including panelPath for ChatFile
+ * @param {object} [config]
+ * @param {string} [config.projectRoot] - Project root (required for thread storage)
  * @param {string} [config.viewName] - View name for client messages (e.g., 'code-viewer')
  */
 function setPanel(ws, panelId, config = {}) {

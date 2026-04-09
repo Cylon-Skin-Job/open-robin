@@ -188,9 +188,7 @@ function createClientMessageRouter({
           const chatConfig = views.resolveChatConfig(projectRoot, panel);
 
           if (chatConfig) {
-            // panelId = view name (panel), panelPath = full chat folder path
             ThreadWebSocketHandler.setPanel(ws, panel, {
-              panelPath: chatConfig.chatPath,
               projectRoot,
               viewName: panel,
             });

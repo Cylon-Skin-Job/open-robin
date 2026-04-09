@@ -283,13 +283,11 @@ wss.on('connection', (ws) => {
   // Set up a default panel so ThreadManager exists for wire spawning.
   // Don't send the thread list yet — wait for the client's set_panel message
   // to avoid cross-contamination (e.g., issues-viewer seeing code-viewer threads).
-  // Only set up threads if the default view has chat.
-  // panelId = view name ('code-viewer'), panelPath = absolute chat folder path
+  // Only set up threads if the default view has chat (SPEC-24c: storage is
+  // unified at ai/views/chat/threads/<user>/, no panelPath needed).
   const defaultChatConfig = views.resolveChatConfig(projectRoot, 'code-viewer');
   if (defaultChatConfig) {
-    // panelId = view name ('code-viewer'), panelPath = full chat folder path
     ThreadWebSocketHandler.setPanel(ws, 'code-viewer', {
-      panelPath: defaultChatConfig.chatPath,
       projectRoot,
       viewName: 'code-viewer',
     });
