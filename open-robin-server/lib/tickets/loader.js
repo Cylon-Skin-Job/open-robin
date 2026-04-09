@@ -7,6 +7,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { parseFrontmatter } = require('../frontmatter');
 
 /**
  * Parse a ticket markdown file into frontmatter object + body string.
@@ -21,24 +22,20 @@ function loadTicket(filePath) {
     return null;
   }
 
-  const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-  if (!match) return null;
+  const { frontmatter, body } = parseFrontmatter(raw, 'ticket');
 
-  const frontmatter = {};
-  for (const line of match[1].split('\n')) {
-    const colonIdx = line.indexOf(':');
-    if (colonIdx === -1) continue;
-    const key = line.slice(0, colonIdx).trim();
-    const value = line.slice(colonIdx + 1).trim();
-    frontmatter[key] = value;
-  }
+  // A ticket must have at least one frontmatter field. If the file has no
+  // --- block, parseFrontmatter returns { frontmatter: {}, body: raw } —
+  // that's "not a ticket" in this context, so return null to match the
+  // pre-SPEC-25 behavior.
+  if (Object.keys(frontmatter).length === 0) return null;
 
   frontmatter.blocks = frontmatter.blocks || null;
   frontmatter.blocked_by = frontmatter.blocked_by || null;
 
   return {
     frontmatter,
-    body: match[2].trim(),
+    body,
     filename: path.basename(filePath),
   };
 }

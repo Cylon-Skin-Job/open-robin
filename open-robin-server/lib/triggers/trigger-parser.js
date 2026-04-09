@@ -6,7 +6,7 @@
  */
 
 const fs = require('fs');
-const { parseFrontmatter } = require('../watcher/filter-loader');
+const { parseFrontmatter } = require('../frontmatter');
 
 /**
  * Parse a TRIGGERS.md file into an array of trigger definitions.
@@ -51,7 +51,7 @@ function parseTriggerBlocks(filePath) {
         // End of block — parse it
         const yaml = blockLines.join('\n');
         const wrapped = `---\n${yaml}\n---\n`;
-        const { frontmatter } = parseFrontmatter(wrapped);
+        const { frontmatter } = parseFrontmatter(wrapped, 'trigger');
         if (frontmatter && Object.keys(frontmatter).length > 0) {
           blocks.push(frontmatter);
         }

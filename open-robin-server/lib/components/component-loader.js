@@ -12,7 +12,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { parseFrontmatter } = require('../watcher/filter-loader');
+const { parseFrontmatter } = require('../frontmatter');
 
 const cache = {
   modals: new Map(),
@@ -66,7 +66,7 @@ function loadModalSubtype(subtype, subtypeDir) {
   }
 
   const configContent = fs.readFileSync(configPath, 'utf8');
-  const { frontmatter } = parseFrontmatter(configContent);
+  const { frontmatter } = parseFrontmatter(configContent, 'component');
   if (!frontmatter) {
     console.warn(`[ComponentLoader] ${subtype}: config.md has no frontmatter, skipping`);
     return null;
