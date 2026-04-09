@@ -31,7 +31,6 @@ class ThreadManager {
   constructor(panelId, config = {}) {
     this.panelId = panelId;
     this.panelPath = config.panelPath || null;
-    this.threadsDir = this.panelPath ? path.join(this.panelPath, 'threads') : null;
     this.projectRoot = config.projectRoot || null;
     this.config = { ...DEFAULT_CONFIG, ...config };
 
@@ -65,26 +64,6 @@ class ThreadManager {
     // Fallback: derive from panelId
     const workspace = this.panelId.startsWith('agent:') ? 'agents-viewer' : this.panelId;
     return path.join(this.projectRoot, 'ai', 'views', workspace, 'chat', 'threads', getUsername());
-  }
-
-  /**
-   * Ensure the threads/index.json exists in the views directory.
-   * @private
-   */
-  async _ensureThreadsIndex() {
-    if (!this.projectRoot) return;
-    // Use panelPath directly if available, otherwise derive from panelId
-    const threadsDir = this.panelPath
-      ? path.join(this.panelPath, 'threads')
-      : path.join(this.projectRoot, 'ai', 'views', this.panelId.startsWith('agent:') ? 'agents-viewer' : this.panelId, 'chat', 'threads');
-    const indexPath = path.join(threadsDir, 'index.json');
-    const fs = require('fs').promises;
-    try {
-      await fs.access(indexPath);
-    } catch {
-      await fs.mkdir(threadsDir, { recursive: true });
-      await fs.writeFile(indexPath, JSON.stringify({ sort: 'last-active', order: 'desc' }, null, 2));
-    }
   }
 
   /**
@@ -139,7 +118,6 @@ class ThreadManager {
     const entry = await this.index.create(threadId, name, options);
 
     // Create chat markdown file
-    await this._ensureThreadsIndex();
     const chatFile = this._createChatFile(threadId);
     await chatFile.write(name, []);
 
@@ -267,7 +245,7 @@ class ThreadManager {
   }
 
   /**
-   * Get thread history (CHAT.md format - legacy)
+   * Get thread history — returns { name, messages } from the markdown file.
    * @param {string} threadId
    * @returns {Promise<import('./types').ParsedChat|null>}
    */
