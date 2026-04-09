@@ -1,6 +1,15 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { usePanelStore } from '../state/panelStore';
 import { logger } from '../lib/logger';
+import type { Thread } from '../types';
+
+// SPEC-24e: display name fallback. When a thread has no name (null),
+// render the thread ID with milliseconds stripped.
+// Format: 2026-04-09T14-30-22-123  →  2026-04-09T14-30-22
+function formatThreadDisplayName(thread: Thread): string {
+  if (thread.entry?.name) return thread.entry.name;
+  return thread.threadId.replace(/-\d{3}$/, '');
+}
 
 // FLIP animation for thread reordering
 function useThreadAnimation(threads: { threadId: string }[]) {
@@ -301,8 +310,8 @@ export function Sidebar({ panel }: SidebarProps) {
               ) : (
                 <>
                   <div className="thread-row thread-row-top">
-                    <span className="chat-item-text" title={thread.entry?.name || 'Unnamed'}>
-                      {thread.entry?.name || 'Unnamed'}
+                    <span className="chat-item-text" title={formatThreadDisplayName(thread)}>
+                      {formatThreadDisplayName(thread)}
                       {thread.entry?.status === 'active' && (
                         <span style={{ color: '#4caf50', marginLeft: '4px', fontSize: '8px' }}>●</span>
                       )}
@@ -321,7 +330,7 @@ export function Sidebar({ panel }: SidebarProps) {
                       <div className="thread-menu-dropdown" onClick={(e) => e.stopPropagation()}>
                         <button 
                           onClick={() => {
-                            handleRenameStart(thread.threadId, thread.entry?.name || 'Unnamed');
+                            handleRenameStart(thread.threadId, thread.entry?.name || '');
                             setMenuOpenId(null);
                           }}
                         >

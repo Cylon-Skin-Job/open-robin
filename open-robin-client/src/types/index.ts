@@ -140,7 +140,9 @@ export interface WebSocketMessage {
 
 // Thread Types
 export interface ThreadEntry {
-  name: string;
+  // null when the thread has no display name yet. SPEC-24e: UI falls back
+  // to the thread ID with milliseconds stripped (e.g. 2026-04-09T14-30-22).
+  name: string | null;
   createdAt: string;
   resumedAt?: string;
   messageCount: number;
