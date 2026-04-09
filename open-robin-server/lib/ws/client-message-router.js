@@ -1,11 +1,9 @@
 /**
  * Client Message Router — dispatches incoming WebSocket client messages.
  *
- * Extracted from server.js per SPEC-01f. This is the final extraction
- * under SPEC-01 (server.js decomposition). Handles the full 23-handler
- * switch for client message types: thread lifecycle (create / open /
- * open-daily / rename / delete / copyLink / list), agent session
- * (thread:open-agent), file explorer (tree / content / recent), panel
+ * Extracted from server.js per SPEC-01f. Handles the client message
+ * switch for thread lifecycle (open-assistant / rename / delete /
+ * copyLink / list), file explorer (tree / content / recent), panel
  * management (set_panel), wire protocol (initialize / prompt /
  * response), file operations (file:move), robin system panel
  * (robin:*), clipboard (clipboard:*), and harness admin
@@ -15,18 +13,15 @@
  *
  * Per-connection factory. Called once per WebSocket connection inside
  * wss.on('connection'), after all the other factories have been
- * created (wire message router, wire lifecycle, agent session handler,
- * file explorer). Closes over ws, session, connectionId, projectRoot,
- * and the per-connection helpers.
+ * created (wire message router, wire lifecycle, file explorer).
+ * Closes over ws, session, connectionId, projectRoot, and the
+ * per-connection helpers.
  *
  * Architectural note: most of the handlers in this module are thin
- * delegations to already-extracted modules. The three wire-spawning
- * handlers (thread:create, thread:open, thread:open-daily) share a
- * visible repeated wire-spawn sequence — the repetition is intentional
- * for this extraction and is a candidate for post-SPEC-01 DRY cleanup.
- * The five harness:* admin handlers keep their inline require() calls
- * (only paid when the rarely-used admin command arrives) rather than
- * hoisting them to module-level imports.
+ * delegations to already-extracted modules. The five harness:* admin
+ * handlers keep their inline require() calls (only paid when the
+ * rarely-used admin command arrives) rather than hoisting them to
+ * module-level imports.
  */
 
 const path = require('path');
@@ -49,7 +44,6 @@ const { emit } = require('../event-bus');
  * @param {string} deps.projectRoot
  * @param {object} deps.fileExplorer - from createFileExplorerHandlers (01a)
  * @param {{ awaitHarnessReady: Function, initializeWire: Function, setupWireHandlers: Function }} deps.wireLifecycle - from createWireLifecycle (01c)
- * @param {(clientMsg: object) => Promise<void>} deps.handleThreadOpenAgent - from createAgentSessionHandler (01e)
  * @param {Map} deps.sessions - server.js module-level sessions Map (for close handler)
  * @param {Function} deps.setSessionRoot
  * @param {Function} deps.clearSessionRoot
@@ -65,7 +59,6 @@ function createClientMessageRouter({
   projectRoot,
   fileExplorer,
   wireLifecycle,
-  handleThreadOpenAgent,
   sessions,
   setSessionRoot,
   clearSessionRoot,
@@ -94,103 +87,53 @@ function createClientMessageRouter({
         return;
       }
 
-      if (clientMsg.type === 'thread:create') {
-        console.log('[WS] thread:create received');
-        await ThreadWebSocketHandler.handleThreadCreate(ws, clientMsg);
+      if (clientMsg.type === 'thread:open-assistant') {
+        console.log('[WS] thread:open-assistant received, threadId:', clientMsg.threadId?.slice(0, 8) || '(new)');
 
-        // Get the newly created thread ID and spawn wire
-        const state = ThreadWebSocketHandler.getState(ws);
-        const threadId = state?.threadId;
-        console.log('[WS] Thread created, state:', { hasState: !!state, threadId, hasManager: !!state?.threadManager });
-        if (threadId) {
-          console.log('[WS] Spawning wire for new thread:', threadId);
-          session.currentThreadId = threadId;  // Track for history.json
-          const wire = spawnThreadWire(threadId, projectRoot);
-          session.wire = wire;
-          registerWire(threadId, wire, projectRoot, ws);
-          console.log('[WS] Wire spawned, awaiting harness ready...');
-          await awaitHarnessReady(wire);
-          console.log('[WS] Setting up handlers...');
-          setupWireHandlers(wire, threadId);
-          session.wire = wire;  // Re-assign in case exit handler cleared it
-          console.log('[WS] Handlers set up, initializing wire...');
-          initializeWire(wire);
-          console.log('[WS] Wire initialization complete');
-          ws.send(JSON.stringify({ type: 'wire_ready', threadId }));
-
-          // Register with ThreadManager
-          if (state?.threadManager) {
-            console.log('[WS] Registering with ThreadManager...');
-            await state.threadManager.openSession(threadId, wire, ws);
-            console.log('[WS] ThreadManager registration complete');
-          }
-        } else {
-          console.error('[WS] No threadId after create!');
-        }
-        return;
-      }
-
-      if (clientMsg.type === 'thread:open') {
-        const { threadId } = clientMsg;
-        const state = ThreadWebSocketHandler.getState(ws);
-
-        // Close current wire if switching threads
+        // Close current wire if one is open (switching threads or reopening).
         if (session.wire) {
+          console.log('[WS] Closing previous wire before opening assistant thread');
           session.wire.kill('SIGTERM');
           session.wire = null;
         }
 
-        // Track thread ID for history.json
+        // Dispatcher: create or resume based on whether msg.threadId exists.
+        await ThreadWebSocketHandler.handleThreadOpenAssistant(ws, clientMsg);
+
+        // After the handler runs, the per-ws state should have the current thread ID.
+        const state = ThreadWebSocketHandler.getState(ws);
+        const threadId = state?.threadId;
+        if (!threadId) {
+          console.error('[WS] No threadId after handleThreadOpenAssistant — dispatch failed');
+          return;
+        }
+
+        console.log('[WS] Spawning wire for thread:', threadId);
         session.currentThreadId = threadId;
+        const wire = spawnThreadWire(threadId, projectRoot);
+        session.wire = wire;
+        registerWire(threadId, wire, projectRoot, ws);
 
-        // Open the thread
-        await ThreadWebSocketHandler.handleThreadOpen(ws, clientMsg);
-
-        // Spawn wire process with --session
-        console.log('[WS] Spawning wire for opened thread:', threadId);
-        session.wire = spawnThreadWire(threadId, projectRoot);
-        registerWire(threadId, session.wire, projectRoot, ws);
         console.log('[WS] Wire spawned, awaiting harness ready...');
-        await awaitHarnessReady(session.wire);
+        await awaitHarnessReady(wire);
         console.log('[WS] Setting up handlers...');
-        setupWireHandlers(session.wire, threadId);
-        console.log('[WS] Handlers set up, initializing wire...');
-        initializeWire(session.wire);
+        setupWireHandlers(wire, threadId);
+        session.wire = wire;  // Re-assign in case exit handler cleared it
+        console.log('[WS] Initializing wire...');
+        initializeWire(wire);
         console.log('[WS] Wire initialization complete');
+
+        // Fire wire_ready for BOTH create and resume — this harmonizes the two
+        // paths (previously only thread:create sent it, which was a latent bug
+        // in the resume flow: the connecting overlay would not clear).
+        ws.send(JSON.stringify({ type: 'wire_ready', threadId }));
 
         // Register with ThreadManager
         if (state?.threadManager) {
-          await state.threadManager.openSession(threadId, session.wire, ws);
+          console.log('[WS] Registering with ThreadManager...');
+          await state.threadManager.openSession(threadId, wire, ws);
+          console.log('[WS] ThreadManager registration complete');
         }
-        return;
-      }
-
-      if (clientMsg.type === 'thread:open-daily') {
-        // Close current wire if switching threads
-        if (session.wire) {
-          session.wire.kill('SIGTERM');
-          session.wire = null;
-        }
-        await ThreadWebSocketHandler.handleThreadOpenDaily(ws, clientMsg);
-        // Get the thread ID that was opened (today's date)
-        const dailyThreadId = ThreadWebSocketHandler.getCurrentThreadId(ws);
-        if (dailyThreadId) {
-          session.currentThreadId = dailyThreadId;
-          session.wire = spawnThreadWire(dailyThreadId, projectRoot);
-          registerWire(dailyThreadId, session.wire, projectRoot, ws);
-          await awaitHarnessReady(session.wire);
-          setupWireHandlers(session.wire, dailyThreadId);
-          initializeWire(session.wire);
-          const dailyState = ThreadWebSocketHandler.getState(ws);
-          if (dailyState?.threadManager) {
-            await dailyState.threadManager.openSession(dailyThreadId, session.wire, ws);
-          }
-        }
-        return;
-      }
-
-      if (clientMsg.type === 'thread:open-agent') {
-        await handleThreadOpenAgent(clientMsg);
         return;
       }
 

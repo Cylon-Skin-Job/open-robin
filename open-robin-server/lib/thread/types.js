@@ -54,15 +54,11 @@
 // WebSocket message types
 
 /**
- * @typedef {Object} WSMessageThreadCreate
- * @property {'thread:create'} type
- * @property {string} [name] - Optional initial name
- */
-
-/**
- * @typedef {Object} WSMessageThreadOpen
- * @property {'thread:open'} type
- * @property {string} threadId - Thread ID to open
+ * @typedef {Object} WSMessageThreadOpenAssistant
+ * @property {'thread:open-assistant'} type
+ * @property {string} [threadId] - If present and valid, resume; otherwise create new
+ * @property {string} [name] - Optional display name for new threads (default null)
+ * @property {string} [harnessId] - Harness selection for new threads ('kimi' | 'robin')
  */
 
 /**
@@ -86,7 +82,7 @@
  */
 
 /**
- * @typedef {WSMessageThreadCreate|WSMessageThreadOpen|WSMessageThreadRename|WSMessageThreadDelete|WSMessageSend} WSClientMessage
+ * @typedef {WSMessageThreadOpenAssistant|WSMessageThreadRename|WSMessageThreadDelete|WSMessageSend} WSClientMessage
  */
 
 /**

@@ -1,16 +1,20 @@
 /**
  * Thread CRUD Handlers
  *
- * Extracted from ThreadWebSocketHandler.js — handles thread create, open,
- * open-daily, rename, delete, and copy-link operations.
+ * Extracted from ThreadWebSocketHandler.js — exposes handleThreadOpenAssistant
+ * (the unified create-or-resume dispatcher), handleThreadRename,
+ * handleThreadDelete, and handleThreadCopyLink.
+ *
+ * handleThreadCreate and handleThreadOpen remain as private helpers inside
+ * the factory, called only by handleThreadOpenAssistant. They are not
+ * exported — external callers must use the dispatcher so upsert semantics
+ * are enforced.
  *
  * Uses a factory pattern so the coordinator can inject shared state (Maps)
  * and helper functions. All functions close over the same scope, which is
- * critical because handleThreadCreate and handleThreadOpenDaily both call
- * handleThreadOpen internally.
+ * critical because handleThreadOpenAssistant calls handleThreadCreate /
+ * handleThreadOpen, and handleThreadCreate calls handleThreadOpen internally.
  */
-
-const { v4: uuidv4 } = require('uuid');
 
 /**
  * @param {object} deps
@@ -23,20 +27,34 @@ const { v4: uuidv4 } = require('uuid');
 function createCrudHandlers({ wsState, sendThreadList, closeCurrentThread, pendingReorderTimers, REORDER_DELAY_MS }) {
 
   /**
-   * Generate a timestamped default thread name.
-   * e.g. "New Chat 04/06 2:34 PM"
+   * Generate a timestamp-based thread ID.
+   *
+   * Format: YYYY-MM-DDTHH-MM-SS-mmm (e.g. "2026-04-08T14-30-22-123")
+   *
+   * This format is:
+   * - Filesystem-safe (no colons — colons break on Windows and some tooling)
+   * - Lexicographically sortable (chronological sort by string comparison)
+   * - Human-readable at a glance
+   * - Millisecond-precise (collision-resistant within a single process;
+   *   two threads created in the same millisecond is not a concern for
+   *   human-driven chat creation)
+   *
+   * Local time, not UTC. A chat created at 2:34 PM Pacific shows `14-30` in
+   * its ID, not `21-30`. Matches user intuition for "when did I create that
+   * chat".
+   *
    * @returns {string}
    */
-  function newChatName() {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    let hours = now.getHours();
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    return `New Chat ${month}/${day} ${hours}:${minutes}:${seconds} ${ampm}`;
+  function generateThreadId() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    const ss = String(d.getSeconds()).padStart(2, '0');
+    const ms = String(d.getMilliseconds()).padStart(3, '0');
+    return `${yyyy}-${mm}-${dd}T${hh}-${mi}-${ss}-${ms}`;
   }
 
   /**
@@ -54,9 +72,10 @@ function createCrudHandlers({ wsState, sendThreadList, closeCurrentThread, pendi
       return;
     }
 
-    // Generate thread ID (will be Kimi session ID)
-    const threadId = uuidv4();
-    const name = msg.name || newChatName();
+    // Generate thread ID — timestamp-based, filesystem-safe, lexicographically
+    // sortable. See generateThreadId() above for format.
+    const threadId = generateThreadId();
+    const name = msg.name || null;
     const harnessId = msg.harnessId || 'kimi';
 
     try {
@@ -177,66 +196,47 @@ function createCrudHandlers({ wsState, sendThreadList, closeCurrentThread, pendi
   }
 
   /**
-   * Handle thread:open-daily message
+   * Handle thread:open-assistant message — the unified create-or-resume verb.
    *
-   * Date-based session model: one thread per day, auto-selected.
-   * - Computes today's date string (YYYY-MM-DD)
-   * - If a thread exists for today, opens it (resumes Kimi session)
-   * - If not, creates a new thread with the date as the threadId
+   * Upsert semantics: if msg.threadId is provided and the thread exists in the
+   * index, resume it (fires thread:opened). Otherwise, create a new thread
+   * (fires thread:created, then thread:opened via handleThreadCreate's chained
+   * call to handleThreadOpen).
+   *
+   * This is the single entry point for opening any assistant thread —
+   * it replaces the old split create/open/open-daily/open-agent protocol.
+   * The "assistant" suffix matches the Chat Assistants vs Background
+   * Workers taxonomy in ai/views/agents-viewer/ — background workers
+   * use the runner path (lib/runner/) and never touch thread:* messages.
    *
    * @param {import('ws').WebSocket} ws
    * @param {object} msg
+   * @param {string} [msg.threadId] - If present and valid, resume. Otherwise create.
+   * @param {string} [msg.name] - Optional display name for new threads (default null).
+   * @param {string} [msg.harnessId] - Harness selection for new threads ('kimi' | 'robin').
+   * @param {object} [msg.harnessConfig] - BYOK configuration for new threads.
    */
-  async function handleThreadOpenDaily(ws, msg) {
+  async function handleThreadOpenAssistant(ws, msg) {
     const state = wsState.get(ws);
     if (!state) {
       ws.send(JSON.stringify({ type: 'error', message: 'No panel set' }));
       return;
     }
 
-    const { threadManager } = state;
-    // Preserve the requesting panel so thread:opened is routed correctly.
-    // If the message includes a panel (e.g., 'issues'), temporarily override
-    // the viewName so handleThreadOpen sends the right panel name to the client.
-    const originalViewName = state.viewName;
-    if (msg.panel) {
-      state.viewName = msg.panel;
-    }
-
-    // Today's date in local time as the thread ID
-    const now = new Date();
-    const todayId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-    const existing = await threadManager.getThread(todayId);
-
-    if (existing) {
-      // Resume today's session
-      console.log(`[ThreadWS] Daily thread exists: ${todayId}, resuming`);
-      await handleThreadOpen(ws, { threadId: todayId });
-    } else {
-      // Create today's session
-      console.log(`[ThreadWS] No daily thread for ${todayId}, creating`);
-      try {
-        await threadManager.createThread(todayId, todayId);
-
-        ws.send(JSON.stringify({
-          type: 'thread:created',
-          threadId: todayId,
-          panel: state.viewName,
-          thread: { name: todayId, createdAt: now.toISOString(), messageCount: 0, status: 'active' }
-        }));
-
-        await handleThreadOpen(ws, { threadId: todayId });
-      } catch (err) {
-        console.error('[ThreadWS] Daily create failed:', err);
-        ws.send(JSON.stringify({ type: 'error', message: err.message }));
+    // Upsert: if client supplied a threadId and it exists, resume.
+    if (msg.threadId) {
+      const existing = await state.threadManager.getThread(msg.threadId);
+      if (existing) {
+        return handleThreadOpen(ws, msg);
       }
+      // threadId provided but thread doesn't exist — fall through to create.
+      // This handles the race where a client tries to resume a freshly-deleted
+      // thread. Creating a new one is the least-surprising outcome.
+      console.warn(`[ThreadWS] thread:open-assistant with unknown threadId ${msg.threadId} — creating new`);
     }
 
-    // Restore original view name context
-    if (msg.panel) {
-      state.viewName = originalViewName;
-    }
+    // No threadId, or threadId not found → create a new thread.
+    return handleThreadCreate(ws, msg);
   }
 
   /**
@@ -353,9 +353,7 @@ function createCrudHandlers({ wsState, sendThreadList, closeCurrentThread, pendi
   }
 
   return {
-    handleThreadCreate,
-    handleThreadOpen,
-    handleThreadOpenDaily,
+    handleThreadOpenAssistant,
     handleThreadRename,
     handleThreadDelete,
     handleThreadCopyLink

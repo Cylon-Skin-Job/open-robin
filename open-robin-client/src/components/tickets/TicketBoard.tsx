@@ -11,9 +11,8 @@
  * For now, only open tickets from the root are loaded.
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { usePanelData } from '../../hooks/usePanelData';
-import { usePanelStore } from '../../state/panelStore';
 import { useTicketStore, type Ticket } from '../../state/ticketStore';
 import './tickets.css';
 
@@ -123,9 +122,6 @@ function Column({ title, tickets, icon }: { title: string; tickets: Ticket[]; ic
 }
 
 export function TicketBoard() {
-  const ws = usePanelStore((s) => s.ws);
-  const lastDailyWsRef = useRef<WebSocket | null>(null);
-
   const onIndex = useCallback((content: string) => {
     try {
       const index = JSON.parse(content);
@@ -145,21 +141,6 @@ export function TicketBoard() {
     onIndex,
     onError,
   });
-
-  // Open daily session on connect/reconnect.
-  // Reset ref on cleanup so strict-mode remount re-sends.
-  useEffect(() => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    if (ws === lastDailyWsRef.current) return;
-    lastDailyWsRef.current = ws;
-    ws.send(JSON.stringify({
-      type: 'thread:open-daily',
-      panel: 'issues-viewer',
-    }));
-    return () => {
-      lastDailyWsRef.current = null;
-    };
-  }, [ws]);
 
   const tickets = useTicketStore((s) => s.tickets);
   const loaded = useTicketStore((s) => s.loaded);

@@ -72,14 +72,14 @@ async function testConnection() {
 }
 
 async function testThreadCreate() {
-  console.log('\n📝 Testing thread:create...');
+  console.log('\n📝 Testing thread:open-assistant (create)...');
   
   const ws = await createWebSocket();
   await waitForMessage(ws, 'connected');
   
-  // Create thread
-  ws.send(JSON.stringify({ type: 'thread:create' }));
-  
+  // Create thread (no threadId → dispatcher creates new)
+  ws.send(JSON.stringify({ type: 'thread:open-assistant' }));
+
   const created = await waitForMessage(ws, 'thread:created');
   if (!created.threadId) throw new Error('No threadId received');
   
@@ -120,13 +120,13 @@ async function testThreadRename(threadId) {
 }
 
 async function testThreadOpen(threadId) {
-  console.log('\n📂 Testing thread:open...');
-  
+  console.log('\n📂 Testing thread:open-assistant (resume)...');
+
   const ws = await createWebSocket();
   await waitForMessage(ws, 'connected');
-  
-  ws.send(JSON.stringify({ type: 'thread:open', threadId }));
-  
+
+  ws.send(JSON.stringify({ type: 'thread:open-assistant', threadId }));
+
   const opened = await waitForMessage(ws, 'thread:opened');
   if (opened.threadId !== threadId) {
     throw new Error('Wrong thread opened');
@@ -144,7 +144,7 @@ async function testMessageSend(threadId) {
   await waitForMessage(ws, 'connected');
   
   // Open thread first
-  ws.send(JSON.stringify({ type: 'thread:open', threadId }));
+  ws.send(JSON.stringify({ type: 'thread:open-assistant', threadId }));
   await waitForMessage(ws, 'thread:opened');
   
   // Send a prompt (which triggers message tracking)

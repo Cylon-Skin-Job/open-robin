@@ -54,7 +54,7 @@ export function ChatArea({ panel }: ChatAreaProps) {
     setWireReady(false);
     setConnectingHarnessId(harnessId);
     if (ws?.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'thread:create', harnessId }));
+      ws.send(JSON.stringify({ type: 'thread:open-assistant', harnessId }));
     }
   }, [ws, setWireReady]);
 

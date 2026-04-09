@@ -50,13 +50,13 @@ class ThreadIndex {
   /**
    * Create a new thread entry
    * @param {string} threadId
-   * @param {string} [name='New Chat']
+   * @param {string|null} [name=null] - Display name; null means "fall back to ID" in the UI
    * @param {object} [options]
    * @param {string} [options.harnessId='kimi']
    * @param {object} [options.harnessConfig]
    * @returns {Promise<object>}
    */
-  async create(threadId, name = 'New Chat', options = {}) {
+  async create(threadId, name = null, options = {}) {
     const db = getDb();
     const now = Date.now();
     const createdAt = new Date().toISOString();

@@ -153,7 +153,7 @@ export function Sidebar({ panel }: SidebarProps) {
             show: true,
             message: msg.message,
             onConfirm: () => {
-              sendMessage({ type: 'thread:create', confirmed: true });
+              sendMessage({ type: 'thread:open-assistant', confirmed: true });
               setConfirmModal(prev => ({ ...prev, show: false }));
             },
             onCancel: () => {
@@ -195,7 +195,7 @@ export function Sidebar({ panel }: SidebarProps) {
   };
   
   const handleOpenThread = (threadId: string) => {
-    sendMessage({ type: 'thread:open', threadId });
+    sendMessage({ type: 'thread:open-assistant', threadId });
   };
   
   const handleRenameStart = (threadId: string, currentName: string) => {

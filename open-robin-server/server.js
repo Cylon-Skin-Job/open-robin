@@ -60,12 +60,6 @@ const {
 // Wire message router — per-connection event switch (extracted per SPEC-01d)
 const { createWireMessageRouter } = require('./lib/wire/message-router');
 
-// Agent session handler — per-connection thread:open-agent factory (SPEC-01e).
-// NOTE: this require is load-bearing — its transitive require chain sets the
-// persona-wire global that the runner reads at startup. Do not make this
-// conditional or lazy.
-const { createAgentSessionHandler } = require('./lib/thread/agent-session-handler');
-
 // Client message router — per-connection dispatch factory (extracted per SPEC-01f).
 const { createClientMessageRouter } = require('./lib/ws/client-message-router');
 
@@ -324,26 +318,15 @@ wss.on('connection', (ws) => {
     onWireMessage: handleMessage,
   });
 
-  // Per-connection thread:open-agent handler (extracted per SPEC-01e).
-  const { handleThreadOpenAgent } = createAgentSessionHandler({
-    ws,
-    session,
-    projectRoot,
-    AI_PANELS_PATH,
-    getDefaultProjectRoot,
-    threadWebSocketHandler: ThreadWebSocketHandler,
-    wireLifecycle: { awaitHarnessReady, initializeWire, setupWireHandlers },
-  });
-
   // ==========================================================================
   // Client Message Router (SPEC-01f)
   // ==========================================================================
   //
-  // Per-connection client message router. Depends on the wire lifecycle,
-  // agent session handler, and file explorer — must be created AFTER those
-  // factories. robinHandlers / clipboardHandlers are injected as getter
-  // closures to preserve the mutable-reference pattern from SPEC-01b
-  // (the module-level `let` bindings are reassigned inside the
+  // Per-connection client message router. Depends on the wire lifecycle
+  // and file explorer — must be created AFTER those factories.
+  // robinHandlers / clipboardHandlers are injected as getter closures to
+  // preserve the mutable-reference pattern from SPEC-01b (the
+  // module-level `let` bindings are reassigned inside the
   // startServer().then() callback).
   const { handleClientMessage, handleClientClose } = createClientMessageRouter({
     ws,
@@ -352,7 +335,6 @@ wss.on('connection', (ws) => {
     projectRoot,
     fileExplorer,
     wireLifecycle: { awaitHarnessReady, initializeWire, setupWireHandlers },
-    handleThreadOpenAgent,
     sessions,
     setSessionRoot,
     clearSessionRoot,
