@@ -45,6 +45,7 @@ async function writeViewStatePatch(projectRoot, viewId, username, patch) {
   const merged = {
     collapsed: { ...(current.collapsed || {}), ...(patch.collapsed || {}) },
     widths:    { ...(current.widths    || {}), ...(patch.widths    || {}) },
+    popup:     { ...(current.popup     || {}), ...(patch.popup     || {}) },
   };
   await writeViewState(projectRoot, viewId, username, merged);
   return merged;
@@ -72,6 +73,13 @@ async function resolveViewState(projectRoot, viewId, username) {
     widths: {
       leftSidebar: clampWidth(userState?.widths?.leftSidebar ?? defaults.widths.leftSidebar),
       leftChat:    clampWidth(userState?.widths?.leftChat    ?? defaults.widths.leftChat),
+    },
+    popup: {
+      open:   userState?.popup?.open   ?? false,
+      x:      userState?.popup?.x      ?? -1,
+      y:      userState?.popup?.y      ?? -1,
+      width:  userState?.popup?.width  ?? 420,
+      height: userState?.popup?.height ?? 520,
     },
   };
 }

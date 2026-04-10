@@ -7,6 +7,7 @@ import type {
   Thread,
   Scope,
   ViewUIState,
+  PopupState,
   Pane
 } from '../types';
 import type { PanelConfig } from '../lib/panels';
@@ -32,6 +33,15 @@ const DEFAULT_VIEW_UI_STATE: ViewUIState = {
 function clampWidth(n: number): number {
   return Math.max(120, Math.min(600, n));
 }
+
+// SPEC-26d: floating popup defaults
+const DEFAULT_POPUP: PopupState = {
+  open: false,
+  x: -1,   // -1 means "compute default on first render" (bottom-right with padding)
+  y: -1,
+  width: 420,
+  height: 520,
+};
 
 interface AppState {
   // Panel configs (dynamically discovered)
@@ -103,6 +113,13 @@ interface AppState {
   toggleCollapsed: (view: string, pane: Pane) => void;
   setPaneWidth: (view: string, pane: Pane, width: number) => void;
   commitPaneWidths: (view: string) => void;
+
+  // SPEC-26d: floating popup for view chats
+  openFloatingChat: () => void;
+  closeFloatingChat: () => void;
+  setPopupPosition: (panel: string, x: number, y: number) => void;
+  setPopupSize: (panel: string, width: number, height: number) => void;
+  commitPopupState: (panel: string) => void;
 }
 
 /**
@@ -443,6 +460,87 @@ export const usePanelStore = create<AppState>((set, get) => ({
       type: 'state:set',
       view,
       state: { widths: state.widths },
+    }));
+  },
+
+  // SPEC-26d: floating popup actions
+  openFloatingChat: () => {
+    const state = get();
+    const panel = state.currentPanel;
+    const threads = state.threads.view;
+    const ws = state.ws;
+
+    // If there are view threads, activate the MRU one on the server
+    if (threads.length > 0 && ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'thread:open-assistant',
+        scope: 'view',
+        threadId: threads[0].threadId,
+      }));
+    }
+    // If no threads, ChatArea will show the harness picker automatically
+
+    // Update popup.open in viewStates
+    set((s) => {
+      const vs = s.viewStates[panel] || { ...DEFAULT_VIEW_UI_STATE };
+      const popup = vs.popup || { ...DEFAULT_POPUP };
+      return {
+        viewStates: {
+          ...s.viewStates,
+          [panel]: { ...vs, popup: { ...popup, open: true } },
+        },
+      };
+    });
+  },
+
+  closeFloatingChat: () => {
+    const panel = get().currentPanel;
+    set((s) => {
+      const vs = s.viewStates[panel];
+      if (!vs?.popup) return s;
+      return {
+        viewStates: {
+          ...s.viewStates,
+          [panel]: { ...vs, popup: { ...vs.popup, open: false } },
+        },
+      };
+    });
+    // Persist the close state
+    get().commitPopupState(panel);
+  },
+
+  setPopupPosition: (panel, x, y) => set((s) => {
+    const vs = s.viewStates[panel] || { ...DEFAULT_VIEW_UI_STATE };
+    const popup = vs.popup || { ...DEFAULT_POPUP };
+    return {
+      viewStates: {
+        ...s.viewStates,
+        [panel]: { ...vs, popup: { ...popup, x, y } },
+      },
+    };
+  }),
+
+  setPopupSize: (panel, width, height) => set((s) => {
+    const vs = s.viewStates[panel] || { ...DEFAULT_VIEW_UI_STATE };
+    const popup = vs.popup || { ...DEFAULT_POPUP };
+    return {
+      viewStates: {
+        ...s.viewStates,
+        [panel]: { ...vs, popup: { ...popup, width, height } },
+      },
+    };
+  }),
+
+  commitPopupState: (panel) => {
+    const state = get();
+    const vs = state.viewStates[panel];
+    if (!vs?.popup) return;
+    const ws = state.ws;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send(JSON.stringify({
+      type: 'state:set',
+      view: panel,
+      state: { popup: vs.popup },
     }));
   },
 

@@ -131,6 +131,11 @@ function handleMessage(msg: WebSocketMessage) {
   if (msg.type === 'state:result') {
     const store = usePanelStore.getState();
     store.setViewState((msg as any).view, (msg as any).state);
+    // SPEC-26d: if the loaded view state says popup was open AND this is
+    // the current panel, sync the popup visibility.
+    if ((msg as any).view === store.currentPanel && (msg as any).state?.popup?.open) {
+      store.openFloatingChat();
+    }
     return;
   }
   if (msg.type === 'state:error') {

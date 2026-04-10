@@ -147,6 +147,15 @@ export interface WebSocketMessage {
 // SPEC-26c-2: per-view UI state (collapse + pane widths)
 export type Pane = 'leftSidebar' | 'leftChat';
 
+// SPEC-26d: floating popup state for view-scoped chats
+export interface PopupState {
+  open: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface ViewUIState {
   collapsed: {
     leftSidebar: boolean;
@@ -156,6 +165,7 @@ export interface ViewUIState {
     leftSidebar: number;
     leftChat: number;
   };
+  popup?: PopupState;  // SPEC-26d — optional so old state files still parse
 }
 
 // SPEC-26: dual-chat paradigm. Every thread lives in one of two scopes.

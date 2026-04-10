@@ -10,6 +10,7 @@ import { ResizeHandle } from './ResizeHandle';
 import { Toast } from './Toast';
 import { ModalOverlay } from './Modal/ModalOverlay';
 import { RobinOverlay } from './Robin/RobinOverlay';
+import { FloatingChat } from './FloatingChat';
 import './App.css';
 
 // SPEC-26c-2: defaults for the 3-column layout
@@ -222,6 +223,7 @@ function App() {
       <Toast />
       <ModalOverlay />
       <RobinOverlay open={robinOpen} onClose={() => setRobinOpen(false)} />
+      <FloatingChat />
     </div>
   );
 }

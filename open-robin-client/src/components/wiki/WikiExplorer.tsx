@@ -14,7 +14,6 @@ import { useWikiStore } from '../../state/wikiStore';
 import { TopicList } from './TopicList';
 import { PageViewer } from './PageViewer';
 import { EdgePanel } from './EdgePanel';
-import { FloatingChat } from '../FloatingChat';
 import './wiki.css';
 
 export function WikiExplorer() {
@@ -75,7 +74,6 @@ export function WikiExplorer() {
       <TopicList />
       <PageViewer />
       <EdgePanel />
-      <FloatingChat panel="rv-wiki-viewer" />
     </div>
   );
 }
