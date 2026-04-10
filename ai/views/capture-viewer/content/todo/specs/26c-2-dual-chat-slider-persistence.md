@@ -1,317 +1,902 @@
-# SPEC-26c-2 — Dual Chat Slider State + Resize Handles + Local JSON Persistence
+# SPEC-26c-2 — Left-Column Collapse + Resize + Per-View Persistence + Right-Side Column Teardown
 
-**Parent:** SPEC-26 (dual-chat paradigm)
-**Position:** Phase 3.5 of 4. Polish pass on 26c. Adds collapse/expand affordances, drag-to-resize handles at every column boundary, and per-view persistence of both dimensions of UI state.
+**Parent:** SPEC-26 (dual-chat paradigm, post-pivot to asymmetric layout)
+**Position:** Phase 3.5 of 5. Narrows 26c's symmetric 5-column layout to an asymmetric 3-column layout and adds collapse/resize affordances with per-view JSON persistence. The right-side view chat becomes a floating popup in SPEC-26d, not here.
 **Depends on:**
-- 26a (`72d390e`), 26b (`e0913c2`), 26c (TBD) all merged
-**Model recommendation:** **Opus 4.6**. Two new UX patterns (collapse + drag-resize), new persistence layer, CSS refactor from hardcoded grid widths to CSS variables. Multiple moving pieces tightly coupled through the same state slice.
-**Estimated blast radius:** **Medium.** Adds one new top-level store field + new wire messages + new server module + new client components (drag handle, collapse button). Refactors the grid-template-columns in views.css from hardcoded values to CSS variables. No wire protocol changes for thread messages; new `state:*` namespace added.
+- 26a (`72d390e`), 26b (`e0913c2`), 26c (`536727e`) all merged
+- `ai/views/settings/styles/views.css` (global workspace CSS) — minor touch
+**Model recommendation:** **Opus 4.6**. Substantial panelStore refactor residue, CSS grid restructure, new resize handle component, new server module, new wire messages. Multiple moving pieces tightly coupled.
+**Estimated blast radius:** **Medium.** Removes two components from the App.tsx render tree (right-side Sidebar + ChatArea), adds one new component (ResizeHandle), adds one new server module (`lib/view-state/`), adds a new store slice, adds new wire messages (`state:get` / `state:set`), refactors grid-template-columns to CSS variables. No thread-protocol changes. The right-scope infrastructure from 26c stays intact — SPEC-26d will re-expose view chats as a floating popup.
 
 ---
 
-## Your mission
+## Your mission — the pivot explainer
 
-Two UX affordances built on one shared persistence layer. Three work streams:
+**Design reality check:** SPEC-26c delivered a symmetric 5-column layout (`[project sidebar][project chat][content][view chat][view sidebar]`). After live validation, the user observed that two empty thread rails + two chat columns created visual confusion and wasted screen real estate. The right-side view chat needs to become a floating popup (SPEC-26d), not a permanent column.
 
-**Stream 1 — Collapse affordances.**
-Each chat column can collapse to a thin edge rail and expand back out. Minimum UX:
-- Each sidebar has a collapse toggle (a small button in the header or at its inner edge)
-- Each chat column has a similar toggle (likewise at the header or inner edge)
-- Content area flexes to fill the freed space when any side collapses
-- Collapsed state is a thin strip (~40px — the "rail"), not fully hidden, so the expand affordance is always reachable
+This spec does two things:
 
-**Stream 2 — Drag-to-resize handles.**
-Four thin vertical drag handles sit at the column boundaries:
-- Between left sidebar and left chat
-- Between left chat and content area
-- Between content area and right chat
-- Between right chat and right sidebar
+1. **Dismantles the right-side columns** from 26c's layout — `<ChatArea scope="view" />` and `<Sidebar scope="view" />` are removed from the `PanelContent` render tree. Grid collapses from 5 columns to 3.
+2. **Adds collapse + resize + persistence for the remaining left-side columns** — left sidebar (project thread list), left chat (project chat), content area. Two collapsible panes (`leftSidebar`, `leftChat`), two resize handles (between sidebar/chat and between chat/content), content area always `1fr`.
 
-Each handle shows a `col-resize` cursor on hover and updates the adjacent column's width on drag. Content area stays `1fr` and absorbs whatever width change happens on either side. Min/max enforced in the drag handler (120px min per column, ~600px max — tune to taste).
+**Not scrapped — staying for 26d:**
+- `panelStore` scope split (`threads: { project, view }`, `currentThreadIds: { project, view }`, `currentScope`) — 26d's floating popup will render the view scope
+- `Sidebar.tsx` / `ChatArea.tsx` scope props — 26d will re-instantiate `<ChatArea scope="view" />` and `<Sidebar scope="view" />` inside a `FloatingChat` container
+- Server routing from 26b (`scope` field on wire messages, dual ThreadManagers) — unchanged, still used
+- `thread-handlers.ts` scope-aware response routing — unchanged
+- `FloatingChat.tsx` — already exists, currently used only by wiki-viewer; 26d will generalize and enhance it
+
+**Three work streams in this spec:**
+
+**Stream 1 — Right-side layout teardown.**
+- Remove `<ChatArea scope="view" />` and `<Sidebar scope="view" />` from `PanelContent` in `App.tsx`
+- Remove the right-side resize handles (in 26c-2 they never existed as concrete components; this is just "don't render them")
+- Update CSS grid from 5 content columns to 3: `[leftSidebar][leftChat][content]`
+
+**Stream 2 — Left-side collapse + resize affordances.**
+- Two collapse toggles: one on the project Sidebar header, one on the project ChatArea (position TBD — executor chooses)
+- Clicking collapse → pane shrinks to a 40px rail with an expand icon
+- Two drag handles at the grid boundaries: `leftSidebar | leftChat` and `leftChat | content`
+- Dragging updates width state smoothly (mousemove → local state); commits on mouseup (mouseup → wire `state:set`)
+- Clamps: min 120px, max 600px per pane
+- Content area always `1fr` — absorbs any width change
 
 **Stream 3 — Per-view persistence via local JSON.**
-Per the user's directive: "Local JSON" — following the project's "templated but composable" config pattern (matching how index.json / content.json / layout.json live in view folders today).
-
-The persistence model:
+Following the project's "templated but composable" config pattern.
 - Each view has its own UI state file at `ai/views/<view>/state/<username>.json`
-- The file holds per-user UI preferences for that view: the four collapse booleans AND the four pane widths
-- On mount, the client asks the server for the current user's state file for the current view
-- On toggle OR after a drag settles, the client writes the updated state back to the server
-- Server reads/writes the file via new `state:*` wire messages
-
-The "templated but composable" intent: the file format matches the project's other config file patterns (JSON, small, per-user, in the view's own folder). It should be browsable via the file explorer, git-trackable for users who want to sync UI preferences across devices, and obvious to a human reader.
-
-**CSS refactor:** 26c ships with hardcoded grid-template-columns values (e.g., `220px 320px 1fr 320px 220px`). 26c-2 converts those to CSS variables driven by state so both collapse and resize can mutate them at runtime without touching the stylesheet.
+- Holds the two collapsed booleans (`leftSidebar`, `leftChat`) and the two widths (`leftSidebar`, `leftChat`)
+- Wire messages: `state:get { view }` → `state:result { view, state }`, `state:set { view, state }`
+- Server resolves precedence: per-user file → view's `layout.json` defaults → hardcoded fallbacks
+- Client loads state on `setCurrentPanel`, commits changes on toggle or mouseup
 
 ---
 
 **After this phase:**
-- Each of the four chat-column pieces has a collapse toggle
-- Clicking a toggle collapses that piece to a thin rail (~40px with just an expand icon) and the content area reflows to fill the freed space
-- Each column boundary has a drag handle; the user can stretch any column to their preferred width
-- State persists per view: switching views restores the previous collapse state AND widths for the new view
-- Per-user state file lives at `ai/views/<view>/state/<username>.json` and holds BOTH collapsed booleans and pane widths
-- Default state for new views: everything expanded at widths from `layout.json` (if present) or hardcoded fallbacks
-- Reloading the browser restores the last-saved state including drag positions
-- Grid-template-columns in views.css is CSS-variable-driven (`var(--left-sidebar-w)` etc.), mutated from state
+- Every chat-enabled view renders three content columns: `[Sidebar(project)][ChatArea(project)][ContentArea]`
+- Two resize handles (6px each) sit between the three columns
+- Both the left sidebar and left chat can be collapsed to 40px rails
+- Widths persist per view per user at `ai/views/<view>/state/<username>.json`
+- Content area gets much more horizontal space than in 26c's 5-column model
+- The right-scope infrastructure (viewThreadManager, view storage paths, scope field on wire messages) is untouched — SPEC-26d will re-expose it as a floating popup
+- `FloatingChat.tsx` continues to work for wiki-viewer as it does today (unchanged in this spec)
 
 **You are not touching:**
-- Server thread routing, wire protocol (thread:* messages), SQLite schema — all handled in 26a/26b
-- The dual-chat layout itself — that's 26c's responsibility
+- Any server code except the new `lib/view-state/` module and the `state:*` handlers in `client-message-router.js`
+- Wire protocol for `thread:*` messages — unchanged
+- SQLite schema — unchanged
+- 26c's `panelStore` scope split — unchanged (view-scope fields remain populated, they just aren't rendered as columns)
+- 26c's `thread-handlers.ts` scope routing — unchanged
+- `FloatingChat.tsx`, `WikiExplorer.tsx` — unchanged (wiki's existing floating chat pattern is preserved as-is, and SPEC-26d will generalize)
 - Dual-wire support — 26d
-- Chat header component design — 26d (this spec adds collapse toggles + drag handles, probably as small inline affordances; the full chat header is 26d)
-- Harness wizard — 26d
-- Agents area
+- Chat header component — 26d
+- Harness wizard per side — 26d
+- Traffic lights / FAB / dock / thread picker modal — 26d
+- CSS architecture migration — separate future spec
+- Agents-viewer area (saved feedback: don't audit)
 
 ---
 
-## Design decisions to lock in before coding
+## Design decisions locked in (from the earlier conversation)
 
-**D1 — File location and naming.**
-Three candidates:
-- **A.** `ai/views/<view>/state/<username>.json` — new `state/` subdirectory per view, per-user file inside. Clean separation from settings/ (which is AI-locked) and content/ (which is primary data).
-- **B.** `ai/views/<view>/content/ui-state.json` — shared across users, one file per view. Simpler but doesn't match the per-user model the user described.
-- **C.** `ai/user-state/<username>/views/<view>.json` — global user-state root, view-keyed files inside. Centralized per user but breaks the "each view owns its own config" locality.
+These were already argued through in the previous draft's D1-D6 and in the follow-up pivot conversation. Keeping as-is:
 
-**My recommendation:** Option A. It matches the "each view is a self-contained unit with its own config" pattern. The per-user subfile respects collaboration (co-workers can have different slider preferences in the same view without conflict). The `state/` directory is new but parallels the existing `content/` and `settings/` subfolders.
+**D1 — File location.** `ai/views/<view>/state/<username>.json`. New `state/` subdirectory per view. Matches "each view is self-contained" pattern.
 
-Lock it in with the executor before drafting; or take the lean.
+**D2 — Transport.** New `state:*` wire messages (parallel to `thread:*`), not HTTP.
 
-**D2 — Transport: wire messages or HTTP?**
-- **Wire messages:** `state:get { view, username }` / `state:set { view, username, state }`. Reuses the existing WS. Low-overhead.
-- **HTTP:** REST endpoint like `GET /api/view-state/<view>` and `POST /api/view-state/<view>`. Simple. No coordinating with wire protocol state.
+**D3 — Granularity.** Both `collapsed` (2 booleans) and `widths` (2 numbers) in one state slice. Drop the right-side `rightChat` / `rightSidebar` fields from the original 4-pane design.
 
-**My recommendation:** Wire messages. The client is already WS-heavy, and this keeps the persistence path consistent with everything else. A new `state:*` namespace on the wire (parallel to `thread:*`, `robin:*`, `clipboard:*`).
+**D4 — Default resolution order.**
+1. Per-user file (`ai/views/<view>/state/<username>.json`)
+2. View's `layout.json` defaults (`threadListVisible`, `threadListWidth`, `chatWidth`)
+3. Hardcoded fallback: `leftSidebar` visible at 220px, `leftChat` visible at 320px
 
-**D3 — Granularity.**
-- **Per-column booleans only:** just `{ leftSidebar, leftChat, rightChat, rightSidebar }` visibility flags
-- **Booleans + widths:** `{ collapsed: {...4 booleans}, widths: {...4 numbers} }`
+**D5 — Resize commit timing + handle positioning.**
+- Commit on mouseup (not every mousemove)
+- In-grid handles (6px columns between content columns), not absolute overlays
+- Split store actions: `setPaneWidth` (local only, called on mousemove) and `commitPaneWidths` (persist to server, called on mouseup)
 
-**My recommendation:** Both. The four booleans cover collapse state; the four widths cover drag-to-resize state. Both persist to the same file so the user's full layout preferences are captured in one place.
-
-**D4 — Default state for views without a file.**
-- Everything expanded (all four booleans true) + hardcoded default widths
-- Or read from `ai/views/<view>/settings/layout.json` which has `chatPosition`, `threadListVisible`, `chatWidth`, `threadListWidth` — existing fields from the pre-26c era that become the "view default" when no per-user state exists.
-
-**My recommendation:** Use `layout.json`'s existing fields as per-view defaults, with a precedence chain:
-
-1. **Per-user file** (`ai/views/<view>/state/<username>.json`) — if present, highest priority
-2. **View's `layout.json`** — `threadListVisible` → collapsed.leftSidebar; `threadListWidth` → widths.leftSidebar; `chatWidth` → widths.leftChat; mirror fields for the right side if present, otherwise same widths applied symmetrically
-3. **Hardcoded fallback:** all expanded, sidebars 220px, chats 320px
-
-This revives the existing `layout.json` fields for their intended purpose: each view ships with sensible default widths and visibility, and individual users override via drag/collapse. The "templated but composable" pattern.
-
-**D5 — Resize handle UX.**
-- **Width commit timing:**
-  - **Optimistic + throttled:** update state on every mousemove (throttled to ~16ms), commit to server 300ms after the user stops dragging
-  - **Commit on mouseup only:** update state on every mousemove (unbounded), commit to server once when the drag ends
-- **Handle positioning:**
-  - **In-grid handle:** a thin column in the grid-template-columns (e.g., 6px wide) between each pair of content columns
-  - **Absolute overlay:** `position: absolute` strip on top of the boundary
-
-**My recommendation:** Commit-on-mouseup (simpler, avoids sending many writes during a drag) + in-grid handle (works naturally with the grid layout, no z-index games). Store the widths in state during the drag so other components re-render smoothly; persist to server only once the user releases.
-
-**D6 — Minimum and maximum widths.**
-- Each pane has a min of **120px** (below this, content becomes unusable)
-- Each pane has a max of **600px** (above this, the content area gets squeezed too hard)
-- When a pane is collapsed, its "collapsed width" is **40px** (the rail), but its stored width in the user's file remains at whatever value they set — so expanding restores the previous size
-
-**My recommendation:** Enforce 120px/600px in the drag handler (clamp the value before writing to state). Don't persist values outside that range.
+**D6 — Min/max widths.**
+- Min 120px per pane (below this, content becomes unusable)
+- Max 600px per pane (above this, the content area gets squeezed too hard)
+- Collapsed rail is 40px (not a persisted width value — it's a runtime-only presentation)
+- Collapsed pane stores the pre-collapse width; expanding restores it
 
 ---
 
-## Scope — assuming the D1-D6 recommendations
+## Context before you touch code
 
-### Server changes
+Read these in order:
 
-**New file:** `lib/view-state/index.js` — read/write per-user view state files.
+1. **`ai/views/wiki-viewer/content/enforcement/code-standards/PAGE.md`** — house rules.
+2. **`ai/views/capture-viewer/content/todo/specs/26a-dual-chat-data-model.md`** — understand the data model that the scope infrastructure rests on.
+3. **`ai/views/capture-viewer/content/todo/specs/26b-dual-chat-routing-layer.md`** — understand the server routing.
+4. **`ai/views/capture-viewer/content/todo/specs/26c-dual-chat-client-layout.md`** — understand what 26c delivered (and what you're partially undoing).
+5. **`open-robin-client/src/components/App.tsx`** (focus on `PanelContent` L20-60 post-26c) — the file you partially revert.
+6. **`open-robin-client/src/components/App.css`** (focus on `.rv-layout-dual-chat` grid rule around L200-210) — refactor from hardcoded 5-col to CSS-variable 3-col.
+7. **`open-robin-client/src/state/panelStore.ts`** — read the full file but only add a new `viewStates` slice; do NOT touch the existing scope split (`threads`, `currentThreadIds`, `currentScope`, `projectChat`, `panels[panelId]`).
+8. **`open-robin-client/src/components/Sidebar.tsx`** — add collapse button + collapsed rail rendering. Scope prop remains.
+9. **`open-robin-client/src/components/ChatArea.tsx`** — add collapse button + collapsed rail rendering. Scope prop remains.
+10. **`open-robin-server/lib/ws/client-message-router.js`** — add `state:*` handler cases.
 
-Exports:
-- `readViewState(projectRoot, viewId, username)` → returns the parsed JSON or `null` if missing
-- `writeViewState(projectRoot, viewId, username, state)` → writes atomically, creates `ai/views/<view>/state/` if needed
-- `resolveViewState(projectRoot, viewId, username)` → merges per-user file with layout.json defaults and hardcoded fallbacks; returns the fully populated `ViewUIState`
+### Line-number drift verification
 
-**New file:** `lib/view-state/defaults.js` — pull default state from the view's `settings/layout.json`. Maps the existing fields:
-- `threadListVisible` → `collapsed.leftSidebar` (inverted: visible=true → collapsed=false)
-- `threadListWidth` → `widths.leftSidebar`
-- `chatWidth` → `widths.leftChat`
-- Right-side fields get the same values unless the layout.json declares separate mirror fields (future extension)
-
-**Wire messages (new) in `lib/ws/client-message-router.js`:**
-
-- `state:get { view }` — server calls `resolveViewState`, sends back `state:result { view, state }`
-- `state:set { view, state }` — server merges the partial state patch with the existing file and writes atomically
-
-Username comes from `getUsername()` in `lib/thread/ChatFile.js` — reuse that.
-
-### Client changes
-
-**New store slice: `viewStates`.**
-
-```ts
-// in panelStore.ts
-interface ViewUIState {
-  collapsed: {
-    leftSidebar: boolean;
-    leftChat: boolean;
-    rightChat: boolean;
-    rightSidebar: boolean;
-  };
-  widths: {
-    leftSidebar: number;
-    leftChat: number;
-    rightChat: number;
-    rightSidebar: number;
-  };
-}
-
-type Pane = 'leftSidebar' | 'leftChat' | 'rightChat' | 'rightSidebar';
-
-interface AppState {
-  // ... existing ...
-
-  // SPEC-26c-2: per-view UI state (collapse/expand + pane widths)
-  viewStates: Record<string, ViewUIState>;  // keyed by view id
-
-  loadViewState: (view: string) => void;                          // send state:get, update on reply
-  toggleCollapsed: (view: string, pane: Pane) => void;            // local toggle + send state:set
-  setPaneWidth: (view: string, pane: Pane, width: number) => void; // local update (no persist)
-  commitPaneWidths: (view: string) => void;                       // persist current widths to server
-}
+```bash
+cd /Users/rccurtrightjr./projects/open-robin
+wc -l \
+  open-robin-client/src/components/App.tsx \
+  open-robin-client/src/components/App.css \
+  open-robin-client/src/state/panelStore.ts \
+  open-robin-client/src/components/Sidebar.tsx \
+  open-robin-client/src/components/ChatArea.tsx \
+  open-robin-server/lib/ws/client-message-router.js
 ```
 
-The split between `setPaneWidth` (local only) and `commitPaneWidths` (persist) lets drag handles update state smoothly on every mousemove without hitting the server, then commit once on mouseup.
+### Pre-prod wipe
 
-**New WS handler** for `state:result`: populate `viewStates[msg.view]` from `msg.state`.
+```bash
+pkill -9 -f "node.*server.js" 2>/dev/null; sleep 1
+sqlite3 /Users/rccurtrightjr./projects/open-robin/ai/system/robin.db "PRAGMA foreign_keys=ON; DELETE FROM threads;"
+find /Users/rccurtrightjr./projects/open-robin/ai/views/chat/threads -type f -name '*.md' -delete 2>/dev/null
+find /Users/rccurtrightjr./projects/open-robin/ai/views/*/chat/threads -type f -name '*.md' -delete 2>/dev/null
+rm -rf /Users/rccurtrightjr./projects/open-robin/ai/views/*/state/ 2>/dev/null
+```
 
-**On `setCurrentPanel(id)`:** if `viewStates[id]` is missing, call `loadViewState(id)` to fetch from the server. Show a reasonable default shape in the meantime (fully-expanded, hardcoded widths) so the layout doesn't flash.
+Note the `PRAGMA foreign_keys=ON;` prefix and the new `state/` directory removal — any leftover state files from earlier drafts need to go so the defaults fallback is exercised.
 
-**New component: `<ResizeHandle />`.**
+---
 
+## Changes — file by file
+
+### 1. `open-robin-client/src/components/App.tsx` — Stream 1 (right-side teardown)
+
+**1a. Remove the right-side `<ChatArea>` and `<Sidebar>` from `PanelContent`.**
+
+Current (post-26c):
 ```tsx
-interface ResizeHandleProps {
-  panel: string;   // current view
-  pane: Pane;      // which pane this handle adjusts
-}
-
-function ResizeHandle({ panel, pane }: ResizeHandleProps) {
-  // mousedown → start tracking; calculate delta from initial mouse x
-  // apply to store.setPaneWidth(panel, pane, newWidth) on every mousemove
-  // mouseup → store.commitPaneWidths(panel) to persist
-  // clamp width between 120 and 600 before writing
-  // show col-resize cursor
-  return <div className="rv-resize-handle" data-pane={pane} />;
-}
+const PanelContent = memo(function PanelContent({ panel, hasChat }: { panel: string; hasChat: boolean }) {
+  if (!hasChat) {
+    return <ContentArea panel={panel} />;
+  }
+  return (
+    <>
+      <Sidebar panel={panel} scope="project" />
+      <ChatArea panel={panel} scope="project" />
+      <ContentArea panel={panel} />
+      <ChatArea panel={panel} scope="view" />
+      <Sidebar panel={panel} scope="view" />
+    </>
+  );
+});
 ```
 
-Rendered four times inside PanelContent, at the boundaries between grid columns.
-
-**Collapse toggles in Sidebar / ChatArea:**
-- Sidebar gets a small collapse button in its header (a `<` or `→` icon)
-- ChatArea gets a similar button at its inner edge (toward the content area)
-- Click → `store.toggleCollapsed(panel, pane)` → state updates locally + sends `state:set` with the new collapsed boolean
-- Collapsed panes render as a ~40px rail with only an expand icon visible
-- Click the rail expand icon → `toggleCollapsed` again → expand back to the stored width
-
-**Layout CSS updates (`ai/views/settings/styles/views.css`):**
-
-Replace the hardcoded grid-template-columns from 26c with CSS variable references. The client writes the variable values via inline style on the panel container.
-
-```css
-.rv-layout-dual-chat {
-  display: grid;
-  grid-template-columns:
-    var(--left-sidebar-w, 220px)
-    6px  /* resize handle column 1 */
-    var(--left-chat-w, 320px)
-    6px  /* resize handle column 2 */
-    1fr
-    6px  /* resize handle column 3 */
-    var(--right-chat-w, 320px)
-    6px  /* resize handle column 4 */
-    var(--right-sidebar-w, 220px);
-  grid-template-rows: 1fr;
-  height: 100%;
-}
-
-.rv-resize-handle {
-  grid-row: 1;
-  cursor: col-resize;
-  background: transparent;
-  transition: background 0.15s;
-}
-
-.rv-resize-handle:hover {
-  background: var(--theme-primary, #888);
-  opacity: 0.4;
-}
-
-.sidebar--collapsed,
-.chat-area--collapsed {
-  width: 40px !important;  /* override grid-template width */
-  /* hide child content except the expand button */
-}
-
-.chat-area--inactive {
-  /* unchanged from 26c */
-}
+New:
+```tsx
+const PanelContent = memo(function PanelContent({ panel, hasChat }: { panel: string; hasChat: boolean }) {
+  if (!hasChat) {
+    return <ContentArea panel={panel} />;
+  }
+  // SPEC-26c-2: right-side view chat is no longer a column. SPEC-26d
+  // will re-expose it as a floating popup.
+  return (
+    <>
+      <Sidebar panel={panel} scope="project" />
+      <ResizeHandle panel={panel} pane="leftSidebar" />
+      <ChatArea panel={panel} scope="project" />
+      <ResizeHandle panel={panel} pane="leftChat" />
+      <ContentArea panel={panel} />
+    </>
+  );
+});
 ```
 
-The six columns for the handles live between the five content columns. When a pane is collapsed, the JS updates its CSS variable to `40px` (the rail width) and adds the `--collapsed` class to the element for inner-content hiding.
+Three content children (Sidebar, ChatArea, ContentArea) + two ResizeHandles interleaved. Grid has 5 tracks total (3 content + 2 handles).
 
-**PanelContent update in App.tsx.**
+**1b. Inline grid style driven by `viewStates`.**
 
-Take the `viewStates[panel]` and apply its width values as inline style CSS variables:
+Just above the PanelContent render (or wherever the `rv-panel` div is built in App.tsx), add scope-aware grid inline styles:
 
 ```tsx
 const viewState = usePanelStore((s) => s.viewStates[panel]);
-const widths = viewState?.widths || DEFAULT_WIDTHS;
-const collapsed = viewState?.collapsed || DEFAULT_COLLAPSED;
+const widths = viewState?.widths ?? DEFAULT_WIDTHS;
+const collapsed = viewState?.collapsed ?? DEFAULT_COLLAPSED;
 
 const gridStyle: CSSProperties = {
-  '--left-sidebar-w':  `${collapsed.leftSidebar ? 40 : widths.leftSidebar}px`,
-  '--left-chat-w':     `${collapsed.leftChat ? 40 : widths.leftChat}px`,
-  '--right-chat-w':    `${collapsed.rightChat ? 40 : widths.rightChat}px`,
-  '--right-sidebar-w': `${collapsed.rightSidebar ? 40 : widths.rightSidebar}px`,
+  '--left-sidebar-w': `${collapsed.leftSidebar ? 40 : widths.leftSidebar}px`,
+  '--left-chat-w':    `${collapsed.leftChat    ? 40 : widths.leftChat   }px`,
 } as CSSProperties;
 
 return (
-  <div className="rv-layout-dual-chat" style={gridStyle}>
-    <Sidebar panel={panel} scope="project" collapsed={collapsed.leftSidebar} />
-    <ResizeHandle panel={panel} pane="leftSidebar" />
-    <ChatArea panel={panel} scope="project" collapsed={collapsed.leftChat} />
-    <ResizeHandle panel={panel} pane="leftChat" />
-    <ContentArea panel={panel} />
-    <ResizeHandle panel={panel} pane="rightChat" />
-    <ChatArea panel={panel} scope="view" collapsed={collapsed.rightChat} />
-    <ResizeHandle panel={panel} pane="rightSidebar" />
-    <Sidebar panel={panel} scope="view" collapsed={collapsed.rightSidebar} />
+  <div className="rv-panel rv-layout-dual-chat active" style={gridStyle}>
+    <PanelContent panel={panel} hasChat={hasChat} />
   </div>
 );
 ```
 
-Note: the `collapsed` prop on Sidebar/ChatArea is what those components use to decide whether to render full content or just the expand-icon rail. Pass it through.
+(The exact structure depends on where `rv-panel` is built in App.tsx today — read the current file and match its pattern.)
 
-**File format for the per-user state file:**
+**1c. Defaults constants near the top of the file.**
 
-```json
-{
-  "collapsed": {
-    "leftSidebar": false,
-    "leftChat": false,
-    "rightChat": false,
-    "rightSidebar": false
-  },
-  "widths": {
-    "leftSidebar": 220,
-    "leftChat": 320,
-    "rightChat": 320,
-    "rightSidebar": 220
-  }
+```ts
+const DEFAULT_WIDTHS = { leftSidebar: 220, leftChat: 320 };
+const DEFAULT_COLLAPSED = { leftSidebar: false, leftChat: false };
+```
+
+---
+
+### 2. `open-robin-client/src/components/App.css` — 3-column grid refactor
+
+**2a. Rewrite `.rv-layout-dual-chat` to use CSS variables.**
+
+Current (post-26c):
+```css
+.rv-layout-dual-chat {
+  /* [project sidebar] [project chat] [content] [view chat] [view sidebar] */
+  grid-template-columns:
+    var(--sidebar-width)
+    var(--chat-width)
+    1fr
+    var(--chat-width)
+    var(--sidebar-width);
 }
 ```
 
-Both `collapsed` and `widths` are always present after first write. Partial writes are merged with the existing file on the server side.
+New:
+```css
+/* SPEC-26c-2: 3-column asymmetric layout.
+ * [project sidebar] [handle] [project chat] [handle] [content]
+ * Widths come from per-view state (viewStates), written to inline style
+ * as CSS variables on the .rv-panel container.
+ */
+.rv-layout-dual-chat {
+  grid-template-columns:
+    var(--left-sidebar-w, 220px)
+    6px   /* resize handle 1 */
+    var(--left-chat-w,    320px)
+    6px   /* resize handle 2 */
+    1fr;
+}
+```
+
+**2b. Add resize handle styling.**
+
+```css
+/* SPEC-26c-2: in-grid drag handle. 6px thin strip, col-resize cursor,
+   subtle hover feedback so users can find it.
+   NOTE: do NOT set grid-row on this element. An explicit grid-row with
+   auto grid-column makes CSS Grid's auto-placement treat handles as
+   "partially placed" and pack them into the first tracks, pushing
+   the actual content into the wrong columns. This bug was hit in the
+   first iteration of 26c-2 — fixed by deleting the grid-row line.
+   Single-row grid (grid-template-rows: minmax(0, 1fr)) already puts
+   everything in row 1. */
+.rv-resize-handle {
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s ease;
+  min-width: 0;
+}
+
+.rv-resize-handle:hover,
+.rv-resize-handle:active {
+  background: rgba(var(--theme-primary-rgb, 136, 136, 136), 0.35);
+}
+```
+
+**2c. Add collapsed rail variants.**
+
+```css
+/* SPEC-26c-2: collapsed rail — sidebar/chat collapses to a 40px strip
+   with only an expand icon. Width comes from the inline CSS variable
+   on .rv-panel (set to 40px when collapsed). Hide child content except
+   the expand affordance. */
+.sidebar--collapsed,
+.chat-area--collapsed {
+  overflow: hidden;
+}
+
+.sidebar--collapsed > *:not(.rv-collapse-rail-btn),
+.chat-area--collapsed > *:not(.rv-collapse-rail-btn) {
+  display: none;
+}
+
+.rv-collapse-rail-btn {
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-dim, #888);
+}
+
+.rv-collapse-rail-btn:hover {
+  color: var(--theme-primary, #888);
+}
+
+.rv-collapse-btn {
+  /* inline collapse toggle — position TBD per component */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-dim, #888);
+}
+
+.rv-collapse-btn:hover {
+  color: var(--theme-primary, #888);
+}
+```
+
+---
+
+### 3. `open-robin-client/src/components/ResizeHandle.tsx` — new component
+
+```tsx
+import { useRef } from 'react';
+import { usePanelStore } from '../state/panelStore';
+import type { Pane } from '../types';
+
+interface ResizeHandleProps {
+  panel: string;
+  pane: Pane;  // 'leftSidebar' | 'leftChat'
+}
+
+const MIN_WIDTH = 120;
+const MAX_WIDTH = 600;
+
+export function ResizeHandle({ panel, pane }: ResizeHandleProps) {
+  const setPaneWidth = usePanelStore((s) => s.setPaneWidth);
+  const commitPaneWidths = usePanelStore((s) => s.commitPaneWidths);
+  const getPaneWidth = usePanelStore((s) => {
+    const vs = s.viewStates[panel];
+    return vs?.widths?.[pane] ?? 220;  // fallback
+  });
+
+  const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    dragRef.current = {
+      startX: e.clientX,
+      startWidth: getPaneWidth,
+    };
+
+    // Prevent text selection during drag
+    document.body.style.userSelect = 'none';
+
+    const handleMove = (ev: MouseEvent) => {
+      if (!dragRef.current) return;
+      const delta = ev.clientX - dragRef.current.startX;
+      const raw = dragRef.current.startWidth + delta;
+      const clamped = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, raw));
+      setPaneWidth(panel, pane, clamped);
+    };
+
+    const handleUp = () => {
+      dragRef.current = null;
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      commitPaneWidths(panel);
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+  };
+
+  return (
+    <div
+      className="rv-resize-handle"
+      data-pane={pane}
+      onMouseDown={handleMouseDown}
+    />
+  );
+}
+```
+
+Key points:
+- Captures `startX` and `startWidth` on mousedown
+- Mousemove updates store via `setPaneWidth` (local only — no server write)
+- Mouseup commits via `commitPaneWidths` (one server write per drag)
+- Clamps between 120 and 600
+- Disables text selection during drag
+
+---
+
+### 4. `open-robin-client/src/state/panelStore.ts` — new viewStates slice
+
+**4a. Add types and defaults.**
+
+Add to imports:
+```ts
+import type { ViewUIState, Pane } from '../types';
+```
+
+Add constants near the top:
+```ts
+const DEFAULT_VIEW_UI_STATE: ViewUIState = {
+  collapsed: { leftSidebar: false, leftChat: false },
+  widths:    { leftSidebar: 220,   leftChat: 320   },
+};
+
+function clampWidth(n: number): number {
+  return Math.max(120, Math.min(600, n));
+}
+```
+
+**4b. Extend the store interface.**
+
+```ts
+interface AppState {
+  // ... existing ...
+
+  // SPEC-26c-2: per-view UI state (collapse/expand + left-column widths)
+  viewStates: Record<string, ViewUIState>;
+
+  loadViewState: (view: string) => void;                         // sends state:get; updates on reply
+  setViewState: (view: string, state: ViewUIState) => void;      // used by the WS handler
+  toggleCollapsed: (view: string, pane: Pane) => void;           // local + persists
+  setPaneWidth: (view: string, pane: Pane, width: number) => void; // local only, drag-time
+  commitPaneWidths: (view: string) => void;                      // persists current widths on mouseup
+}
+```
+
+**4c. Implementation.**
+
+Add to the initial state block:
+```ts
+viewStates: {},
+```
+
+Add the actions:
+```ts
+loadViewState: (view) => {
+  const ws = get().ws;
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ type: 'state:get', view }));
+},
+
+setViewState: (view, state) => set((s) => ({
+  viewStates: { ...s.viewStates, [view]: state },
+})),
+
+toggleCollapsed: (view, pane) => {
+  set((s) => {
+    const current = s.viewStates[view] ?? DEFAULT_VIEW_UI_STATE;
+    const nextCollapsed = {
+      ...current.collapsed,
+      [pane]: !current.collapsed[pane],
+    };
+    const nextState: ViewUIState = { ...current, collapsed: nextCollapsed };
+
+    // Persist immediately — collapse is a discrete event, not a drag.
+    const ws = get().ws;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'state:set',
+        view,
+        state: { collapsed: nextCollapsed },
+      }));
+    }
+
+    return {
+      viewStates: { ...s.viewStates, [view]: nextState },
+    };
+  });
+},
+
+setPaneWidth: (view, pane, width) => set((s) => {
+  const current = s.viewStates[view] ?? DEFAULT_VIEW_UI_STATE;
+  const clamped = clampWidth(width);
+  const nextWidths = { ...current.widths, [pane]: clamped };
+  return {
+    viewStates: {
+      ...s.viewStates,
+      [view]: { ...current, widths: nextWidths },
+    },
+  };
+}),
+
+commitPaneWidths: (view) => {
+  const state = get().viewStates[view];
+  if (!state) return;
+  const ws = get().ws;
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({
+    type: 'state:set',
+    view,
+    state: { widths: state.widths },
+  }));
+},
+```
+
+**4d. Hook `loadViewState` into `setCurrentPanel`.**
+
+Current `setCurrentPanel` in panelStore (post-26c):
+```ts
+setCurrentPanel: (id) => {
+  // ... existing panel init logic ...
+  const ws = state.ws;
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'set_panel', panel: id }));
+  }
+},
+```
+
+Add after the `set_panel` send:
+```ts
+// SPEC-26c-2: load view state if not yet cached
+if (!get().viewStates[id]) {
+  get().loadViewState(id);
+}
+```
+
+---
+
+### 5. `open-robin-client/src/types/index.ts` — add types
+
+```ts
+// SPEC-26c-2: per-view UI state (collapse + pane widths)
+export type Pane = 'leftSidebar' | 'leftChat';
+
+export interface ViewUIState {
+  collapsed: {
+    leftSidebar: boolean;
+    leftChat: boolean;
+  };
+  widths: {
+    leftSidebar: number;
+    leftChat: number;
+  };
+}
+
+// Add to WebSocketMessage union
+export interface StateResultMessage {
+  type: 'state:result';
+  view: string;
+  state: ViewUIState;
+}
+// Also add to the union type if one exists
+```
+
+---
+
+### 6. `open-robin-client/src/components/Sidebar.tsx` — collapse affordance
+
+**6a. Accept a `collapsed` prop from parent.**
+
+```tsx
+interface SidebarProps {
+  panel: string;
+  scope: Scope;
+  collapsed?: boolean;
+}
+```
+
+**6b. Render collapsed rail variant when `collapsed === true`.**
+
+```tsx
+if (collapsed) {
+  return (
+    <div className={`sidebar sidebar--${scope} sidebar--collapsed`}>
+      <button
+        className="rv-collapse-rail-btn"
+        onClick={() => toggleCollapsed(panel, scope === 'project' ? 'leftSidebar' : 'leftSidebar')}
+        title="Expand sidebar"
+      >
+        <span className="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+  );
+}
+```
+
+(scope === 'view' shouldn't happen in 26c-2 because the view sidebar is no longer rendered, but the prop remains for 26d future use.)
+
+**6c. Add a collapse button to the expanded sidebar header.**
+
+In the existing header JSX, add a small button. Exact placement is the executor's judgment call — probably to the right of the existing title:
+
+```tsx
+<div className="sidebar-header">
+  <span className="sidebar-title">{scope === 'project' ? 'Project' : (config?.name || panel)}</span>
+  <button
+    className="rv-collapse-btn"
+    onClick={() => toggleCollapsed(panel, 'leftSidebar')}
+    title="Collapse sidebar"
+  >
+    <span className="material-symbols-outlined">chevron_left</span>
+  </button>
+</div>
+```
+
+**6d. Wire up the store hook at the top of the component.**
+
+```tsx
+const toggleCollapsed = usePanelStore((s) => s.toggleCollapsed);
+```
+
+---
+
+### 7. `open-robin-client/src/components/ChatArea.tsx` — collapse affordance
+
+**7a. Accept a `collapsed` prop.**
+
+```tsx
+interface ChatAreaProps {
+  panel: string;
+  scope: Scope;
+  collapsed?: boolean;
+}
+```
+
+**7b. Render collapsed rail variant.**
+
+```tsx
+if (collapsed) {
+  return (
+    <div className={`chat-area chat-area--${scope} chat-area--collapsed`}>
+      <button
+        className="rv-collapse-rail-btn"
+        onClick={() => toggleCollapsed(panel, 'leftChat')}
+        title="Expand chat"
+      >
+        <span className="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+  );
+}
+```
+
+**7c. Add a collapse button to the expanded chat area.**
+
+Position is executor's judgment — probably top-right of the chat area. The chat area has an existing "inactive" state from 26c; the collapse button is a separate affordance.
+
+```tsx
+<button
+  className="rv-collapse-btn rv-collapse-btn--chat"
+  onClick={() => toggleCollapsed(panel, 'leftChat')}
+  title="Collapse chat"
+  style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }}
+>
+  <span className="material-symbols-outlined">chevron_left</span>
+</button>
+```
+
+**7d. Ensure `.chat-area` has `position: relative`** so the absolute-positioned collapse button anchors correctly. Add to the CSS in step 2 if not already present.
+
+---
+
+### 8. `open-robin-server/lib/view-state/index.js` — new server module
+
+**8a. Create the directory and the main module.**
+
+```js
+/**
+ * View-state — per-user per-view UI preferences.
+ *
+ * Persists collapse/expand state and pane widths for each view to
+ * ai/views/<view>/state/<username>.json. Reads fall back through a
+ * precedence chain: per-user file → view's layout.json → hardcoded
+ * defaults.
+ *
+ * Part of SPEC-26c-2. Foundation for any future per-view UI state
+ * (slider positions, font sizes, etc.).
+ */
+
+const path = require('path');
+const fs = require('fs').promises;
+const fsSync = require('fs');
+const { getDefaults } = require('./defaults');
+
+function getStatePath(projectRoot, viewId, username) {
+  return path.join(projectRoot, 'ai', 'views', viewId, 'state', `${username}.json`);
+}
+
+async function readViewState(projectRoot, viewId, username) {
+  const filePath = getStatePath(projectRoot, viewId, username);
+  try {
+    const raw = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(raw);
+  } catch (err) {
+    if (err.code === 'ENOENT') return null;
+    throw err;
+  }
+}
+
+async function writeViewState(projectRoot, viewId, username, state) {
+  const filePath = getStatePath(projectRoot, viewId, username);
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  const tmpPath = filePath + '.tmp';
+  await fs.writeFile(tmpPath, JSON.stringify(state, null, 2));
+  await fs.rename(tmpPath, filePath);
+}
+
+/**
+ * Merge a partial patch into the existing state file. Writes atomically.
+ */
+async function writeViewStatePatch(projectRoot, viewId, username, patch) {
+  const current = (await readViewState(projectRoot, viewId, username)) || {};
+  const merged = {
+    collapsed: { ...(current.collapsed || {}), ...(patch.collapsed || {}) },
+    widths:    { ...(current.widths    || {}), ...(patch.widths    || {}) },
+  };
+  await writeViewState(projectRoot, viewId, username, merged);
+  return merged;
+}
+
+/**
+ * Resolve the effective view state via the precedence chain:
+ *   1. per-user file
+ *   2. view's layout.json defaults
+ *   3. hardcoded defaults
+ */
+async function resolveViewState(projectRoot, viewId, username) {
+  const userState = await readViewState(projectRoot, viewId, username);
+  const defaults = getDefaults(projectRoot, viewId);
+
+  return {
+    collapsed: {
+      leftSidebar: userState?.collapsed?.leftSidebar ?? defaults.collapsed.leftSidebar,
+      leftChat:    userState?.collapsed?.leftChat    ?? defaults.collapsed.leftChat,
+    },
+    widths: {
+      leftSidebar: clampWidth(userState?.widths?.leftSidebar ?? defaults.widths.leftSidebar),
+      leftChat:    clampWidth(userState?.widths?.leftChat    ?? defaults.widths.leftChat),
+    },
+  };
+}
+
+function clampWidth(n) {
+  return Math.max(120, Math.min(600, n));
+}
+
+module.exports = {
+  readViewState,
+  writeViewState,
+  writeViewStatePatch,
+  resolveViewState,
+};
+```
+
+**8b. Create `defaults.js`.**
+
+```js
+/**
+ * Defaults for per-view UI state.
+ *
+ * Precedence: per-user file → view's layout.json → these hardcoded values.
+ *
+ * Maps existing layout.json fields (threadListVisible, threadListWidth,
+ * chatWidth) to the ViewUIState shape. These fields were originally from
+ * the pre-26c layout system and were repurposed in 26c-2 as view defaults.
+ */
+
+const path = require('path');
+const fsSync = require('fs');
+
+const HARDCODED_DEFAULTS = {
+  collapsed: { leftSidebar: false, leftChat: false },
+  widths:    { leftSidebar: 220,   leftChat: 320   },
+};
+
+function getDefaults(projectRoot, viewId) {
+  const layoutPath = path.join(projectRoot, 'ai', 'views', viewId, 'settings', 'layout.json');
+  let layout = null;
+  try {
+    layout = JSON.parse(fsSync.readFileSync(layoutPath, 'utf8'));
+  } catch {
+    // No layout.json — use hardcoded
+    return HARDCODED_DEFAULTS;
+  }
+
+  return {
+    collapsed: {
+      // threadListVisible === false means the sidebar starts collapsed
+      leftSidebar: layout.threadListVisible === false,
+      leftChat:    false,  // no existing field; always start expanded
+    },
+    widths: {
+      leftSidebar: typeof layout.threadListWidth === 'number' ? layout.threadListWidth : HARDCODED_DEFAULTS.widths.leftSidebar,
+      leftChat:    typeof layout.chatWidth       === 'number' ? layout.chatWidth       : HARDCODED_DEFAULTS.widths.leftChat,
+    },
+  };
+}
+
+module.exports = {
+  getDefaults,
+  HARDCODED_DEFAULTS,
+};
+```
+
+---
+
+### 9. `open-robin-server/lib/ws/client-message-router.js` — state:* handlers
+
+**9a. Add a require at the top.**
+
+```js
+const { resolveViewState, writeViewStatePatch } = require('../view-state');
+const { getUsername } = require('../thread/ChatFile');
+```
+
+**9b. Add the handler cases.**
+
+Place these near the other `thread:*` handlers (probably around the same area where thread:list etc. live in `client-message-router.js`):
+
+```js
+// ---- View UI state (SPEC-26c-2) ----
+
+if (clientMsg.type === 'state:get') {
+  try {
+    const projectRoot = getDefaultProjectRoot();
+    const username = getUsername();
+    const state = await resolveViewState(projectRoot, clientMsg.view, username);
+    ws.send(JSON.stringify({
+      type: 'state:result',
+      view: clientMsg.view,
+      state,
+    }));
+  } catch (err) {
+    console.error('[state:get] failed:', err);
+    ws.send(JSON.stringify({ type: 'state:error', message: err.message }));
+  }
+  return;
+}
+
+if (clientMsg.type === 'state:set') {
+  try {
+    const projectRoot = getDefaultProjectRoot();
+    const username = getUsername();
+    const merged = await writeViewStatePatch(projectRoot, clientMsg.view, username, clientMsg.state);
+    // Echo the merged state back so the client can reconcile
+    ws.send(JSON.stringify({
+      type: 'state:result',
+      view: clientMsg.view,
+      state: merged,
+    }));
+  } catch (err) {
+    console.error('[state:set] failed:', err);
+    ws.send(JSON.stringify({ type: 'state:error', message: err.message }));
+  }
+  return;
+}
+```
+
+`getUsername()` is already used elsewhere in the server for chat file paths; reuse it.
+
+---
+
+### 10. `open-robin-client/src/lib/ws-client.ts` — handle `state:result` / `state:error`
+
+Find the main WS message handler (probably a `switch (msg.type)` or chain of `if (msg.type === ...)`) and add:
+
+```ts
+if (msg.type === 'state:result') {
+  store.setViewState(msg.view, msg.state);
+  return true;
+}
+if (msg.type === 'state:error') {
+  console.error('[state] error:', msg.message);
+  return true;
+}
+```
+
+---
+
+### 11. Pre-prod wipe + rebuild
+
+```bash
+cd /Users/rccurtrightjr./projects/open-robin
+pkill -9 -f "node.*server.js" 2>/dev/null; sleep 1
+sqlite3 ai/system/robin.db "PRAGMA foreign_keys=ON; DELETE FROM threads;"
+find ai/views/chat/threads -type f -name '*.md' -delete 2>/dev/null
+find ai/views/*/chat/threads -type f -name '*.md' -delete 2>/dev/null
+rm -rf ai/views/*/state/ 2>/dev/null
+cd open-robin-client && npm run build
+cd ../open-robin-server && node server.js > /tmp/26c2-boot.log 2>&1 &
+sleep 4
+curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:3001/
+```
 
 ---
 
@@ -320,182 +905,154 @@ Both `collapsed` and `widths` are always present after first write. Partial writ
 ### Static checks
 
 ```bash
-# Server module loads
+cd /Users/rccurtrightjr./projects/open-robin/open-robin-server
 node -e "require('./lib/view-state')"
-node -e "require('./lib/ws/client-message-router')"
+node -e "require('./lib/view-state/defaults')"
 
-# Client typecheck + build
 cd ../open-robin-client
 npx tsc --noEmit
 npm run build
 ```
 
-### Live validation
+All must pass.
+
+### Live validation — walk through these in the browser
+
+**3-column layout verification:**
+1. Hard-refresh. The panel should show exactly three columns: project sidebar, project chat, content. NOT the 5-column layout 26c shipped.
+2. No right-side sidebar or chat area visible.
+3. FloatingChat on wiki-viewer still works (unchanged from 26c).
 
 **Collapse path:**
-
-1. **Fresh view — defaults load.** Open a view you haven't visited since this spec landed. All four panes visible by default at widths from layout.json (or hardcoded 220/320/320/220).
-
-2. **Collapse a pane.** Click the collapse toggle on the left sidebar. It collapses to a thin ~40px rail. The content area expands.
-
-3. **Refresh the browser.** The collapsed state is restored — left sidebar still collapsed.
-
-4. **Switch views.** The new view has its own state (independently collapsed or expanded based on its own file).
-
-5. **Switch back to the original view.** Collapse state is restored to what you left it.
-
-6. **Expand the rail back out.** Click the expand icon on the collapsed rail. The sidebar returns to its previous width (not a hardcoded default).
+4. Click the collapse button in the project sidebar header. Sidebar shrinks to a 40px rail with a chevron_right expand icon.
+5. Content area expands to fill the freed space.
+6. Refresh the browser. Collapsed state persists.
+7. Click the rail expand icon. Sidebar returns to its previous width.
+8. Same flow for the project chat column.
 
 **Resize path:**
+9. Hover the boundary between the sidebar and the chat. Cursor → col-resize.
+10. Drag. The sidebar widens/narrows smoothly. Content area absorbs the change.
+11. Release. State commits to file (check `/tmp/26c2-boot.log` for `[state:set]` lines if logging is enabled).
+12. Refresh. Dragged width restored.
+13. Drag past 120px (min). Clamps.
+14. Drag past 600px (max). Clamps.
+15. Drag the boundary between the chat and the content area. Same behavior for `leftChat`.
 
-7. **Hover a column boundary.** Cursor should change to `col-resize`.
-
-8. **Drag the left-sidebar / left-chat boundary.** The left sidebar widens or narrows; content area flexes. Smooth update on every mousemove.
-
-9. **Release the drag.** State commits to the server file (check server log for a `state:set` message if logging is on).
-
-10. **Refresh the browser.** The dragged width is restored.
-
-11. **Drag past the min (120px).** The column should clamp at 120px — can't go narrower.
-
-12. **Drag past the max (600px).** Clamp at 600px.
-
-13. **Drag adjacent to a collapsed rail.** Either: disabled (can't drag into a rail), or the rail expands first and then the drag takes over. Executor's choice — document which.
-
-**Persistence + multi-view:**
-
-14. **Set different widths on three different views.** Verify each retains its own state independently.
-
-15. **Check the state file on disk.**
-    ```bash
+**Persistence file audit:**
+16. ```bash
     cat /Users/rccurtrightjr./projects/open-robin/ai/views/code-viewer/state/rccurtrightjr..json
     ```
-    Expected: JSON with both `collapsed` and `widths` objects, values matching what you dragged/toggled.
+    Expected: JSON with `collapsed` (2 booleans) and `widths` (2 numbers), NO rightChat/rightSidebar fields.
 
-16. **Manually edit the file.** Change a width to 250px via your editor. Refresh. The edited value should appear in the UI.
+17. Manually edit the file (e.g. change `leftSidebar` width to 250). Refresh. UI picks it up.
 
-17. **Delete the state file.** Refresh. Defaults from layout.json (or hardcoded fallback) should apply.
+18. Delete the state file. Refresh. Defaults from `layout.json` (or hardcoded fallback) apply.
 
-18. **Second user.** If possible, test with a different username. Different state file, different preferences, no collisions.
+**Multi-view independence:**
+19. Set different widths on 2-3 different views. Each view keeps its own state.
 
 ### What breaks if you get it wrong
 
 | Failure | Root cause | Fix |
 |---|---|---|
-| State doesn't persist across reloads | `state:set` not being sent, or server not writing | Check the WS frame and the server log |
-| All views share the same state | Store is using a single `viewState` instead of keyed `viewStates[view]` | Fix the store key |
-| Default state never applies | Server isn't reading layout.json fallback | Check `resolveViewState` fallback chain |
-| Collapsed pane is hidden instead of railed | CSS `.sidebar--collapsed` is `display: none` instead of narrow | Fix CSS |
-| Per-user file collision | `getUsername()` returning the wrong value | Check the username resolution |
-| File written to wrong location | Path assembly in server — check `ai/views/<view>/state/<username>.json` | Verify with file explorer |
-| Drag jumps on mousedown | The drag handler is calculating delta from 0 instead of from mouse.x | Track initial mouse x on mousedown, subtract on mousemove |
-| Drag persists to server on every mousemove | `setPaneWidth` is sending `state:set` instead of updating local state only | Split `setPaneWidth` (local) from `commitPaneWidths` (persist) |
-| Content area overflows horizontally after drag | Grid template is losing `1fr` for content area | Verify the grid-template-columns still has `1fr` in the content slot regardless of how the other columns resize |
-| Resize handle invisible | `.rv-resize-handle` has no background and zero hover feedback | Check the CSS — it should have `col-resize` cursor and a visible hover state |
-| Drag through a collapsed rail causes weird behavior | Drag handler isn't aware the adjacent pane is collapsed | Either disable drag when adjacent pane is collapsed, or expand-and-drag (document choice in report-back) |
-| Width values below 120 or above 600 persist | Clamp missing in the drag handler | Add `Math.max(120, Math.min(600, newWidth))` before writing to state |
+| 5 columns instead of 3 | 1a revert incomplete; right-side Sidebar/ChatArea still rendered | Re-check PanelContent |
+| Grid children in wrong tracks | `.rv-resize-handle` has `grid-row: 1` set (the 26c-2 v1 bug) | DO NOT set grid-row on the handle. Delete that line if present. |
+| Drag jumps on mousedown | Not capturing `startX` correctly; using `clientX` every time without subtracting | Store `startX` on mousedown, subtract from later `clientX` |
+| Every mousemove hits the server | `setPaneWidth` sends `state:set` instead of updating local only | Split clearly: setPaneWidth is local; commitPaneWidths persists |
+| State doesn't persist across refresh | `state:set` not being sent, OR server file write failing | Check WS frames + server log |
+| Defaults never apply | `getDefaults` reading wrong path, or layout.json missing | Verify the fallback chain |
+| Collapsed pane disappears entirely | `display: none` instead of narrow rail | `.sidebar--collapsed > *:not(...)` display:none, but the parent itself should be visible at 40px |
+| Right-side FloatingChat (wiki-viewer) breaks | Wasn't supposed to touch it | Revert any changes to FloatingChat.tsx or WikiExplorer.tsx |
 
 ---
 
 ## Do not do
 
-- **Do not** add any per-view state beyond `collapsed` and `widths`. Font size, theme overrides, thread-list sort order — all future work.
-- **Do not** use localStorage instead of the file-based persistence. The user specifically chose "local JSON" with the composable config pattern.
-- **Do not** touch the SQLite schema. UI state stays file-based.
-- **Do not** remove or modify the `layout.json` files in view folders. They become the per-view defaults (read-only from 26c-2's perspective).
-- **Do not** auto-collapse anything based on screen width. Responsive behavior is future work.
-- **Do not** add animations for the collapse/expand transitions unless they're effectively free (CSS transitions on grid-template-columns). Animations are polish.
-- **Do not** move chat header affordances into a separate component. 26d handles that. 26c-2's collapse buttons are just small inline affordances on the existing Sidebar / ChatArea components.
-- **Do not** touch `lib/thread/`, `lib/runner/`, `lib/frontmatter/`, or any server file unrelated to view state.
-- **Do not** make the resize handles drag-commit to the server on every mousemove. Drag updates local state only; commit on mouseup.
-- **Do not** use `position: absolute` for the resize handles. They live in the grid as thin (6px) columns between the content columns. Grid-native.
-- **Do not** let widths go below 120px or above 600px. Clamp in the drag handler.
-- **Do not** touch 26c's component file paths or delete any files. 26c-2 extends 26c; it doesn't rewrite.
-- **Do not** persist the drag width while the pane is collapsed. When a pane is collapsed, the user's stored width stays at the previous (non-collapsed) value so expanding restores it.
+- **Do not** touch `FloatingChat.tsx` or `WikiExplorer.tsx`. Wiki's existing popup stays exactly as it is. SPEC-26d will generalize.
+- **Do not** touch `panelStore` thread state (`threads`, `currentThreadIds`, `currentScope`, `projectChat`, `panels[panelId]`). Those were set up correctly in 26c for both scopes; 26d will use the view-scope fields.
+- **Do not** touch `thread-handlers.ts` or any `thread:*` wire handling. 26c is done.
+- **Do not** add the right-side view chat back in any form. SPEC-26d handles the floating popup.
+- **Do not** add the FAB, traffic lights, thread picker modal, or dock in this spec. All of that is 26d.
+- **Do not** rename `Sidebar.tsx` or `ChatArea.tsx` or split them into project/view variants. They keep the scope prop; only one instance of each is rendered in the current layout (scope="project").
+- **Do not** touch SQLite schema.
+- **Do not** touch wire protocol for `thread:*`.
+- **Do not** set `grid-row: 1` on `.rv-resize-handle`. See the bug note in the CSS section.
+- **Do not** write per-view state to any location other than `ai/views/<view>/state/<username>.json`.
+- **Do not** use localStorage — the user explicitly chose file-based persistence.
+- **Do not** touch `lib/runner/`, `lib/frontmatter/`, `lib/views/`, or any other server module.
+- **Do not** auto-collapse based on screen width or other responsive behavior.
+- **Do not** add animations (beyond the free CSS variable transitions).
+- **Do not** touch the agents-viewer area.
 
 ---
 
 ## Commit message template
 
 ```
-SPEC-26c-2: per-view collapse + resize + local JSON persistence
+SPEC-26c-2: left-column collapse + resize + right-column teardown
 
-Builds on 26c's dual-chat layout with two new UX affordances and
-the persistence layer for both.
+Pivot from 26c's symmetric 5-column layout to an asymmetric 3-column
+layout. The right-side view chat column is removed in this spec;
+SPEC-26d will re-expose it as a floating popup.
 
-Stream 1 — Collapse: each of the four chat-column pieces
-(leftSidebar / leftChat / rightChat / rightSidebar) has a small
-toggle button. Clicking collapses the pane to a 40px rail; click
-the rail's expand icon to restore to the previous width.
+Stream 1 — Right-side layout teardown:
+  - App.tsx PanelContent drops <ChatArea scope="view" /> and
+    <Sidebar scope="view" />. Grid collapses from 5 tracks to 3 content
+    columns + 2 resize handles.
+  - App.css .rv-layout-dual-chat grid-template-columns rewritten as:
+    var(--left-sidebar-w, 220px) 6px var(--left-chat-w, 320px) 6px 1fr
+  - panelStore scope infrastructure (threads.view, currentThreadIds.view,
+    etc.) retained intact for SPEC-26d to consume.
 
-Stream 2 — Resize: four drag handles at the column boundaries.
-Grab + drag to stretch or narrow any pane. Content area stays 1fr
-and flexes to absorb the change. Widths clamped 120-600px. Drag
-updates local state smoothly; commit to server only on mouseup.
+Stream 2 — Left-column collapse + resize:
+  - New ResizeHandle.tsx component (~60 lines). Captures startX +
+    startWidth on mousedown, mousemove calls setPaneWidth (local),
+    mouseup calls commitPaneWidths (persist). Clamps 120-600.
+  - Sidebar.tsx and ChatArea.tsx each accept a `collapsed` prop. When
+    true, render a 40px rail with an expand icon. When false, render
+    normally with an inline collapse button.
+  - App.tsx writes inline CSS variables on .rv-panel from
+    viewStates[panel].widths (or DEFAULT_WIDTHS) with collapsed-aware
+    40px overrides.
+  - user-select: none during drag; grid-row NOT set on handles
+    (avoids the CSS Grid auto-placement bug seen in the first draft).
 
-Stream 3 — Per-view local JSON persistence: both collapsed state
-and widths persist to per-view per-user files following the
-project's "templated but composable" config pattern.
+Stream 3 — Per-view local JSON persistence:
+  - New lib/view-state/index.js server module: readViewState,
+    writeViewState, writeViewStatePatch, resolveViewState. Atomic
+    writes (tmp + rename).
+  - New lib/view-state/defaults.js: maps existing layout.json fields
+    (threadListVisible, threadListWidth, chatWidth) to the ViewUIState
+    shape. HARDCODED_DEFAULTS fallback: sidebar 220px, chat 320px,
+    both expanded.
+  - New state:get / state:set wire messages in client-message-router.js.
+    Username via lib/thread/ChatFile getUsername(). Responses echoed
+    as state:result so client can reconcile.
+  - ws-client.ts handles state:result / state:error.
+  - panelStore gains viewStates slice + loadViewState / toggleCollapsed /
+    setPaneWidth / commitPaneWidths actions. setCurrentPanel dispatches
+    loadViewState on uncached views.
 
-File format — ai/views/<view>/state/<username>.json:
+Files at ai/views/<view>/state/<username>.json hold:
   {
-    "collapsed": { leftSidebar, leftChat, rightChat, rightSidebar },
-    "widths":    { leftSidebar, leftChat, rightChat, rightSidebar }
+    "collapsed": { "leftSidebar": bool, "leftChat": bool },
+    "widths":    { "leftSidebar": num,  "leftChat": num  }
   }
 
-Server:
-  - New lib/view-state/index.js — readViewState, writeViewState,
-    resolveViewState (merges per-user file with layout.json defaults
-    and hardcoded fallbacks).
-  - New lib/view-state/defaults.js — maps existing layout.json fields
-    (threadListVisible, threadListWidth, chatWidth) to the view's
-    default ViewUIState. Revives those fields for their intended
-    purpose.
-  - New wire messages in client-message-router:
-      state:get { view } → state:result { view, state }
-      state:set { view, state } — partial patch, merged into file
-  - Username via lib/thread/ChatFile.js getUsername.
-
-Client:
-  - New viewStates store slice in panelStore.ts, keyed by view id.
-    Separate setPaneWidth (local) and commitPaneWidths (persist)
-    actions — drag updates local state on mousemove, commits once
-    on mouseup.
-  - toggleCollapsed action updates state + sends state:set in one
-    call (collapse is a single discrete event, not a drag).
-  - New WS handler for state:result responses.
-  - loadViewState(view) dispatched on setCurrentPanel.
-  - Sidebar.tsx and ChatArea.tsx each accept a `collapsed` prop and
-    render the rail variant when true.
-  - New ResizeHandle.tsx component. 4 instances in PanelContent,
-    one per boundary. col-resize cursor, clamped drag, commits on
-    mouseup.
-  - App.tsx PanelContent writes CSS variables on the grid container
-    from viewStates[panel].widths.
-  - 26c's hardcoded grid-template-columns refactored to CSS vars:
-    var(--left-sidebar-w) / var(--left-chat-w) / 1fr /
-    var(--right-chat-w) / var(--right-sidebar-w). 6px handle
-    columns inserted between each content column.
-
-Default state resolution order (server-side):
-  1. ai/views/<view>/state/<username>.json (if exists)
-  2. ai/views/<view>/settings/layout.json (threadListVisible,
-     threadListWidth, chatWidth)
-  3. Hardcoded: all expanded, sidebars 220px, chats 320px
+Default precedence: per-user file → view's layout.json → hardcoded.
 
 Live-validated:
-  - Fresh view loads with layout.json defaults
-  - Collapse toggle → pane becomes 40px rail, content reflows
-  - Expand toggle → pane restores to previous width
-  - Drag boundary → smooth mousemove-driven resize
-  - Mouseup → state commits to file
-  - Refresh → layout restored exactly
-  - Switch views → each view keeps its independent state
-  - Multiple users → isolated state files, no collisions
-  - Min/max clamps enforced (120-600px)
+  - 3-column layout: [Sidebar][Chat][Content]
+  - Collapse toggles rail the pane to 40px, content reflows
+  - Drag handles resize smoothly, clamp at 120/600
+  - State persists across refresh and view switches
+  - FloatingChat on wiki-viewer still works unchanged
+  - Smoke test 49/0
 
-Part of SPEC-26 (dual-chat paradigm). 26d is next: dual wire
-support + chat header per side + harness wizard per side.
+Part of SPEC-26 (dual-chat paradigm, asymmetric). SPEC-26d is next:
+view chat becomes a floating popup (FAB + traffic lights + dock +
+thread picker modal).
 
 Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 ```
@@ -505,36 +1062,39 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 ## Report back
 
 1. **Diff stats.** `git diff --stat main`. Expected:
-   - `panelStore.ts` medium (~60 net — the viewStates slice + actions)
-   - New `lib/view-state/index.js` (~100 lines)
-   - New `lib/view-state/defaults.js` (~40 lines)
-   - `client-message-router.js` small (~30 for the new state:* handlers)
-   - New `ResizeHandle.tsx` (~60 lines)
-   - `Sidebar.tsx` small (~25 for collapse button + collapsed-rail rendering)
-   - `ChatArea.tsx` small (~25 for the same)
-   - `App.tsx` medium (~40 for inline CSS vars + ResizeHandle placements)
-   - `views.css` medium (~60 for CSS var grid refactor + handle styling + collapsed variants)
-   - New WS handler in `thread-handlers.ts` or a new handler file (~20 for state:result)
+   - `App.tsx` medium (~30 net — right-side removal + inline style vars)
+   - `App.css` medium (~60 — grid rewrite + handle + collapsed styles)
+   - `panelStore.ts` medium (~90 — viewStates slice + actions)
+   - New `ResizeHandle.tsx` (~60)
+   - `Sidebar.tsx` small (~25 — collapse button + rail)
+   - `ChatArea.tsx` small (~25 — same)
+   - `ChatInput.tsx` untouched
+   - `types/index.ts` small (~15)
+   - `ws-client.ts` small (~10 — state:* handlers)
+   - New `lib/view-state/index.js` (~90)
+   - New `lib/view-state/defaults.js` (~40)
+   - `client-message-router.js` small (~35 — state:* cases)
 
-2. **D1-D6 decisions locked.** If you diverged from any of the six design recommendations, explain why.
+2. **Static checks.** tsc, npm build, node-e module load — all pass.
 
-3. **Static checks.** tsc, build, module load — all pass.
+3. **Server boot output.** HTTP 200, no errors, trigger/filter loading unchanged.
 
-4. **Live validation walkthrough.** Run all 18 steps of the live validation section (collapse path + resize path + persistence/multi-view). Report each.
+4. **Live validation walkthrough.** Run all 19 steps in the live validation section. Report each. Specifically confirm:
+   - Only 3 columns visible (NOT 5)
+   - Wiki-viewer's FloatingChat still works
+   - Collapse rail renders correctly (not display: none)
+   - Drag is smooth (no jump on mousedown, no jitter during drag)
+   - Clamps work at 120 and 600
 
-5. **State file audit.** Paste the contents of two different views' state files after toggling some panes AND dragging some widths. Confirm both `collapsed` and `widths` are present with reasonable values.
+5. **State file audit.** Paste two different views' state files after toggling and dragging.
 
-6. **Drag smoothness check.** Qualitative: does dragging a handle feel smooth? Any visible lag or flicker? If it's janky, note whether it's render-time (state update slow) or reflow-time (grid recompute slow).
+6. **Surprises.** Anything that needed updating outside the change list. Particular watch items: did the 26c scope split in `panelStore` interact weirdly with the new `viewStates` slice? Did 26c's thread-handlers.ts need any changes (shouldn't, but verify)?
 
-7. **Clamp verification.** Drag a pane to its min (120) and max (600). Does it clamp correctly? Paste the persisted values.
+7. **Files touched outside the change list.** Expected: zero beyond what's listed. If any, explain.
 
-8. **Surprises.**
-   - Did the grid-template-columns CSS var refactor cause any unexpected layout breakage?
-   - Did any 26c component assume fixed widths and need updating?
-   - Did the drag handler fight with text selection in adjacent panes? If so, did you add `user-select: none` during drag?
+8. **26d signals.** While touching Sidebar.tsx and ChatArea.tsx, note:
+   - What will the FloatingChat wrapper need to provide for the view-scoped ChatArea to work inside a popup?
+   - Is the current FloatingChat.tsx's draggable logic reusable, or does 26d need to rewrite it?
+   - Where does the per-view popup state belong (new store slice? extension of viewStates?)?
 
-9. **Files touched outside the change list.** Expected: zero beyond what's listed. If any, explain.
-
-10. **26d signals.** After 26c-2 lands, what would make the most sense to build first in 26d — dual-wire support, chat header component, or harness wizard per side? Which one will feel most urgent to the user given what they now see in the UI?
-
-Hand the report back to the orchestrator.
+Hand the report back to the orchestrator. After this lands, SPEC-26d (FAB + floating popup for view chats) is the next and final phase of the 26 series.
