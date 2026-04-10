@@ -28,12 +28,13 @@
  */
 
 import { usePanelStore } from '../state/panelStore';
-import type { Message, AssistantTurn, StreamSegment } from '../types';
+import type { Message, AssistantTurn, StreamSegment, Scope } from '../types';
 import { LiveSegmentRenderer } from './LiveSegmentRenderer';
 import { InstantSegmentRenderer } from './InstantSegmentRenderer';
 
 interface MessageListProps {
   panel: string;
+  scope: Scope;
   messages: Message[];
   currentTurn: AssistantTurn | null;
   segments: StreamSegment[];
@@ -43,18 +44,25 @@ interface MessageListProps {
 
 export function MessageList({
   panel,
+  scope,
   messages,
   currentTurn,
   segments,
   lastUserMsgRef,
   showOrb,
 }: MessageListProps) {
-  const pendingTurnEnd = usePanelStore((s) => s.panels[panel].pendingTurnEnd);
+  // SPEC-26c: pendingTurnEnd is scoped. Project reads from projectChat;
+  // view reads from panels[currentPanel].
+  const pendingTurnEnd = usePanelStore((s) =>
+    scope === 'project'
+      ? s.projectChat.pendingTurnEnd
+      : (s.panels[panel]?.pendingTurnEnd ?? false)
+  );
   const finalizeTurn = usePanelStore((s) => s.finalizeTurn);
 
   // CRITICAL: undefined when not pending, NOT a no-op function.
   // LiveSegmentRenderer's completion effect checks `if (!onRevealComplete) return;`
-  const onRevealComplete = pendingTurnEnd ? () => finalizeTurn(panel) : undefined;
+  const onRevealComplete = pendingTurnEnd ? () => finalizeTurn(scope) : undefined;
 
   // Find the last user message index for scroll anchoring
   let lastUserIdx = -1;

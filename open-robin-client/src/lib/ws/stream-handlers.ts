@@ -4,6 +4,11 @@
  *
  * Extracted from ws-client.ts (spec 05a) so the most fragile part of the
  * message router is isolated and testable. Everything else stays in ws-client.
+ *
+ * SPEC-26c: stream messages route by scope. The wire is single-scope at any
+ * given moment — whichever side (project or view) owns the live wire is the
+ * one whose chat state receives the stream. Prefer msg.scope (set server-side
+ * in 26b), fall back to store.currentScope.
  */
 
 import { usePanelStore } from '../../state/panelStore';
@@ -16,7 +21,32 @@ import {
   reset as resetGrouper,
 } from '../tool-grouper';
 import { showToast } from '../toast';
-import type { WebSocketMessage } from '../../types';
+import type { WebSocketMessage, Scope } from '../../types';
+
+/**
+ * Resolve the target scope for a stream message.
+ *  - Prefer msg.scope (server-side wire tag, 26b+).
+ *  - Fall back to store.currentScope (set by wire_ready / thread:opened).
+ *  - Final fallback: 'view' — conservative default so a stale stream can't
+ *    accidentally pollute project chat.
+ */
+function resolveScope(msg: WebSocketMessage): Scope {
+  if (msg.scope === 'project' || msg.scope === 'view') return msg.scope;
+  const current = usePanelStore.getState().currentScope;
+  if (current) return current;
+  return 'view';
+}
+
+/**
+ * Read the active chat state slot for a given scope.
+ * Mirrors the panelStore's internal getChatState helper — kept local to
+ * avoid exposing a private store helper.
+ */
+function readChatState(scope: Scope) {
+  const state = usePanelStore.getState();
+  if (scope === 'project') return state.projectChat;
+  return state.panels[state.currentPanel];
+}
 
 /**
  * Handle stream-related WebSocket messages.
@@ -24,23 +54,23 @@ import type { WebSocketMessage } from '../../types';
  */
 export function handleStreamMessage(msg: WebSocketMessage): boolean {
   const store = usePanelStore.getState();
-  const panel = store.currentPanel;
+  const scope = resolveScope(msg);
 
   switch (msg.type) {
     case 'turn_begin': {
-      console.log('[WS] Turn begin');
+      console.log('[WS] Turn begin scope=', scope);
       // Safety net: if the previous turn wasn't finalized (edge case —
       // finalizeTurn normally handles this), snapshot it now. In the
       // normal flow, currentTurn is already null by this point because
       // finalizeTurn cleared it.
-      const panelState = store.panels[panel];
-      if (panelState) {
-        const prevTurn = panelState.currentTurn;
-        const segments = panelState.segments;
+      const chatState = readChatState(scope);
+      if (chatState) {
+        const prevTurn = chatState.currentTurn;
+        const segments = chatState.segments;
 
         if (prevTurn) {
           console.warn('[WS] turn_begin: previous turn was not finalized — snapshotting now');
-          store.addMessage(panel, {
+          store.addMessage(scope, {
             id: prevTurn.id,
             type: 'assistant',
             content: prevTurn.content,
@@ -50,7 +80,7 @@ export function handleStreamMessage(msg: WebSocketMessage): boolean {
         }
       }
 
-      store.resetSegments(panel);
+      store.resetSegments(scope);
       resetGrouper();
 
       // CRITICAL: Clear pendingTurnEnd from the PREVIOUS turn.
@@ -65,9 +95,9 @@ export function handleStreamMessage(msg: WebSocketMessage): boolean {
       // Omitting this line caused new turns to finalize immediately
       // after their first segment, because the stale pendingTurnEnd
       // from the previous turn was still set.
-      store.setPendingTurnEnd(panel, false);
+      store.setPendingTurnEnd(scope, false);
 
-      store.setCurrentTurn(panel, {
+      store.setCurrentTurn(scope, {
         id: msg.turnId || '',
         content: '',
         status: 'streaming',
@@ -88,11 +118,11 @@ export function handleStreamMessage(msg: WebSocketMessage): boolean {
           console.log(`[TIMING] FIRST TOKEN (content) at ${t.firstTokenAt.toFixed(1)}ms — TTFT: ${ttft.toFixed(1)}ms`);
         }
         breakSequence();
-        store.appendSegment(panel, 'text', msg.text);
+        store.appendSegment(scope, 'text', msg.text);
 
-        const turn = usePanelStore.getState().panels[panel]?.currentTurn;
+        const turn = readChatState(scope)?.currentTurn;
         if (turn) {
-          store.updateTurnContent(panel, turn.content + msg.text);
+          store.updateTurnContent(scope, turn.content + msg.text);
         }
       }
       return true;
@@ -107,19 +137,19 @@ export function handleStreamMessage(msg: WebSocketMessage): boolean {
           console.log(`[TIMING] FIRST TOKEN (thinking) at ${t.firstTokenAt.toFixed(1)}ms — TTFT: ${ttft.toFixed(1)}ms`);
         }
         breakSequence();
-        store.appendSegment(panel, 'think', msg.text);
+        store.appendSegment(scope, 'think', msg.text);
       }
       return true;
 
     case 'tool_call': {
       const segType = toolNameToSegmentType(msg.toolName || '');
       const toolCallId = msg.toolCallId || '';
-      const segCount = usePanelStore.getState().panels[panel]?.segments.length ?? 0;
+      const segCount = readChatState(scope)?.segments.length ?? 0;
 
       const action = onToolCall(segType, toolCallId, segCount);
 
       if (action.action === 'new') {
-        store.pushSegment(panel, {
+        store.pushSegment(scope, {
           type: segType,
           content: '',
           toolCallId,
@@ -143,12 +173,12 @@ export function handleStreamMessage(msg: WebSocketMessage): boolean {
         const summaryLine = typeof summaryValue === 'string'
           ? summaryValue
           : msg.toolOutput?.slice(0, 80) || groupLookup.type;
-        const existing = usePanelStore.getState().panels[panel]?.segments[groupLookup.segmentIndex]?.content;
+        const existing = readChatState(scope)?.segments[groupLookup.segmentIndex]?.content;
         const prefix = existing ? '\n' : '';
-        store.appendSegmentContentByIndex(panel, groupLookup.segmentIndex, prefix + summaryLine);
+        store.appendSegmentContentByIndex(scope, groupLookup.segmentIndex, prefix + summaryLine);
       } else if (toolCallId) {
         // Non-grouped tool — set full content on the segment.
-        store.updateSegmentByToolCallId(panel, toolCallId, {
+        store.updateSegmentByToolCallId(scope, toolCallId, {
           content: msg.toolOutput || '',
           toolArgs: msg.toolArgs,
           toolDisplay: msg.toolDisplay,
@@ -183,23 +213,23 @@ export function handleStreamMessage(msg: WebSocketMessage): boolean {
       //
       // See LiveSegmentRenderer.tsx completion detection comments for the
       // full explanation of why this is an effect and not a callback.
-      const currentTurn = usePanelStore.getState().panels[panel]?.currentTurn;
+      const currentTurn = readChatState(scope)?.currentTurn;
 
       if (currentTurn) {
         // Mark last segment complete (closing tag) so reveal knows it's done
-        const segs = usePanelStore.getState().panels[panel]?.segments || [];
+        const segs = readChatState(scope)?.segments || [];
         if (segs.length > 0) {
           const lastSeg = segs[segs.length - 1];
           if (!lastSeg.complete) {
-            store.updateSegmentByToolCallId(panel, lastSeg.toolCallId || '', {
+            store.updateSegmentByToolCallId(scope, lastSeg.toolCallId || '', {
               complete: true,
             });
             if (!lastSeg.toolCallId) {
-              store.updateLastSegment(panel, { complete: true });
+              store.updateLastSegment(scope, { complete: true });
             }
           }
         }
-        store.setPendingTurnEnd(panel, true);
+        store.setPendingTurnEnd(scope, true);
       }
 
       return true;

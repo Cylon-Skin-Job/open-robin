@@ -4,7 +4,8 @@ import type {
   Message,
   AssistantTurn,
   StreamSegment,
-  Thread
+  Thread,
+  Scope
 } from '../types';
 import type { PanelConfig } from '../lib/panels';
 
@@ -30,28 +31,36 @@ interface AppState {
   currentPanel: string;
   setCurrentPanel: (id: string) => void;
 
-  // Per-panel states (dynamically initialized)
+  // Per-panel states (dynamically initialized).
+  // SPEC-26c: these hold VIEW-scoped chat state. The current panel's view
+  // chat lives at panels[state.currentPanel].
   panels: Record<string, PanelState>;
 
-  // Panel actions
-  addMessage: (panel: string, message: Message) => void;
-  setCurrentTurn: (panel: string, turn: AssistantTurn | null) => void;
-  updateTurnContent: (panel: string, content: string) => void;
-  appendSegment: (panel: string, segType: StreamSegment['type'], text: string) => void;
-  pushSegment: (panel: string, segment: StreamSegment) => void;
-  updateLastSegment: (panel: string, updates: Partial<StreamSegment>) => void;
-  updateSegmentByToolCallId: (panel: string, toolCallId: string, updates: Partial<StreamSegment>) => void;
-  appendSegmentContentByIndex: (panel: string, index: number, text: string) => void;
-  resetSegments: (panel: string) => void;
-  setPendingTurnEnd: (panel: string, pending: boolean) => void;
-  setPendingMessage: (panel: string, message: Message | null) => void;
-  finalizeTurn: (panel: string) => void;
-  clearPanel: (panel: string) => void;
+  // SPEC-26c: project-scoped chat state is top-level because the project
+  // chat follows the user across panel switches (it is NOT per-panel).
+  projectChat: PanelState;
+
+  // Chat state actions — every action takes a scope:
+  //  - 'project' routes to state.projectChat
+  //  - 'view'    routes to state.panels[state.currentPanel]
+  addMessage: (scope: Scope, message: Message) => void;
+  setCurrentTurn: (scope: Scope, turn: AssistantTurn | null) => void;
+  updateTurnContent: (scope: Scope, content: string) => void;
+  appendSegment: (scope: Scope, segType: StreamSegment['type'], text: string) => void;
+  pushSegment: (scope: Scope, segment: StreamSegment) => void;
+  updateLastSegment: (scope: Scope, updates: Partial<StreamSegment>) => void;
+  updateSegmentByToolCallId: (scope: Scope, toolCallId: string, updates: Partial<StreamSegment>) => void;
+  appendSegmentContentByIndex: (scope: Scope, index: number, text: string) => void;
+  resetSegments: (scope: Scope) => void;
+  setPendingTurnEnd: (scope: Scope, pending: boolean) => void;
+  setPendingMessage: (scope: Scope, message: Message | null) => void;
+  finalizeTurn: (scope: Scope) => void;
+  clearChat: (scope: Scope) => void;
 
   // WebSocket
   ws: WebSocket | null;
   setWs: (ws: WebSocket | null) => void;
-  sendMessage: (text: string, panel?: string) => void;
+  sendMessage: (text: string, scope: Scope) => void;
 
   // Project root (absolute path from server)
   projectRoot: string | null;
@@ -61,24 +70,42 @@ interface AppState {
   contextUsage: number;
   setContextUsage: (usage: number) => void;
 
-  // Thread management
-  threads: Thread[];
-  currentThreadId: string | null;
+  // Thread management — SPEC-26c: dual-scope
+  threads: { project: Thread[]; view: Thread[] };
+  currentThreadIds: { project: string | null; view: string | null };
+  currentScope: Scope | null;  // which scope has the live wire
   wireReady: boolean;
-  setThreads: (threads: Thread[]) => void;
-  setCurrentThreadId: (threadId: string | null) => void;
+
+  setThreads: (scope: Scope, threads: Thread[]) => void;
+  setCurrentThreadId: (scope: Scope, threadId: string | null) => void;
+  setCurrentScope: (scope: Scope | null) => void;
   setWireReady: (ready: boolean) => void;
-  addThread: (thread: Thread) => void;
-  updateThread: (threadId: string, updates: Partial<Thread['entry']>) => void;
-  removeThread: (threadId: string) => void;
+  addThread: (scope: Scope, thread: Thread) => void;
+  updateThread: (scope: Scope, threadId: string, updates: Partial<Thread['entry']>) => void;
+  removeThread: (scope: Scope, threadId: string) => void;
 }
 
 /**
- * Helper: get panel state, auto-initializing if needed.
- * This ensures panel actions work even before discovery completes.
+ * SPEC-26c helper: resolve the chat state slot for a given scope.
+ *  - 'project' → top-level state.projectChat
+ *  - 'view'    → state.panels[state.currentPanel] (auto-init if missing)
  */
-function getPs(state: AppState, panel: string): PanelState {
-  return state.panels[panel] || createInitialPanelState();
+function getChatState(state: AppState, scope: Scope): PanelState {
+  if (scope === 'project') return state.projectChat;
+  return state.panels[state.currentPanel] || createInitialPanelState();
+}
+
+/**
+ * SPEC-26c helper: build the partial state update to write a new chat-state
+ * slot back to the store, correctly keyed by scope.
+ */
+function writeChatState(state: AppState, scope: Scope, next: PanelState): Partial<AppState> {
+  if (scope === 'project') {
+    return { projectChat: next };
+  }
+  return {
+    panels: { ...state.panels, [state.currentPanel]: next }
+  };
 }
 
 export const usePanelStore = create<AppState>((set, get) => ({
@@ -99,24 +126,33 @@ export const usePanelStore = create<AppState>((set, get) => ({
   // Initial state — empty until discovery populates
   currentPanel: 'code-viewer',
   panels: {},
+  projectChat: createInitialPanelState(),  // SPEC-26c
   ws: null,
   projectRoot: null,
   contextUsage: 0,
-  threads: [],
-  currentThreadId: null,
+  threads: { project: [], view: [] },
+  currentThreadIds: { project: null, view: null },
+  currentScope: null,
   wireReady: false,
 
   // Actions
   setCurrentPanel: (id) => {
     // Auto-initialize panel state if not yet created
     const state = get();
+    const base: Partial<AppState> = {
+      currentPanel: id,
+      // SPEC-26c: view thread resets on panel switch (server kills the wire
+      // when panel changes); project thread persists across panels.
+      currentThreadIds: { ...state.currentThreadIds, view: null },
+      currentScope: null,
+    };
     if (!state.panels[id]) {
       set({
-        currentPanel: id,
-        panels: { ...state.panels, [id]: createInitialPanelState() }
+        ...base,
+        panels: { ...state.panels, [id]: createInitialPanelState() },
       });
     } else {
-      set({ currentPanel: id });
+      set(base);
     }
     // Tell the server so ThreadManager scopes to this panel's threads
     const ws = state.ws;
@@ -125,37 +161,28 @@ export const usePanelStore = create<AppState>((set, get) => ({
     }
   },
 
-  addMessage: (panel, message) => set((state) => {
-    const ps = getPs(state, panel);
-    return {
-      panels: {
-        ...state.panels,
-        [panel]: { ...ps, messages: [...ps.messages, message] }
-      }
-    };
+  addMessage: (scope, message) => set((state) => {
+    const cs = getChatState(state, scope);
+    return writeChatState(state, scope, { ...cs, messages: [...cs.messages, message] });
   }),
 
-  setCurrentTurn: (panel, turn) => set((state) => ({
-    panels: {
-      ...state.panels,
-      [panel]: { ...getPs(state, panel), currentTurn: turn }
-    }
-  })),
-
-  updateTurnContent: (panel, content) => set((state) => {
-    const ps = getPs(state, panel);
-    if (!ps.currentTurn) return state;
-    return {
-      panels: {
-        ...state.panels,
-        [panel]: { ...ps, currentTurn: { ...ps.currentTurn, content } }
-      }
-    };
+  setCurrentTurn: (scope, turn) => set((state) => {
+    const cs = getChatState(state, scope);
+    return writeChatState(state, scope, { ...cs, currentTurn: turn });
   }),
 
-  appendSegment: (panel, segType, text) => set((state) => {
-    const ps = getPs(state, panel);
-    const segments = [...ps.segments];
+  updateTurnContent: (scope, content) => set((state) => {
+    const cs = getChatState(state, scope);
+    if (!cs.currentTurn) return state;
+    return writeChatState(state, scope, {
+      ...cs,
+      currentTurn: { ...cs.currentTurn, content }
+    });
+  }),
+
+  appendSegment: (scope, segType, text) => set((state) => {
+    const cs = getChatState(state, scope);
+    const segments = [...cs.segments];
     const last = segments[segments.length - 1];
     if (last && last.type === segType) {
       // Same type — append content
@@ -167,78 +194,62 @@ export const usePanelStore = create<AppState>((set, get) => ({
       }
       segments.push({ type: segType, content: text });
     }
-    return {
-      panels: { ...state.panels, [panel]: { ...ps, segments } }
-    };
+    return writeChatState(state, scope, { ...cs, segments });
   }),
 
-  pushSegment: (panel, segment) => set((state) => {
-    const ps = getPs(state, panel);
-    const segments = [...ps.segments];
+  pushSegment: (scope, segment) => set((state) => {
+    const cs = getChatState(state, scope);
+    const segments = [...cs.segments];
     // Mark prior segment complete before pushing new one
     const last = segments[segments.length - 1];
     if (last && !last.complete) {
       segments[segments.length - 1] = { ...last, complete: true };
     }
     segments.push(segment);
-    return {
-      panels: { ...state.panels, [panel]: { ...ps, segments } }
-    };
+    return writeChatState(state, scope, { ...cs, segments });
   }),
 
-  updateLastSegment: (panel, updates) => set((state) => {
-    const ps = getPs(state, panel);
-    const segments = [...ps.segments];
+  updateLastSegment: (scope, updates) => set((state) => {
+    const cs = getChatState(state, scope);
+    const segments = [...cs.segments];
     const last = segments[segments.length - 1];
     if (last) {
       segments[segments.length - 1] = { ...last, ...updates };
     }
-    return {
-      panels: { ...state.panels, [panel]: { ...ps, segments } }
-    };
+    return writeChatState(state, scope, { ...cs, segments });
   }),
 
-  updateSegmentByToolCallId: (panel, toolCallId, updates) => set((state) => {
-    const ps = getPs(state, panel);
-    const idx = ps.segments.findIndex((s) => s.toolCallId === toolCallId);
+  updateSegmentByToolCallId: (scope, toolCallId, updates) => set((state) => {
+    const cs = getChatState(state, scope);
+    const idx = cs.segments.findIndex((s) => s.toolCallId === toolCallId);
     if (idx < 0) return state;
-    const segments = [...ps.segments];
+    const segments = [...cs.segments];
     segments[idx] = { ...segments[idx], ...updates };
-    return {
-      panels: { ...state.panels, [panel]: { ...ps, segments } }
-    };
+    return writeChatState(state, scope, { ...cs, segments });
   }),
 
-  appendSegmentContentByIndex: (panel, index, text) => set((state) => {
-    const ps = getPs(state, panel);
-    if (index < 0 || index >= ps.segments.length) return state;
-    const segments = [...ps.segments];
+  appendSegmentContentByIndex: (scope, index, text) => set((state) => {
+    const cs = getChatState(state, scope);
+    if (index < 0 || index >= cs.segments.length) return state;
+    const segments = [...cs.segments];
     segments[index] = { ...segments[index], content: segments[index].content + text };
-    return {
-      panels: { ...state.panels, [panel]: { ...ps, segments } }
-    };
+    return writeChatState(state, scope, { ...cs, segments });
   }),
 
-  resetSegments: (panel) => set((state) => ({
-    panels: {
-      ...state.panels,
-      [panel]: { ...getPs(state, panel), segments: [] }
-    }
-  })),
+  resetSegments: (scope) => set((state) => {
+    const cs = getChatState(state, scope);
+    return writeChatState(state, scope, { ...cs, segments: [] });
+  }),
 
-  setPendingTurnEnd: (panel, pending) => set((state) => ({
-    panels: {
-      ...state.panels,
-      [panel]: { ...getPs(state, panel), pendingTurnEnd: pending }
-    }
-  })),
+  setPendingTurnEnd: (scope, pending) => set((state) => {
+    const cs = getChatState(state, scope);
+    return writeChatState(state, scope, { ...cs, pendingTurnEnd: pending });
+  }),
 
-  setPendingMessage: (panel, message) => set((state) => ({
-    panels: {
-      ...state.panels,
-      [panel]: { ...getPs(state, panel), pendingMessage: message }
-    }
-  })),
+  setPendingMessage: (scope, message) => set((state) => {
+    const cs = getChatState(state, scope);
+    return writeChatState(state, scope, { ...cs, pendingMessage: message });
+  }),
 
   // TURN FINALIZATION — completes the full turn lifecycle in one atomic update.
   // Called exactly once per turn, by LiveSegmentRenderer's completion effect,
@@ -261,14 +272,14 @@ export const usePanelStore = create<AppState>((set, get) => ({
   //   - User bubble appearing above the live response on mid-stream send
   //   - Turn never moving to history if no follow-up message was sent
   //   - Stale LiveSegmentRenderer state persisting after animation completed
-  finalizeTurn: (panel) => {
+  finalizeTurn: (scope) => {
     const state = get();
-    const ps = getPs(state, panel);
-    const turn = ps.currentTurn;
+    const cs = getChatState(state, scope);
+    const turn = cs.currentTurn;
     if (turn) {
-      const segments = ps.segments;
+      const segments = cs.segments;
       const newMessages = [
-        ...ps.messages,
+        ...cs.messages,
         {
           id: turn.id || `turn-${Date.now()}`,
           type: 'assistant' as const,
@@ -277,64 +288,77 @@ export const usePanelStore = create<AppState>((set, get) => ({
           segments: segments.length > 0 ? [...segments] : undefined,
         },
       ];
-      set((s) => ({
-        panels: {
-          ...s.panels,
-          [panel]: {
-            ...getPs(s, panel),
-            messages: newMessages,
-            currentTurn: null,
-            segments: [],
-            pendingTurnEnd: false,
-            pendingMessage: null,
-            lastReleasedSegmentCount: 0,
-          }
-        }
+      set((s) => writeChatState(s, scope, {
+        ...getChatState(s, scope),
+        messages: newMessages,
+        currentTurn: null,
+        segments: [],
+        pendingTurnEnd: false,
+        pendingMessage: null,
+        lastReleasedSegmentCount: 0,
       }));
     }
   },
 
-  clearPanel: (panel) => set((state) => ({
-    panels: {
-      ...state.panels,
-      [panel]: createInitialPanelState()
-    }
-  })),
+  clearChat: (scope) => set((state) =>
+    writeChatState(state, scope, createInitialPanelState())
+  ),
 
   setWs: (ws) => set({ ws }),
-  sendMessage: (text, panel) => {
+  sendMessage: (text, scope) => {
     const state = get();
     const socket = state.ws;
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      const now = performance.now();
-      (window as any).__TIMING = { sendAt: now, firstTokenAt: 0, firstTokenType: '' };
-      console.log(`[TIMING] SEND at ${now.toFixed(1)}ms`);
-      socket.send(JSON.stringify({
-        type: 'prompt',
-        user_input: text,
-        panel: panel || state.currentPanel,
-        threadId: state.currentThreadId,
-      }));
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    const threadId = state.currentThreadIds[scope];
+    if (!threadId) {
+      console.error(`[Store] sendMessage: no active thread in scope=${scope}`);
+      return;
     }
+    const now = performance.now();
+    (window as any).__TIMING = { sendAt: now, firstTokenAt: 0, firstTokenType: '' };
+    console.log(`[TIMING] SEND at ${now.toFixed(1)}ms scope=${scope}`);
+    socket.send(JSON.stringify({
+      type: 'prompt',
+      scope,
+      threadId,
+      user_input: text,
+    }));
   },
   setProjectRoot: (root) => set({ projectRoot: root }),
   setContextUsage: (usage) => set({ contextUsage: usage }),
 
-  // Thread actions
-  setThreads: (threads) => set({ threads }),
-  setCurrentThreadId: (threadId) => set({ currentThreadId: threadId }),
+  // Thread actions — SPEC-26c: scope-aware
+  setThreads: (scope, threads) => set((state) => ({
+    threads: { ...state.threads, [scope]: threads },
+  })),
+  setCurrentThreadId: (scope, threadId) => set((state) => ({
+    currentThreadIds: { ...state.currentThreadIds, [scope]: threadId },
+  })),
+  setCurrentScope: (scope) => set({ currentScope: scope }),
   setWireReady: (ready) => set({ wireReady: ready }),
-  addThread: (thread) => set((state) => ({
-    threads: [thread, ...state.threads]
+  addThread: (scope, thread) => set((state) => ({
+    threads: {
+      ...state.threads,
+      [scope]: [thread, ...state.threads[scope]],
+    },
   })),
-  updateThread: (threadId, updates) => set((state) => ({
-    threads: state.threads.map(t =>
-      t.threadId === threadId ? { ...t, entry: { ...t.entry, ...updates } } : t
-    )
+  updateThread: (scope, threadId, updates) => set((state) => ({
+    threads: {
+      ...state.threads,
+      [scope]: state.threads[scope].map(t =>
+        t.threadId === threadId ? { ...t, entry: { ...t.entry, ...updates } } : t
+      ),
+    },
   })),
-  removeThread: (threadId) => set((state) => ({
-    threads: state.threads.filter(t => t.threadId !== threadId),
-    currentThreadId: state.currentThreadId === threadId ? null : state.currentThreadId
+  removeThread: (scope, threadId) => set((state) => ({
+    threads: {
+      ...state.threads,
+      [scope]: state.threads[scope].filter(t => t.threadId !== threadId),
+    },
+    currentThreadIds: {
+      ...state.currentThreadIds,
+      [scope]: state.currentThreadIds[scope] === threadId ? null : state.currentThreadIds[scope],
+    },
   })),
 
 }));

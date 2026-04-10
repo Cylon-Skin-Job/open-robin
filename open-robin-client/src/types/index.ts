@@ -136,7 +136,15 @@ export interface WebSocketMessage {
   name?: string;
   content?: string;
   message?: string;
+  // SPEC-26b: every thread:* response and wire_ready carries scope
+  scope?: Scope;
+  viewId?: string | null;
 }
+
+// SPEC-26: dual-chat paradigm. Every thread lives in one of two scopes.
+//  - 'project': follows the user across panel switches
+//  - 'view': bound to a specific view panel
+export type Scope = 'project' | 'view';
 
 // Thread Types
 export interface ThreadEntry {
@@ -147,6 +155,9 @@ export interface ThreadEntry {
   resumedAt?: string;
   messageCount: number;
   status: 'active' | 'suspended';
+  // SPEC-26a: server returns scope + viewId on every thread entry
+  scope?: Scope;
+  viewId?: string | null;
 }
 
 export interface Thread {

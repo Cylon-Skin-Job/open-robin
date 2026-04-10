@@ -184,7 +184,8 @@
 
 /* Content area in full layout gets no padding (explorer/viewer fills it) */
 
-/* Layout classes — driven by index.json "layout" field */
+/* SPEC-26c: binary layout. Chat-enabled views render the 5-column dual
+ * chat layout; everything else is a single content column. */
 .rv-layout-full {
   grid-template-columns: 1fr;
 }
@@ -193,20 +194,33 @@
   padding: 0;
 }
 
-.rv-layout-chat-content {
-  grid-template-columns: var(--chat-width) 1fr;
+.rv-layout-dual-chat {
+  /* [project sidebar] [project chat] [content] [view chat] [view sidebar] */
+  grid-template-columns:
+    var(--sidebar-width)
+    var(--chat-width)
+    1fr
+    var(--chat-width)
+    var(--sidebar-width);
 }
 
-.rv-layout-chat-content .rv-content-area {
+.rv-layout-dual-chat .rv-content-area {
   padding: 0;
 }
 
-.rv-layout-sidebar-chat-content {
-  /* default grid already has 3 columns */
+/* SPEC-26c: inactive chat column — the one whose scope does NOT currently
+ * hold the live wire. Dimmed so the user can see which side is active. */
+.chat-area--inactive {
+  opacity: 0.55;
 }
 
-.rv-layout-sidebar-chat-content .rv-content-area {
-  padding: 0;
+.chat-area--inactive .chat-footer {
+  pointer-events: none;
+}
+
+.sidebar--active {
+  /* subtle highlight for the sidebar on the live-wire side */
+  box-shadow: inset 0 0 0 1px rgba(var(--theme-primary-rgb, 136, 136, 136), 0.25);
 }
 
 /* Chat input - reduce gap to icons */

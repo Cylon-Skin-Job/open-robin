@@ -24,12 +24,14 @@ interface ChatInputProps {
   onStop: () => void;
   disabled: boolean;
   panel: string;
+  /** Optional placeholder override (SPEC-26c: set when chat is inactive). */
+  placeholder?: string;
   /** True when the AI is streaming or the renderer is still revealing. */
   isTurnActive: boolean;
 }
 
 export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(function ChatInput(
-  { onSend, onStop, disabled, panel, isTurnActive },
+  { onSend, onStop, disabled, panel, placeholder, isTurnActive },
   ref
 ) {
   const [text, setText] = useState('');
@@ -107,7 +109,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(function ChatI
         <textarea
           ref={textareaRef}
           className="chat-input"
-          placeholder={`Ask about ${(config?.name || panel).toLowerCase()}...`}
+          placeholder={placeholder ?? `Ask about ${(config?.name || panel).toLowerCase()}...`}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}

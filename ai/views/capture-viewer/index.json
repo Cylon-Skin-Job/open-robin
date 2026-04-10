@@ -10,7 +10,6 @@
   "sort": "created",
   "created": "2026-03-23T12:00:00-07:00",
   "settings": {
-    "layout": "sidebar-chat-content",
     "wikiExempt": true,
     "theme": {
       "primary": "#a78bfa",

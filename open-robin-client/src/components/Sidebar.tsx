@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { usePanelStore } from '../state/panelStore';
 import { logger } from '../lib/logger';
-import type { Thread } from '../types';
+import type { Thread, Scope } from '../types';
 
 // SPEC-24e: display name fallback. When a thread has no name (null),
 // render the thread ID with milliseconds stripped.
@@ -116,26 +116,30 @@ function useThreadAnimation(threads: { threadId: string }[]) {
 
 interface SidebarProps {
   panel: string;
+  scope: Scope;
 }
 
-export function Sidebar({ panel }: SidebarProps) {
+export function Sidebar({ panel, scope }: SidebarProps) {
   const config = usePanelStore((s) => s.getPanelConfig(panel));
   const ws = usePanelStore((state) => state.ws);
-  const threads = usePanelStore((state) => state.threads);
-  const currentThreadId = usePanelStore((state) => state.currentThreadId);
+  // SPEC-26c: sidebar reads from its scope's thread list. Project sidebar
+  // reads state.threads.project; view sidebar reads state.threads.view.
+  const threads = usePanelStore((state) => state.threads[scope]);
+  const currentThreadId = usePanelStore((state) => state.currentThreadIds[scope]);
+  const currentScope = usePanelStore((state) => state.currentScope);
   const { setThreadRef } = useThreadAnimation(threads);
-  
+
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const setCurrentThreadId = usePanelStore((state) => state.setCurrentThreadId);
-  
-  // Request thread list when connected
+
+  // Request thread list when connected. SPEC-26c: scoped per sidebar.
   useEffect(() => {
     if (ws?.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'thread:list' }));
+      ws.send(JSON.stringify({ type: 'thread:list', scope }));
     }
-  }, [ws, panel]);
+  }, [ws, panel, scope]);
 
   // Handle WebSocket messages for copy-link.
   useEffect(() => {
@@ -173,44 +177,45 @@ export function Sidebar({ panel }: SidebarProps) {
   }, [ws]);
   
   const handleCreateThread = () => {
-    logger.info('[Sidebar] New Thread — clearing thread to show harness picker');
-    setCurrentThreadId(null);
+    logger.info('[Sidebar] New Thread — clearing thread to show harness picker scope=%s', scope);
+    setCurrentThreadId(scope, null);
   };
-  
+
   const handleOpenThread = (threadId: string) => {
-    sendMessage({ type: 'thread:open-assistant', threadId });
+    sendMessage({ type: 'thread:open-assistant', scope, threadId });
   };
-  
+
   const handleRenameStart = (threadId: string, currentName: string) => {
     setRenamingId(threadId);
     setRenameValue(currentName);
   };
-  
+
   const handleRenameSubmit = (threadId: string) => {
     if (renameValue.trim()) {
-      sendMessage({ 
-        type: 'thread:rename', 
-        threadId, 
-        name: renameValue.trim() 
+      sendMessage({
+        type: 'thread:rename',
+        scope,
+        threadId,
+        name: renameValue.trim()
       });
     }
     setRenamingId(null);
     setRenameValue('');
   };
-  
+
   const handleRenameCancel = () => {
     setRenamingId(null);
     setRenameValue('');
   };
-  
+
   const handleDeleteThread = (threadId: string) => {
     if (confirm('Delete this conversation?')) {
-      sendMessage({ type: 'thread:delete', threadId });
+      sendMessage({ type: 'thread:delete', scope, threadId });
     }
   };
-  
+
   const handleCopyLink = (threadId: string) => {
-    sendMessage({ type: 'thread:copyLink', threadId });
+    sendMessage({ type: 'thread:copyLink', scope, threadId });
   };
   
   const formatDate = (dateStr: string) => {
@@ -234,10 +239,13 @@ export function Sidebar({ panel }: SidebarProps) {
     }
   };
   
+  const isActive = currentScope === scope;
+  const headerLabel = scope === 'project' ? 'Project' : (config?.name || panel);
+
   return (
-    <aside className="sidebar">
-      <div className="sidebar-header">{config?.name || panel}</div>
-      
+    <aside className={`sidebar sidebar--${scope}${isActive ? ' sidebar--active' : ''}`}>
+      <div className="sidebar-header">{headerLabel}</div>
+
       <button 
         className="new-chat-btn"
         onClick={handleCreateThread}

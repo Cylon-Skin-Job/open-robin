@@ -90,7 +90,7 @@ export function FloatingChat({ panel }: FloatingChatProps) {
             </button>
           </div>
           <div className="floating-chat-body">
-            <ChatArea panel={panel} />
+            <ChatArea panel={panel} scope="view" />
           </div>
         </div>
       )}

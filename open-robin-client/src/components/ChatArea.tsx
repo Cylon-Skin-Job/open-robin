@@ -15,12 +15,26 @@ import {
 import { ChatHarnessPicker, type HarnessStatus } from './ChatHarnessPicker';
 import { ConnectingOverlay } from './ConnectingOverlay';
 import { getHarnessOption } from '../config/harness';
+import type { Scope, PanelState } from '../types';
 
 interface ChatAreaProps {
   panel: string;
+  scope: Scope;
 }
 
-export function ChatArea({ panel }: ChatAreaProps) {
+/**
+ * SPEC-26c: ChatArea is parameterized by scope. Project scope reads from
+ * state.projectChat (top-level, follows the user across panel switches);
+ * view scope reads from state.panels[panel] (per-panel view chat).
+ */
+function selectChatState(scope: Scope, panel: string) {
+  return (state: ReturnType<typeof usePanelStore.getState>): PanelState | undefined => {
+    if (scope === 'project') return state.projectChat;
+    return state.panels[panel];
+  };
+}
+
+export function ChatArea({ panel, scope }: ChatAreaProps) {
   const lastUserMsgRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputRef>(null);
@@ -34,29 +48,37 @@ export function ChatArea({ panel }: ChatAreaProps) {
     chatInputRef.current?.insertText(text);
   };
 
-  // Store data
-  const messages = usePanelStore((state) => state.panels[panel]?.messages || []);
-  const currentTurn = usePanelStore((state) => state.panels[panel]?.currentTurn || null);
-  const segments = usePanelStore((state) => state.panels[panel]?.segments || []);
+  // SPEC-26c: all chat state reads are scope-keyed. Project state lives at
+  // state.projectChat; view state lives at state.panels[panel].
+  const selector = selectChatState(scope, panel);
+  const messages = usePanelStore((state) => selector(state)?.messages || []);
+  const currentTurn = usePanelStore((state) => selector(state)?.currentTurn || null);
+  const segments = usePanelStore((state) => selector(state)?.segments || []);
   const contextUsage = usePanelStore((state) => state.contextUsage);
-  const currentThreadId = usePanelStore((state) => state.currentThreadId);
+  const currentThreadId = usePanelStore((state) => state.currentThreadIds[scope]);
+  const currentScope = usePanelStore((state) => state.currentScope);
   const ws = usePanelStore((state) => state.ws);
   const wireReady = usePanelStore((state) => state.wireReady);
   const setWireReady = usePanelStore((state) => state.setWireReady);
 
   const addMessage = usePanelStore((state) => state.addMessage);
   const sendMessage = usePanelStore((state) => state.sendMessage);
+  const finalizeTurn = usePanelStore((state) => state.finalizeTurn);
 
   // No thread active → show inline harness picker
   const noThread = !currentThreadId;
+
+  // SPEC-26c: inactive chat still renders history but its input is disabled.
+  // The other side owns the live wire.
+  const isActive = currentScope === scope;
 
   const handleHarnessSelect = useCallback((harnessId: string) => {
     setWireReady(false);
     setConnectingHarnessId(harnessId);
     if (ws?.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'thread:open-assistant', harnessId }));
+      ws.send(JSON.stringify({ type: 'thread:open-assistant', scope, harnessId }));
     }
-  }, [ws, setWireReady]);
+  }, [ws, setWireReady, scope]);
 
   // Fetch harness install statuses once on mount — passed to ChatHarnessPicker as props
   const fetchHarnessStatuses = useCallback(async () => {
@@ -104,8 +126,6 @@ export function ChatArea({ panel }: ChatAreaProps) {
   // Show orb if: local sending state OR streaming with no segments yet
   const showOrb = (isSending || currentTurn?.status === 'streaming') && segments.length === 0;
 
-  const finalizeTurn = usePanelStore((state) => state.finalizeTurn);
-
   // Turn is active if there's a currentTurn (streaming or revealing).
   // This drives the send/stop button toggle.
   const isTurnActive = !!currentTurn || isSending;
@@ -118,35 +138,42 @@ export function ChatArea({ panel }: ChatAreaProps) {
     //
     // KNOWN PAST BUG (DO NOT REINTRODUCE):
     // User bubble appeared above the live assistant response mid-stream.
-    const ps = usePanelStore.getState().panels[panel];
-    if (ps?.currentTurn) {
-      finalizeTurn(panel);
+    const state = usePanelStore.getState();
+    const cs = scope === 'project' ? state.projectChat : state.panels[panel];
+    if (cs?.currentTurn) {
+      finalizeTurn(scope);
     }
 
     justSentRef.current = true;
-    addMessage(panel, {
+    addMessage(scope, {
       id: Date.now().toString(),
       type: 'user',
       content: text,
       timestamp: Date.now()
     });
 
-    sendMessage(text, panel);
+    sendMessage(text, scope);
   };
 
   // Stop: immediately finalize the turn — snap all remaining content
   // to display, move to history. The AI may keep running server-side
   // but the client moves on.
   const handleStop = () => {
-    const ps = usePanelStore.getState().panels[panel];
-    if (ps?.currentTurn) {
-      finalizeTurn(panel);
+    const state = usePanelStore.getState();
+    const cs = scope === 'project' ? state.projectChat : state.panels[panel];
+    if (cs?.currentTurn) {
+      finalizeTurn(scope);
     }
     setIsSending(false);
   };
 
+  const sectionClass = `chat-area chat-area--${scope}${isActive ? ' chat-area--active' : ' chat-area--inactive'}`;
+  const inputPlaceholder = !isActive && !noThread
+    ? 'Click a thread in this sidebar to activate'
+    : undefined;
+
   return (
-    <section className="chat-area">
+    <section className={sectionClass}>
       <div className="chat-messages" ref={chatContainerRef} style={{ position: 'relative' }}>
         {connectingHarnessId ? (
           <ConnectingOverlay harnessName={getHarnessOption(connectingHarnessId)?.name} />
@@ -163,6 +190,7 @@ export function ChatArea({ panel }: ChatAreaProps) {
         ) : (
           <MessageList
             panel={panel}
+            scope={scope}
             messages={messages}
             currentTurn={currentTurn}
             segments={segments}
@@ -181,7 +209,8 @@ export function ChatArea({ panel }: ChatAreaProps) {
           ref={chatInputRef}
           onSend={handleSend}
           onStop={handleStop}
-          disabled={noThread}
+          disabled={noThread || !isActive}
+          placeholder={inputPlaceholder}
           panel={panel}
           isTurnActive={isTurnActive}
         />
@@ -204,7 +233,7 @@ export function ChatArea({ panel }: ChatAreaProps) {
               </span>
             </button>
           ) : (
-            <SendButtonGroup 
+            <SendButtonGroup
               chatInputRef={chatInputRef}
               onSend={handleSend}
             />

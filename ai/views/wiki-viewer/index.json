@@ -10,7 +10,6 @@
   "sort": "ranked",
   "created": "2026-03-20T14:00:00-07:00",
   "settings": {
-    "layout": "sidebar-chat-content",
     "theme": {
       "primary": "#ec4899",
       "sidebar_bg": "#1a1020",

@@ -21,7 +21,9 @@ export interface PanelTheme {
   panel_border: string;
 }
 
-export type PanelLayout = 'full' | 'chat-content' | 'sidebar-chat-content';
+// SPEC-26c: PanelLayout type removed. Layout is now a binary derived from
+// hasChat in App.tsx — chat-enabled views render the 5-column dual-chat
+// layout, everything else is content-only.
 
 export interface ChatConfig {
   type: 'threaded' | 'rolling-daily';
@@ -55,7 +57,6 @@ export interface PanelConfig {
   icon: string;
   hasChat: boolean;
   chatConfig: ChatConfig | null;
-  layout: PanelLayout;
   layoutConfig: LayoutConfig | null;
   contentConfig: ContentConfig | null;
   theme: PanelTheme;
@@ -175,7 +176,6 @@ export async function loadPanelConfig(ws: WebSocket, panelId: string): Promise<P
       icon: json.icon || 'folder',
       hasChat,
       chatConfig,
-      layout: json.settings?.layout || (hasChat ? 'sidebar-chat-content' : 'full') as PanelLayout,
       layoutConfig,
       contentConfig,
       theme: {

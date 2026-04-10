@@ -15,24 +15,23 @@ import './App.css';
  * Memoized panel content — only re-renders when its own panel prop changes,
  * NOT when currentPanel changes in the parent. This prevents all 7 panels
  * from re-rendering on every panel switch.
+ *
+ * SPEC-26c: the three-string layout switch ('full' / 'chat-content' /
+ * 'sidebar-chat-content') collapsed to a binary hasChat. Chat-enabled views
+ * always render the 5-column dual-chat layout.
  */
-const PanelContent = memo(function PanelContent({ panel, layout }: { panel: string; layout: string }) {
-  if (layout === 'full') {
+const PanelContent = memo(function PanelContent({ panel, hasChat }: { panel: string; hasChat: boolean }) {
+  if (!hasChat) {
     return <ContentArea panel={panel} />;
   }
-  if (layout === 'chat-content') {
-    return (
-      <>
-        <ChatArea panel={panel} />
-        <ContentArea panel={panel} />
-      </>
-    );
-  }
+  // Dual-chat layout: [project sidebar][project chat][content][view chat][view sidebar]
   return (
     <>
-      <Sidebar panel={panel} />
-      <ChatArea panel={panel} />
+      <Sidebar panel={panel} scope="project" />
+      <ChatArea panel={panel} scope="project" />
       <ContentArea panel={panel} />
+      <ChatArea panel={panel} scope="view" />
+      <Sidebar panel={panel} scope="view" />
     </>
   );
 });
@@ -160,15 +159,16 @@ function App() {
       {/* Panel Container */}
       <div className="rv-panel-container">
         {configs.map((config) => {
-          const layout = config.layout || (config.hasChat ? 'sidebar-chat-content' : 'full');
+          const hasChat = !!config.hasChat;
+          const layoutClass = hasChat ? 'rv-layout-dual-chat' : 'rv-layout-full';
 
           return (
             <div
               key={config.id}
               data-panel={config.id}
-              className={`rv-panel rv-layout-${layout} ${currentPanel === config.id ? 'active' : ''}`}
+              className={`rv-panel ${layoutClass} ${currentPanel === config.id ? 'active' : ''}`}
             >
-              <PanelContent panel={config.id} layout={layout} />
+              <PanelContent panel={config.id} hasChat={hasChat} />
             </div>
           );
         })}
