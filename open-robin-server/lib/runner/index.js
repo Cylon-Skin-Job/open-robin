@@ -112,28 +112,6 @@ function attachOutputMonitor(proc, runId) {
         console.error(`[Runner] Failed to append HISTORY.md: ${err.message}`);
       }
 
-      // Notify active persona wire session (if any)
-      try {
-        const agentWireSessions = global.__agentWireSessions;
-        if (agentWireSessions && manifest?.bot_name) {
-          const personaWire = agentWireSessions.get(manifest.bot_name);
-          if (personaWire && !personaWire.killed) {
-            const notifyMsg = JSON.stringify({
-              jsonrpc: '2.0',
-              method: 'prompt',
-              id: `notify-${Date.now()}`,
-              params: {
-                user_input: `[System] Run completed: ${manifest.ticket_id} via ${manifest.prompt || 'PROMPT_01.md'}. Outcome: ${manifest.outcome || status}.`,
-              },
-            });
-            personaWire.stdin.write(notifyMsg + '\n');
-            console.log(`[Runner] Notified persona wire for ${manifest.bot_name}`);
-          }
-        }
-      } catch (err) {
-        console.error(`[Runner] Failed to notify persona: ${err.message}`);
-      }
-
       // Push completed state to GitLab
       if (status === 'completed' && manifest?.ticket_id) {
         try {

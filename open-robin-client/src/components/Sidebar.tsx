@@ -118,13 +118,6 @@ interface SidebarProps {
   panel: string;
 }
 
-interface ConfirmationModal {
-  show: boolean;
-  message: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
 export function Sidebar({ panel }: SidebarProps) {
   const config = usePanelStore((s) => s.getPanelConfig(panel));
   const ws = usePanelStore((state) => state.ws);
@@ -135,12 +128,6 @@ export function Sidebar({ panel }: SidebarProps) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  const [confirmModal, setConfirmModal] = useState<ConfirmationModal>({
-    show: false,
-    message: '',
-    onConfirm: () => {},
-    onCancel: () => {}
-  });
   const setCurrentThreadId = usePanelStore((state) => state.setCurrentThreadId);
   
   // Request thread list when connected
@@ -150,30 +137,17 @@ export function Sidebar({ panel }: SidebarProps) {
     }
   }, [ws, panel]);
 
-  // Handle WebSocket messages for confirmation modal and copy link
+  // Handle WebSocket messages for copy-link.
   useEffect(() => {
     if (!ws) return;
 
     const handleMessage = (event: MessageEvent) => {
       try {
         const msg = JSON.parse(event.data);
-        if (msg.type === 'thread:create:confirm') {
-          setConfirmModal({
-            show: true,
-            message: msg.message,
-            onConfirm: () => {
-              sendMessage({ type: 'thread:open-assistant', confirmed: true });
-              setConfirmModal(prev => ({ ...prev, show: false }));
-            },
-            onCancel: () => {
-              setConfirmModal(prev => ({ ...prev, show: false }));
-            }
-          });
-        } else if (msg.type === 'thread:link') {
+        if (msg.type === 'thread:link') {
           // Copy the file path to clipboard
           if (msg.filePath) {
             navigator.clipboard.writeText(msg.filePath).then(() => {
-              // Show a brief success indicator (could be enhanced with a toast)
               console.log('[Sidebar] Copied link to clipboard:', msg.filePath);
             }).catch(err => {
               console.error('[Sidebar] Failed to copy link:', err);
@@ -366,24 +340,6 @@ export function Sidebar({ panel }: SidebarProps) {
           ))
         )}
       </div>
-
-      {/* Confirmation Modal */}
-      {confirmModal.show && (
-        <div className="rv-confirm-modal-overlay" onClick={confirmModal.onCancel}>
-          <div className="rv-confirm-modal-content" onClick={(e) => e.stopPropagation()}>
-            <p className="rv-confirm-modal-message">{confirmModal.message}</p>
-            <div className="rv-confirm-modal-buttons">
-              <button className="rv-confirm-modal-btn rv-confirm-modal-btn-secondary" onClick={confirmModal.onCancel}>
-                Cancel
-              </button>
-              <button className="rv-confirm-modal-btn rv-confirm-modal-btn-primary" onClick={confirmModal.onConfirm}>
-                Create Anyway
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </aside>
   );
 }
