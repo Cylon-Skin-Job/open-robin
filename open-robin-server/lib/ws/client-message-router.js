@@ -33,6 +33,8 @@ const { registerWire, getWireForThread, sendToWire } = require('../wire/process-
 const views = require('../views');
 const { moveFileWithArchive } = require('../file-ops');
 const { emit } = require('../event-bus');
+const { resolveViewState, writeViewStatePatch } = require('../view-state');
+const { getUsername } = require('../thread/ChatFile');
 
 /**
  * Create a per-connection client message router.
@@ -314,6 +316,42 @@ function createClientMessageRouter({
         const wire = threadId ? getWireForThread(threadId) : session.wire;
         if (wire) {
           sendToWire(wire, 'response', clientMsg.payload, clientMsg.requestId);
+        }
+        return;
+      }
+
+      // ---- View UI state (SPEC-26c-2) ----
+
+      if (clientMsg.type === 'state:get') {
+        try {
+          const projectRoot = getDefaultProjectRoot();
+          const username = getUsername();
+          const state = await resolveViewState(projectRoot, clientMsg.view, username);
+          ws.send(JSON.stringify({
+            type: 'state:result',
+            view: clientMsg.view,
+            state,
+          }));
+        } catch (err) {
+          console.error('[state:get] failed:', err);
+          ws.send(JSON.stringify({ type: 'state:error', message: err.message }));
+        }
+        return;
+      }
+
+      if (clientMsg.type === 'state:set') {
+        try {
+          const projectRoot = getDefaultProjectRoot();
+          const username = getUsername();
+          const merged = await writeViewStatePatch(projectRoot, clientMsg.view, username, clientMsg.state);
+          ws.send(JSON.stringify({
+            type: 'state:result',
+            view: clientMsg.view,
+            state: merged,
+          }));
+        } catch (err) {
+          console.error('[state:set] failed:', err);
+          ws.send(JSON.stringify({ type: 'state:error', message: err.message }));
         }
         return;
       }

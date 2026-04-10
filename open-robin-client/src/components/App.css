@@ -194,14 +194,18 @@
   padding: 0;
 }
 
+/* SPEC-26c-2: 3-column asymmetric layout.
+ * [project sidebar] [handle] [project chat] [handle] [content]
+ * Widths come from per-view state (viewStates), written to inline style
+ * as CSS variables on the .rv-panel container.
+ */
 .rv-layout-dual-chat {
-  /* [project sidebar] [project chat] [content] [view chat] [view sidebar] */
   grid-template-columns:
-    var(--sidebar-width)
-    var(--chat-width)
-    1fr
-    var(--chat-width)
-    var(--sidebar-width);
+    var(--left-sidebar-w, 220px)
+    6px   /* resize handle 1 */
+    var(--left-chat-w,    320px)
+    6px   /* resize handle 2 */
+    1fr;
 }
 
 .rv-layout-dual-chat .rv-content-area {
@@ -221,6 +225,67 @@
 .sidebar--active {
   /* subtle highlight for the sidebar on the live-wire side */
   box-shadow: inset 0 0 0 1px rgba(var(--theme-primary-rgb, 136, 136, 136), 0.25);
+}
+
+/* SPEC-26c-2: chat-area needs position context for absolute collapse button */
+.chat-area {
+  position: relative;
+}
+
+/* SPEC-26c-2: in-grid drag handle. 6px thin strip, col-resize cursor,
+   subtle hover feedback so users can find it.
+   NOTE: do NOT set grid-row on this element. An explicit grid-row with
+   auto grid-column makes CSS Grid's auto-placement treat handles as
+   "partially placed" and pack them into the first tracks, pushing
+   the actual content into the wrong columns. */
+.rv-resize-handle {
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s ease;
+  min-width: 0;
+}
+
+.rv-resize-handle:hover,
+.rv-resize-handle:active {
+  background: rgba(var(--theme-primary-rgb, 136, 136, 136), 0.35);
+}
+
+/* SPEC-26c-2: collapsed rail — sidebar/chat collapses to a 40px strip
+   with only an expand icon. Width comes from the inline CSS variable
+   on .rv-panel (set to 40px when collapsed). Hide child content except
+   the expand affordance. */
+.sidebar--collapsed,
+.chat-area--collapsed {
+  overflow: hidden;
+}
+
+.sidebar--collapsed > *:not(.rv-collapse-rail-btn),
+.chat-area--collapsed > *:not(.rv-collapse-rail-btn) {
+  display: none;
+}
+
+.rv-collapse-rail-btn {
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-dim, #888);
+}
+
+.rv-collapse-rail-btn:hover {
+  color: var(--theme-primary, #888);
+}
+
+.rv-collapse-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-dim, #888);
+}
+
+.rv-collapse-btn:hover {
+  color: var(--theme-primary, #888);
 }
 
 /* Chat input - reduce gap to icons */

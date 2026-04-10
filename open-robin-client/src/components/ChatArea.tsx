@@ -20,6 +20,7 @@ import type { Scope, PanelState } from '../types';
 interface ChatAreaProps {
   panel: string;
   scope: Scope;
+  collapsed?: boolean;
 }
 
 /**
@@ -34,7 +35,8 @@ function selectChatState(scope: Scope, panel: string) {
   };
 }
 
-export function ChatArea({ panel, scope }: ChatAreaProps) {
+export function ChatArea({ panel, scope, collapsed }: ChatAreaProps) {
+  const toggleCollapsed = usePanelStore((s) => s.toggleCollapsed);
   const lastUserMsgRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputRef>(null);
@@ -172,8 +174,31 @@ export function ChatArea({ panel, scope }: ChatAreaProps) {
     ? 'Click a thread in this sidebar to activate'
     : undefined;
 
+  // SPEC-26c-2: collapsed rail variant
+  if (collapsed) {
+    return (
+      <section className={`chat-area chat-area--${scope} chat-area--collapsed`}>
+        <button
+          className="rv-collapse-rail-btn"
+          onClick={() => toggleCollapsed(panel, 'leftChat')}
+          title="Expand chat"
+        >
+          <span className="material-symbols-outlined">chevron_right</span>
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section className={sectionClass}>
+      <button
+        className="rv-collapse-btn"
+        onClick={() => toggleCollapsed(panel, 'leftChat')}
+        title="Collapse chat"
+        style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }}
+      >
+        <span className="material-symbols-outlined">chevron_left</span>
+      </button>
       <div className="chat-messages" ref={chatContainerRef} style={{ position: 'relative' }}>
         {connectingHarnessId ? (
           <ConnectingOverlay harnessName={getHarnessOption(connectingHarnessId)?.name} />

@@ -117,10 +117,12 @@ function useThreadAnimation(threads: { threadId: string }[]) {
 interface SidebarProps {
   panel: string;
   scope: Scope;
+  collapsed?: boolean;
 }
 
-export function Sidebar({ panel, scope }: SidebarProps) {
+export function Sidebar({ panel, scope, collapsed }: SidebarProps) {
   const config = usePanelStore((s) => s.getPanelConfig(panel));
+  const toggleCollapsed = usePanelStore((s) => s.toggleCollapsed);
   const ws = usePanelStore((state) => state.ws);
   // SPEC-26c: sidebar reads from its scope's thread list. Project sidebar
   // reads state.threads.project; view sidebar reads state.threads.view.
@@ -242,9 +244,33 @@ export function Sidebar({ panel, scope }: SidebarProps) {
   const isActive = currentScope === scope;
   const headerLabel = scope === 'project' ? 'Project' : (config?.name || panel);
 
+  // SPEC-26c-2: collapsed rail variant
+  if (collapsed) {
+    return (
+      <aside className={`sidebar sidebar--${scope} sidebar--collapsed`}>
+        <button
+          className="rv-collapse-rail-btn"
+          onClick={() => toggleCollapsed(panel, 'leftSidebar')}
+          title="Expand sidebar"
+        >
+          <span className="material-symbols-outlined">chevron_right</span>
+        </button>
+      </aside>
+    );
+  }
+
   return (
     <aside className={`sidebar sidebar--${scope}${isActive ? ' sidebar--active' : ''}`}>
-      <div className="sidebar-header">{headerLabel}</div>
+      <div className="sidebar-header">
+        {headerLabel}
+        <button
+          className="rv-collapse-btn"
+          onClick={() => toggleCollapsed(panel, 'leftSidebar')}
+          title="Collapse sidebar"
+        >
+          <span className="material-symbols-outlined">chevron_left</span>
+        </button>
+      </div>
 
       <button 
         className="new-chat-btn"

@@ -127,6 +127,17 @@ function handleMessage(msg: WebSocketMessage) {
   if (handleThreadMessage(msg)) return;
   if (handleFileMessage(msg)) return;
 
+  // SPEC-26c-2: view UI state responses
+  if (msg.type === 'state:result') {
+    const store = usePanelStore.getState();
+    store.setViewState((msg as any).view, (msg as any).state);
+    return;
+  }
+  if (msg.type === 'state:error') {
+    console.error('[state] error:', (msg as any).message);
+    return;
+  }
+
   const store = usePanelStore.getState();
 
   switch (msg.type) {

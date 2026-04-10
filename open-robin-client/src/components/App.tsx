@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { usePanelStore } from '../state/panelStore';
 import { applyPanelTheme } from '../lib/panels';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -6,35 +6,81 @@ import { ToolsPanel } from './ToolsPanel';
 import { Sidebar } from './Sidebar';
 import { ChatArea } from './ChatArea';
 import { ContentArea } from './ContentArea';
+import { ResizeHandle } from './ResizeHandle';
 import { Toast } from './Toast';
 import { ModalOverlay } from './Modal/ModalOverlay';
 import { RobinOverlay } from './Robin/RobinOverlay';
 import './App.css';
+
+// SPEC-26c-2: defaults for the 3-column layout
+const DEFAULT_WIDTHS = { leftSidebar: 220, leftChat: 320 };
+const DEFAULT_COLLAPSED = { leftSidebar: false, leftChat: false };
 
 /**
  * Memoized panel content — only re-renders when its own panel prop changes,
  * NOT when currentPanel changes in the parent. This prevents all 7 panels
  * from re-rendering on every panel switch.
  *
- * SPEC-26c: the three-string layout switch ('full' / 'chat-content' /
- * 'sidebar-chat-content') collapsed to a binary hasChat. Chat-enabled views
- * always render the 5-column dual-chat layout.
+ * SPEC-26c-2: right-side view chat removed (SPEC-26d will re-expose it as
+ * a floating popup). Layout is now 3 content columns + 2 resize handles.
  */
-const PanelContent = memo(function PanelContent({ panel, hasChat }: { panel: string; hasChat: boolean }) {
+interface PanelContentProps {
+  panel: string;
+  hasChat: boolean;
+  collapsedSidebar: boolean;
+  collapsedChat: boolean;
+}
+const PanelContent = memo(function PanelContent({ panel, hasChat, collapsedSidebar, collapsedChat }: PanelContentProps) {
   if (!hasChat) {
     return <ContentArea panel={panel} />;
   }
-  // Dual-chat layout: [project sidebar][project chat][content][view chat][view sidebar]
+  // SPEC-26c-2: [project sidebar][handle][project chat][handle][content]
   return (
     <>
-      <Sidebar panel={panel} scope="project" />
-      <ChatArea panel={panel} scope="project" />
+      <Sidebar panel={panel} scope="project" collapsed={collapsedSidebar} />
+      <ResizeHandle panel={panel} pane="leftSidebar" />
+      <ChatArea panel={panel} scope="project" collapsed={collapsedChat} />
+      <ResizeHandle panel={panel} pane="leftChat" />
       <ContentArea panel={panel} />
-      <ChatArea panel={panel} scope="view" />
-      <Sidebar panel={panel} scope="view" />
     </>
   );
 });
+
+/**
+ * SPEC-26c-2: PanelWrapper reads viewStates from the store to compute
+ * inline CSS variables for the grid and pass collapsed props to children.
+ * Extracted so each panel reads only its own slice.
+ */
+function PanelWrapper({ panelId, hasChat, layoutClass, isActive }: {
+  panelId: string;
+  hasChat: boolean;
+  layoutClass: string;
+  isActive: boolean;
+}) {
+  const viewState = usePanelStore((s) => s.viewStates[panelId]);
+  const widths = viewState?.widths ?? DEFAULT_WIDTHS;
+  const collapsed = viewState?.collapsed ?? DEFAULT_COLLAPSED;
+
+  const gridStyle: CSSProperties = hasChat ? {
+    '--left-sidebar-w': `${collapsed.leftSidebar ? 40 : widths.leftSidebar}px`,
+    '--left-chat-w':    `${collapsed.leftChat    ? 40 : widths.leftChat   }px`,
+  } as CSSProperties : {};
+
+  return (
+    <div
+      data-panel={panelId}
+      className={`rv-panel ${layoutClass} ${isActive ? 'active' : ''}`}
+      style={gridStyle}
+    >
+      <PanelContent
+        panel={panelId}
+        hasChat={hasChat}
+        collapsedSidebar={collapsed.leftSidebar}
+        collapsedChat={collapsed.leftChat}
+      />
+    </div>
+  );
+}
 
 function App() {
   // WebSocket connection — must run BEFORE the loading gate
@@ -163,13 +209,13 @@ function App() {
           const layoutClass = hasChat ? 'rv-layout-dual-chat' : 'rv-layout-full';
 
           return (
-            <div
+            <PanelWrapper
               key={config.id}
-              data-panel={config.id}
-              className={`rv-panel ${layoutClass} ${currentPanel === config.id ? 'active' : ''}`}
-            >
-              <PanelContent panel={config.id} hasChat={hasChat} />
-            </div>
+              panelId={config.id}
+              hasChat={hasChat}
+              layoutClass={layoutClass}
+              isActive={currentPanel === config.id}
+            />
           );
         })}
       </div>

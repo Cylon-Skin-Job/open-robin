@@ -5,7 +5,9 @@ import type {
   AssistantTurn,
   StreamSegment,
   Thread,
-  Scope
+  Scope,
+  ViewUIState,
+  Pane
 } from '../types';
 import type { PanelConfig } from '../lib/panels';
 
@@ -19,6 +21,16 @@ function createInitialPanelState(): PanelState {
     segments: [],
     lastReleasedSegmentCount: 0
   };
+}
+
+// SPEC-26c-2: per-view UI state defaults
+const DEFAULT_VIEW_UI_STATE: ViewUIState = {
+  collapsed: { leftSidebar: false, leftChat: false },
+  widths:    { leftSidebar: 220,   leftChat: 320   },
+};
+
+function clampWidth(n: number): number {
+  return Math.max(120, Math.min(600, n));
 }
 
 interface AppState {
@@ -83,6 +95,14 @@ interface AppState {
   addThread: (scope: Scope, thread: Thread) => void;
   updateThread: (scope: Scope, threadId: string, updates: Partial<Thread['entry']>) => void;
   removeThread: (scope: Scope, threadId: string) => void;
+
+  // SPEC-26c-2: per-view UI state (collapse/expand + left-column widths)
+  viewStates: Record<string, ViewUIState>;
+  loadViewState: (view: string) => void;
+  setViewState: (view: string, state: ViewUIState) => void;
+  toggleCollapsed: (view: string, pane: Pane) => void;
+  setPaneWidth: (view: string, pane: Pane, width: number) => void;
+  commitPaneWidths: (view: string) => void;
 }
 
 /**
@@ -134,6 +154,7 @@ export const usePanelStore = create<AppState>((set, get) => ({
   currentThreadIds: { project: null, view: null },
   currentScope: null,
   wireReady: false,
+  viewStates: {},
 
   // Actions
   setCurrentPanel: (id) => {
@@ -158,6 +179,10 @@ export const usePanelStore = create<AppState>((set, get) => ({
     const ws = state.ws;
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'set_panel', panel: id }));
+    }
+    // SPEC-26c-2: load view state if not yet cached
+    if (!get().viewStates[id]) {
+      get().loadViewState(id);
     }
   },
 
@@ -360,5 +385,65 @@ export const usePanelStore = create<AppState>((set, get) => ({
       [scope]: state.currentThreadIds[scope] === threadId ? null : state.currentThreadIds[scope],
     },
   })),
+
+  // SPEC-26c-2: per-view UI state actions
+  loadViewState: (view) => {
+    const ws = get().ws;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send(JSON.stringify({ type: 'state:get', view }));
+  },
+
+  setViewState: (view, state) => set((s) => ({
+    viewStates: { ...s.viewStates, [view]: state },
+  })),
+
+  toggleCollapsed: (view, pane) => {
+    set((s) => {
+      const current = s.viewStates[view] ?? DEFAULT_VIEW_UI_STATE;
+      const nextCollapsed = {
+        ...current.collapsed,
+        [pane]: !current.collapsed[pane],
+      };
+      const nextState: ViewUIState = { ...current, collapsed: nextCollapsed };
+
+      // Persist immediately — collapse is a discrete event, not a drag.
+      const ws = get().ws;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'state:set',
+          view,
+          state: { collapsed: nextCollapsed },
+        }));
+      }
+
+      return {
+        viewStates: { ...s.viewStates, [view]: nextState },
+      };
+    });
+  },
+
+  setPaneWidth: (view, pane, width) => set((s) => {
+    const current = s.viewStates[view] ?? DEFAULT_VIEW_UI_STATE;
+    const clamped = clampWidth(width);
+    const nextWidths = { ...current.widths, [pane]: clamped };
+    return {
+      viewStates: {
+        ...s.viewStates,
+        [view]: { ...current, widths: nextWidths },
+      },
+    };
+  }),
+
+  commitPaneWidths: (view) => {
+    const state = get().viewStates[view];
+    if (!state) return;
+    const ws = get().ws;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send(JSON.stringify({
+      type: 'state:set',
+      view,
+      state: { widths: state.widths },
+    }));
+  },
 
 }));

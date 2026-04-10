@@ -1,90 +1,97 @@
 # SPEC-26d — View Chat as Floating Popup (FAB + Menu + Modal)
 
 **Parent:** SPEC-26 (dual-chat paradigm, asymmetric final form)
-**Position:** Phase 4 of 5 (final phase of the 26 series for the core dual-chat experience). Delivers the floating popup for view-scoped chats. After this lands, the project chat lives as a left-side column (26c + 26c-2) and the view chat lives as a draggable floating popup with per-view warm state.
+**Position:** Phase 4 of 5 (final phase of the 26 series for the core dual-chat experience). Delivers the floating popup for view-scoped chats. After this lands, the project chat lives as a left-side column (26c + 26c-2) and the view chat lives as a draggable, resizable floating popup.
 **Depends on:**
 - 26a (`72d390e`), 26b (`e0913c2`), 26c (`536727e`) shipped
-- 26c-2 shipped (left-column collapse/resize + right-side teardown)
+- 26c-2 shipped (left-column collapse/resize + right-side teardown + `viewStates` persistence + `state:get/set` wire messages)
 - `FloatingChat.tsx` already exists (currently only wiki-viewer uses it)
-**Model recommendation:** **Opus 4.6**. New components (FAB logic + thread picker modal), new per-view state slice with non-obvious semantics (warm state, "first click = new chat"), interaction with the existing FloatingChat component, careful wire lifecycle integration.
-**Estimated blast radius:** **Medium.** Generalizes FloatingChat to be the universal view-chat popup. New store slice. New ThreadPickerModal component. Removes WikiExplorer's inline FloatingChat mount. No server changes — 26b already handles view-scoped routing and the server doesn't need to know about popup visibility.
+**Model recommendation:** **Opus 4.6**. New component (ThreadPickerModal), rework of FloatingChat, extension of existing `viewStates` persistence. The simplification drops warm-state tracking entirely — the popup just reads the MRU thread list.
+**Estimated blast radius:** **Medium.** Generalizes FloatingChat to be the universal view-chat popup. Extends the existing `viewStates` slice with a `popup` sub-object. New ThreadPickerModal component. Removes WikiExplorer's inline FloatingChat mount. No server changes — 26b handles view-scoped routing and 26c-2's `state:get/set` handles persistence.
 
 ---
 
 ## Your mission
 
-Build the floating view-chat popup with per-view warm state. Four work streams:
+Build the floating view-chat popup. Three work streams:
 
 **Stream 1 — Universal FAB + FloatingChat at the app shell.**
-Move FloatingChat mounting from `WikiExplorer.tsx` (its current home) up to `App.tsx` so every chat-enabled view gets one. FAB button lives in the bottom-right corner of the viewport. Single instance per app load.
+Move FloatingChat mounting from `WikiExplorer.tsx` (its current home) up to `App.tsx` so every chat-enabled view gets one. FAB button lives in the bottom-right corner of the viewport. Single instance per app load. Only visible on chat-enabled views.
 
-**Stream 2 — First-click semantics + warm state.**
-The FAB button behaves based on the current view's state:
-- **First click in a view (no warm chat yet)** → opens the harness picker (two-step wizard eventually, per the saved memory on `project_two_step_harness_picker`, but this spec just uses the existing `<ChatHarnessPicker>` flow). User picks a harness, a new view-scoped thread is created, the popup opens to it. That thread becomes the view's warm chat.
-- **Subsequent click in the same view** → popup re-opens bound to the warm chat. No harness picker, no new thread. Same conversation state.
-- **After picking a different thread via the menu** → the picked thread becomes the new warm chat (replaces the previous warm chat).
+**Stream 2 — MRU-default open behavior + menu + exit.**
+The FAB button behavior is dead simple — no warm-state tracking:
+- **Click FAB** → open the popup. Read `threads.view` from the store (already MRU-sorted from the server's `thread:list`).
+  - If `threads.view.length > 0` → open the popup bound to `threads.view[0]` (the most recently used view thread). Send `thread:open-assistant { scope: 'view', threadId: threads.view[0].threadId }` to activate it on the server.
+  - If `threads.view.length === 0` → open the popup with ChatArea's "no active thread" state, which shows the harness picker inline.
+- **Upper-LEFT: menu button** → opens `<ThreadPickerModal>` showing all view-scoped threads for the current view, MRU sorted. The "+ New Chat" button at the top creates a new thread via the harness picker. Picking an existing thread sends `thread:open-assistant`, which makes it MRU top. Modal closes.
+- **Upper-RIGHT: exit button (X)** → popup closes. Per-view popup state (open/position/size) persists via `viewStates`.
 
-**Stream 3 — Menu + Exit buttons on the popup header.**
-- **Upper-LEFT: menu button** (small icon, e.g. `menu` material symbol). Click → opens `<ThreadPickerModal>` showing all view-scoped threads for the current view, most recent first.
-- **Upper-RIGHT: exit button** (the existing X close). Click → popup closes. Warm state preserved. Click FAB again to re-open.
+**Stream 3 — Popup state persistence via `viewStates`.**
+Extend the existing `viewStates` slice from 26c-2 with a `popup` sub-object. No new store slices, no new wire messages, no new server modules — just a richer shape in the same per-view JSON file.
 
-**Stream 4 — Thread picker modal.**
-- **"+ New Chat" button at the top** → runs the harness picker flow, creates a new thread, activates it as the warm chat, closes the modal.
-- **Scrollable list of threads** below, sorted by `updated_at` descending (most recent first). The current warm chat is at the top of the list (because it was most recently active).
-- **Click a thread** → switches the popup to that thread, closes the modal. Thread becomes the new warm chat.
-- **Click outside or press Escape** → closes the modal without changing anything.
+The popup is draggable AND resizable (the user wants to stretch it). Position AND size persist per view.
 
 ---
 
 **After this phase:**
 - Every chat-enabled view has a floating popup accessible via a FAB in the bottom-right corner.
-- Per-view warm state: each view remembers its currently-active popup chat independently. Switching views does not affect other views' warm state.
-- First click in a fresh view opens the harness picker. Subsequent clicks surface the warm chat directly.
-- Menu button opens a thread picker modal for the current view's threads; picking one replaces the warm chat.
-- Exit button (X) hides the popup but preserves all state in RAM.
-- Browser refresh wipes all warm state (current reality — future workspace switcher + flushing system will formalize RAM lifecycle).
-- Draggable popup with position remembered per view.
+- Click FAB → popup opens with the most recent view thread (or harness picker if none exist).
+- No warm-state tracking. Just read the thread list. The most recent thread is always the default.
+- Menu button (upper-left) opens a thread picker modal for the current view.
+- Exit button (upper-right, X) closes the popup. State persists.
+- Popup is draggable AND resizable. Position + size remembered per view via the existing `viewStates` persistence layer.
+- Whether the popup was open/closed also persists per view — returning to a view where the popup was open finds it open again.
 - `WikiExplorer.tsx` no longer mounts FloatingChat inline — replaced by the universal mount in `App.tsx`.
+- Browser refresh resets popup open/closed state (per `viewStates` persistence, which reads from the per-user JSON file — so position/size survive refresh but open state does too if persisted).
 
 **You are not touching:**
-- Any server code. 26b's view-scope routing is unchanged. 26c-2's view-state persistence is unrelated (it's for left-column widths/collapse, not popup state). No new wire messages.
-- Project chat (left column), its Sidebar, its ResizeHandles, its collapse state. All of that is untouched.
-- SQLite schema. No new tables or columns.
+- Any server code. No new wire messages. The existing `state:get/set` from 26c-2 handles popup state persistence. The existing `thread:open-assistant { scope: 'view' }` from 26b handles thread activation.
+- Project chat (left column), its Sidebar, its ResizeHandles, its collapse state.
+- SQLite schema.
 - The frontmatter catalog, the agents area, the runner, the CSS architecture migration.
-- Traffic lights (red/yellow/green) — dropped per the simplification conversation.
-- Dock / minimized chats — dropped per the simplification.
-- Right-click on FAB easter egg — dropped per the simplification.
-- Harness wizard per side (separate from harness picker — deferred to a future spec or the two-step-wizard spec).
-- FIFO flushing rules — explicitly deferred. For now, warm state lives until browser refresh.
-- Workspace switching — not implemented yet; when it is, the future flushing work will reset view-chat warm state on workspace switch.
+- Traffic lights / dock / right-click easter egg — all dropped.
+- FIFO flushing rules — explicitly deferred.
+- Workspace switching — not implemented yet.
 
 ---
 
-## Design decisions locked in (from the iterative conversation)
+## Design decisions locked in
 
-**D1 — Warm state is per-view.**
-Each chat-enabled panel has its own `viewChatState` slot in the store: `{ activeThreadId, position }`. Switching panels does not touch other panels' slots. First click in a fresh panel → harness picker. Subsequent click in same panel → restore warm chat.
+**D1 — No warm-state tracking.**
+Don't track `activeThreadId` per view. Don't maintain a separate store slice for "which thread was last in the popup." Just read `threads.view[0]` on every FAB click. The server returns threads in MRU order. Picking a thread via the menu sends `thread:open-assistant`, which touches `updated_at`, making it the new MRU top. The system is self-correcting.
 
-**D2 — FAB is global UI, state is per-view.**
-The FAB button is mounted once at the app shell level. It reads the CURRENT panel's `viewChatState` to decide what happens on click. There is only ever ONE floating popup visible at a time (belongs to the current panel). Switching panels hides the popup; returning to a panel does NOT auto-reopen — user must click the FAB again. When they click, it restores the warm chat.
+**D2 — Popup state lives inside `viewStates`.**
+Extend the existing `viewStates[panel]` shape (from 26c-2) with a `popup` sub-object:
 
-**D3 — The `floatingChatOpen` flag is global AND ephemeral.**
-One boolean in the store: `floatingChatOpen`. Reflects whether the popup is currently visible. Switching panels sets it to false. Closing via X sets it to false. Clicking the FAB sets it to true. Refresh resets to false.
+```json
+{
+  "collapsed": { "leftSidebar": false, "leftChat": false },
+  "widths": { "leftSidebar": 220, "leftChat": 320 },
+  "popup": {
+    "open": false,
+    "x": 800,
+    "y": 300,
+    "width": 420,
+    "height": 520
+  }
+}
+```
 
-**D4 — Warm state IS just "which thread was last active in this view."**
-Nothing more. No "is it open" flag per view. No "position per thread." Just `activeThreadId` and `position` per view. The "open/closed" is a global property of the current view.
+Same file (`ai/views/<view>/state/<username>.json`), same `state:get/set` wire messages, same server module. Just a richer object. The server's `writeViewStatePatch` already merges partial patches, so sending `{ popup: { x: 500 } }` correctly deep-merges.
 
-**D5 — Thread picker is a modal, scoped to the current view.**
-The modal lists view-scoped threads for the current panel only (not project threads, not other views' threads). Sorted by `updated_at` DESC. Has a "+ New Chat" button at the top. Picking a thread activates it as the warm chat and opens the popup to it.
+**D3 — Popup is resizable as well as draggable.**
+Four edges + four corners as resize affordances (or simpler: a resize handle at the bottom-right corner). Min size ~300×300. Max size ~800×700 (or whatever feels right). Size persists alongside position.
 
-**D6 — No server-side changes.**
-Everything is client state plus existing wire messages (`thread:open-assistant`, `thread:list`). The server already supports view-scoped thread creation/listing via 26b's `scope` field. All 26d needs is client-side wiring.
+**D4 — `popup.open` persists per view.**
+When the user closes the popup in code-viewer and switches to issues-viewer, then comes back to code-viewer, the popup is still closed (they have to click FAB). But if they left the popup OPEN and switch away, returning to code-viewer finds it open again. This is because `popup.open` is stored in `viewStates[panel]` and persisted via the JSON file.
 
-**D7 — Position is draggable and remembered per view.**
-Each panel's `viewChatState.position` stores `{ x, y }`. Drag the popup header to update. `null` means "use the default position" (bottom-right). Persists in RAM only; refresh resets.
+On view switch: the `floatingChatOpen` runtime flag is still global (reset on switch per 26c's `setCurrentPanel`). But when the new view loads its `viewStates`, the popup's `open` field from the file is read and the runtime flag is synced to it.
 
-**D8 — Browser refresh wipes all warm state.**
-Not a bug — it's the interim behavior until the flushing system is built. Don't persist warm state to disk or localStorage.
+**D5 — FAB visible only on chat-enabled views.**
+If a view has `hasChat === false` (from its content.json), the FAB is not rendered. Check `config.hasChat` from `panelStore.getPanelConfig(currentPanel)`.
+
+**D6 — Thread picker modal is view-scoped.**
+Shows only `threads.view` (not project threads). Sorted by the order the server returned them (MRU). "+ New Chat" at the top. Click a thread → `thread:open-assistant { scope: 'view', threadId }` → close modal → popup switches. Escape or backdrop click to dismiss.
 
 ---
 
@@ -93,34 +100,12 @@ Not a bug — it's the interim behavior until the flushing system is built. Don'
 Read these in order:
 
 1. **`ai/views/wiki-viewer/content/enforcement/code-standards/PAGE.md`** — house rules.
-2. **`ai/views/capture-viewer/content/todo/specs/26a-dual-chat-data-model.md`** — scope data model.
-3. **`ai/views/capture-viewer/content/todo/specs/26b-dual-chat-routing-layer.md`** — scope routing and wire protocol.
-4. **`ai/views/capture-viewer/content/todo/specs/26c-dual-chat-client-layout.md`** — client state split (scope-keyed threads, `currentThreadIds.view`, etc.) that this spec consumes.
-5. **`ai/views/capture-viewer/content/todo/specs/26c-2-dual-chat-slider-persistence.md`** — left-column collapse/resize work. 26d does NOT touch any of it.
-6. **`open-robin-client/src/components/FloatingChat.tsx`** (all 115 lines) — the file you generalize.
-7. **`open-robin-client/src/components/wiki/WikiExplorer.tsx`** (find and read the FloatingChat mount around L78) — you remove that inline mount.
-8. **`open-robin-client/src/components/App.tsx`** (focus on the panel render loop and where PanelContent is mounted) — you add the FAB + FloatingChat at the top level, outside PanelContent.
-9. **`open-robin-client/src/state/panelStore.ts`** — read the existing `threads: { project, view }` and `currentThreadIds: { project, view }` from 26c. You add a new slice alongside.
-10. **`open-robin-client/src/components/ChatHarnessPicker/`** — understand the existing harness picker flow. It gets reused here.
-
-### Line-number drift verification
-
-```bash
-cd /Users/rccurtrightjr./projects/open-robin/open-robin-client
-wc -l \
-  src/components/FloatingChat.tsx \
-  src/components/App.tsx \
-  src/components/wiki/WikiExplorer.tsx \
-  src/state/panelStore.ts
-```
-
-### Pre-flight — confirm WikiExplorer's current FloatingChat mount
-
-```bash
-grep -n "FloatingChat" /Users/rccurtrightjr./projects/open-robin/open-robin-client/src/components/wiki/WikiExplorer.tsx
-```
-
-Expected: one hit around L17 (import) and one around L78 (the `<FloatingChat panel="rv-wiki-viewer" />` mount). Both go.
+2. **`ai/views/capture-viewer/content/todo/specs/26c-2-dual-chat-slider-persistence.md`** — understand the existing `viewStates` persistence layer you're extending.
+3. **`open-robin-client/src/components/FloatingChat.tsx`** (all ~115 lines) — the file you rework.
+4. **`open-robin-client/src/components/wiki/WikiExplorer.tsx`** — find the FloatingChat mount you're removing.
+5. **`open-robin-client/src/components/App.tsx`** — mount FloatingChat at the top level.
+6. **`open-robin-client/src/state/panelStore.ts`** — read the existing `viewStates` slice from 26c-2 and the `threads: { project, view }` shape from 26c.
+7. **`open-robin-client/src/lib/ws/thread-handlers.ts`** — understand how `thread:list` populates `threads.view`.
 
 ### Pre-prod wipe
 
@@ -129,192 +114,177 @@ pkill -9 -f "node.*server.js" 2>/dev/null; sleep 1
 sqlite3 /Users/rccurtrightjr./projects/open-robin/ai/system/robin.db "PRAGMA foreign_keys=ON; DELETE FROM threads;"
 find /Users/rccurtrightjr./projects/open-robin/ai/views/chat/threads -type f -name '*.md' -delete 2>/dev/null
 find /Users/rccurtrightjr./projects/open-robin/ai/views/*/chat/threads -type f -name '*.md' -delete 2>/dev/null
+rm -rf /Users/rccurtrightjr./projects/open-robin/ai/views/*/state/ 2>/dev/null
 ```
 
 ---
 
 ## Changes — file by file
 
-### 1. `open-robin-client/src/types/index.ts` — new types
+### 1. `open-robin-client/src/types/index.ts`
 
-Add near the existing `Scope` / `ViewUIState` types:
+Extend `ViewUIState` to include the popup sub-object:
 
 ```ts
-// SPEC-26d: per-view floating popup state (warm state + drag position)
-export interface ViewChatState {
-  activeThreadId: string | null;  // the warm view-scoped thread
-  position: { x: number; y: number } | null;  // drag-remembered; null = default
+export interface PopupState {
+  open: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface ViewUIState {
+  collapsed: {
+    leftSidebar: boolean;
+    leftChat: boolean;
+  };
+  widths: {
+    leftSidebar: number;
+    leftChat: number;
+  };
+  popup?: PopupState;  // SPEC-26d — optional so old state files still parse
 }
 ```
 
+The `popup` field is optional to handle backward compat with pre-26d state files. Missing popup → use defaults (closed, default position/size).
+
 ---
 
-### 2. `open-robin-client/src/state/panelStore.ts` — new slice
+### 2. `open-robin-client/src/state/panelStore.ts`
 
-**2a. Add to the AppState interface.**
+**2a. Add popup defaults.**
+
+```ts
+const DEFAULT_POPUP: PopupState = {
+  open: false,
+  x: -1,  // -1 means "compute default on first render" (bottom-right with padding)
+  y: -1,
+  width: 420,
+  height: 520,
+};
+```
+
+**2b. Add popup actions to the AppState interface.**
 
 ```ts
 interface AppState {
   // ... existing ...
 
   // SPEC-26d: floating popup for view chats
-  floatingChatOpen: boolean;                    // is the popup visible right now
-  viewChatStates: Record<string, ViewChatState>;  // per-panel warm state
-
-  openFloatingChat: () => void;                              // click FAB — smart behavior based on current view's warm state
-  closeFloatingChat: () => void;                             // click X
-  setActiveViewChat: (panel: string, threadId: string) => void;  // menu picker or new thread flow
-  setFloatingChatPosition: (panel: string, x: number, y: number) => void;  // drag update
+  openFloatingChat: () => void;
+  closeFloatingChat: () => void;
+  setPopupPosition: (panel: string, x: number, y: number) => void;
+  setPopupSize: (panel: string, width: number, height: number) => void;
+  commitPopupState: (panel: string) => void;  // persist after drag/resize ends
 }
 ```
 
-**2b. Initial state.**
-
-Add to the initial state block:
-```ts
-floatingChatOpen: false,
-viewChatStates: {},
-```
-
-**2c. Action implementations.**
+**2c. Implementations.**
 
 ```ts
 openFloatingChat: () => {
   const state = get();
   const panel = state.currentPanel;
-  const warm = state.viewChatStates[panel];
-
-  if (!warm || !warm.activeThreadId) {
-    // First click in this view: no warm chat. Set floatingChatOpen to true;
-    // the rendered FloatingChat component detects "no active thread" and
-    // shows the harness picker inline (reusing ChatArea's existing
-    // harness-picker-when-no-thread behavior).
-    set({ floatingChatOpen: true });
-    return;
-  }
-
-  // Warm chat exists. Send thread:open-assistant to re-activate it on
-  // the server, then show the popup.
+  const threads = state.threads.view;
   const ws = state.ws;
-  if (ws && ws.readyState === WebSocket.OPEN) {
+
+  // If there are view threads, activate the MRU one on the server
+  if (threads.length > 0 && ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({
       type: 'thread:open-assistant',
       scope: 'view',
-      threadId: warm.activeThreadId,
+      threadId: threads[0].threadId,
     }));
   }
-  set({ floatingChatOpen: true });
+  // If no threads, ChatArea will show the harness picker automatically
+  // (its existing "no active view thread" behavior)
+
+  // Update popup.open in viewStates
+  set((s) => {
+    const vs = s.viewStates[panel] || { ...DEFAULT_VIEW_UI_STATE };
+    const popup = vs.popup || { ...DEFAULT_POPUP };
+    return {
+      viewStates: {
+        ...s.viewStates,
+        [panel]: { ...vs, popup: { ...popup, open: true } },
+      },
+    };
+  });
 },
 
-closeFloatingChat: () => set({ floatingChatOpen: false }),
+closeFloatingChat: () => {
+  const panel = get().currentPanel;
+  set((s) => {
+    const vs = s.viewStates[panel];
+    if (!vs?.popup) return s;
+    return {
+      viewStates: {
+        ...s.viewStates,
+        [panel]: { ...vs, popup: { ...vs.popup, open: false } },
+      },
+    };
+  });
+  // Persist the close state
+  get().commitPopupState(panel);
+},
 
-setActiveViewChat: (panel, threadId) => set((s) => {
-  const existing = s.viewChatStates[panel] || { activeThreadId: null, position: null };
+setPopupPosition: (panel, x, y) => set((s) => {
+  const vs = s.viewStates[panel] || { ...DEFAULT_VIEW_UI_STATE };
+  const popup = vs.popup || { ...DEFAULT_POPUP };
   return {
-    viewChatStates: {
-      ...s.viewChatStates,
-      [panel]: { ...existing, activeThreadId: threadId },
+    viewStates: {
+      ...s.viewStates,
+      [panel]: { ...vs, popup: { ...popup, x, y } },
     },
   };
 }),
 
-setFloatingChatPosition: (panel, x, y) => set((s) => {
-  const existing = s.viewChatStates[panel] || { activeThreadId: null, position: null };
+setPopupSize: (panel, width, height) => set((s) => {
+  const vs = s.viewStates[panel] || { ...DEFAULT_VIEW_UI_STATE };
+  const popup = vs.popup || { ...DEFAULT_POPUP };
   return {
-    viewChatStates: {
-      ...s.viewChatStates,
-      [panel]: { ...existing, position: { x, y } },
+    viewStates: {
+      ...s.viewStates,
+      [panel]: { ...vs, popup: { ...popup, width, height } },
     },
   };
 }),
+
+commitPopupState: (panel) => {
+  const state = get();
+  const vs = state.viewStates[panel];
+  if (!vs?.popup) return;
+  const ws = state.ws;
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({
+    type: 'state:set',
+    view: panel,
+    state: { popup: vs.popup },
+  }));
+},
 ```
 
-**2d. Update `setCurrentPanel` to close the popup on view switch.**
+**2d. On `setCurrentPanel` — sync popup open state from loaded viewStates.**
 
-In the existing `setCurrentPanel` action, after the `set_panel` wire message send, add:
+When the user returns to a view and its `viewStates` are loaded, check `vs.popup.open`. If true, the popup should re-open. Add to the `state:result` handler flow:
+
+In `ws-client.ts` (or wherever `state:result` is handled), after `store.setViewState(msg.view, msg.state)`, check:
 
 ```ts
-// SPEC-26d: leaving a view hides the popup. Warm state for the new view
-// (if any) will be restored on the next FAB click.
-set({ floatingChatOpen: false });
+// If the loaded view state says popup was open, and this IS the current panel, re-open
+if (msg.view === store.currentPanel && msg.state.popup?.open) {
+  store.openFloatingChat();
+}
 ```
 
-**2e. Wire up `thread:created` for view-scoped threads to update warm state.**
-
-This is handled in `thread-handlers.ts` in step 3 below — when a `thread:created` message arrives with `scope: 'view'`, the handler calls `setActiveViewChat(currentPanel, threadId)` so the new thread becomes the warm chat immediately.
+This handles the "return to a view where the popup was left open" case.
 
 ---
 
-### 3. `open-robin-client/src/lib/ws/thread-handlers.ts` — wire view-thread creation to warm state
+### 3. `open-robin-client/src/components/FloatingChat.tsx` — rework
 
-**3a. In the `thread:created` handler, add warm-state update when scope is view.**
-
-Current (post-26c):
-```ts
-case 'thread:created':
-  if (msg.thread && msg.threadId) {
-    store.addThread(scope, { threadId: msg.threadId, entry: msg.thread });
-    store.setCurrentThreadId(scope, msg.threadId);
-    store.setCurrentScope(scope);
-    store.clearChat(scope);
-  }
-  return true;
-```
-
-New:
-```ts
-case 'thread:created':
-  if (msg.thread && msg.threadId) {
-    store.addThread(scope, { threadId: msg.threadId, entry: msg.thread });
-    store.setCurrentThreadId(scope, msg.threadId);
-    store.setCurrentScope(scope);
-    store.clearChat(scope);
-    // SPEC-26d: a new view thread becomes the warm chat for the current panel
-    if (scope === 'view') {
-      store.setActiveViewChat(store.currentPanel, msg.threadId);
-    }
-  }
-  return true;
-```
-
-**3b. Same for `thread:opened` when the scope is view.**
-
-When the user picks a thread from the menu picker, the flow is:
-1. Client sends `thread:open-assistant { scope: 'view', threadId }`
-2. Server responds with `thread:opened { scope: 'view', threadId, ... }`
-3. Handler runs — should ALSO update warm state so the popup knows which thread to render
-
-Update the `thread:opened` case:
-```ts
-case 'thread:opened':
-  if (msg.threadId && msg.thread) {
-    store.setCurrentThreadId(scope, msg.threadId);
-    store.setCurrentScope(scope);
-    store.clearChat(scope);
-
-    if (msg.exchanges && msg.exchanges.length > 0) {
-      convertExchangesToMessages(scope, msg.exchanges);
-    } else if (msg.history && msg.history.length > 0) {
-      convertHistoryToMessages(scope, msg.history);
-    }
-
-    if (msg.contextUsage !== undefined && msg.contextUsage !== null) {
-      store.setContextUsage(msg.contextUsage);
-    }
-
-    // SPEC-26d: opened view thread becomes the warm chat
-    if (scope === 'view') {
-      store.setActiveViewChat(store.currentPanel, msg.threadId);
-    }
-  }
-  return true;
-```
-
----
-
-### 4. `open-robin-client/src/components/FloatingChat.tsx` — rework
-
-Rewrite the component to match the new model. The existing file has ~115 lines; the new version is roughly the same size.
+Rewrite to use the store-based popup state instead of local component state. Keep the draggable logic. Add resize logic. Add the menu button. Remove the `panel` prop (reads `currentPanel` from store). Make the FAB conditional on `hasChat`.
 
 ```tsx
 /**
@@ -322,16 +292,11 @@ Rewrite the component to match the new model. The existing file has ~115 lines; 
  * @role Universal floating popup for view-scoped chats.
  *
  * SPEC-26d: mounted once at the app shell level (in App.tsx).
- * Renders the FAB button always. When the popup is visible
- * (store.floatingChatOpen === true), renders the floating panel
- * bound to the current panel's warm view chat.
- *
- * Behavior:
- *  - Click FAB → store.openFloatingChat() handles the logic:
- *      first click in a view = harness picker, subsequent = restore warm chat
- *  - Click X → store.closeFloatingChat() (warm state preserved)
- *  - Click menu → opens ThreadPickerModal for the current view
- *  - Drag header → updates position via store.setFloatingChatPosition
+ * FAB button always visible on chat-enabled views. Popup opens
+ * to the MRU view thread (or harness picker if none exist).
+ * Menu button → ThreadPickerModal. X → close with state preserved.
+ * Draggable by header. Resizable from bottom-right corner.
+ * Position + size persisted per view via viewStates.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -339,65 +304,98 @@ import { usePanelStore } from '../state/panelStore';
 import { ChatArea } from './ChatArea';
 import { ThreadPickerModal } from './ThreadPickerModal';
 
-const DEFAULT_PANEL_WIDTH = 420;
-const DEFAULT_PANEL_HEIGHT = 520;
+const MIN_WIDTH = 300;
+const MIN_HEIGHT = 300;
+const MAX_WIDTH = 800;
+const MAX_HEIGHT = 700;
 const DEFAULT_PADDING = 80;
 
 export function FloatingChat() {
   const currentPanel = usePanelStore((s) => s.currentPanel);
-  const isOpen = usePanelStore((s) => s.floatingChatOpen);
-  const viewChatState = usePanelStore((s) => s.viewChatStates[currentPanel]);
+  const hasChat = usePanelStore((s) => {
+    const config = s.panelConfigs.find(c => c.id === currentPanel);
+    return !!config?.hasChat;
+  });
+  const popupState = usePanelStore((s) => s.viewStates[currentPanel]?.popup);
   const openFloatingChat = usePanelStore((s) => s.openFloatingChat);
   const closeFloatingChat = usePanelStore((s) => s.closeFloatingChat);
-  const setFloatingChatPosition = usePanelStore((s) => s.setFloatingChatPosition);
+  const setPopupPosition = usePanelStore((s) => s.setPopupPosition);
+  const setPopupSize = usePanelStore((s) => s.setPopupSize);
+  const commitPopupState = usePanelStore((s) => s.commitPopupState);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [defaultPos, setDefaultPos] = useState({ x: 0, y: 0 });
-  const panelRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const resizeRef = useRef<{ startX: number; startY: number; origW: number; origH: number } | null>(null);
 
-  // Compute the default position (bottom-right) on first render
-  useEffect(() => {
-    setDefaultPos({
-      x: window.innerWidth - DEFAULT_PANEL_WIDTH - DEFAULT_PADDING,
-      y: window.innerHeight - DEFAULT_PANEL_HEIGHT - DEFAULT_PADDING,
-    });
-  }, []);
+  // Don't render FAB on views without chat
+  if (!hasChat) return null;
 
-  // Actual position: stored position or default
-  const position = viewChatState?.position ?? defaultPos;
+  const isOpen = popupState?.open ?? false;
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Only drag from the header bar
+  // Resolve position: -1 means "compute default"
+  let posX = popupState?.x ?? -1;
+  let posY = popupState?.y ?? -1;
+  if (posX < 0 || posY < 0) {
+    posX = window.innerWidth - (popupState?.width ?? 420) - DEFAULT_PADDING;
+    posY = window.innerHeight - (popupState?.height ?? 520) - DEFAULT_PADDING;
+  }
+  const popupWidth = popupState?.width ?? 420;
+  const popupHeight = popupState?.height ?? 520;
+
+  // --- Drag handlers ---
+  const handleDragMouseDown = useCallback((e: React.MouseEvent) => {
     if (!(e.target as HTMLElement).closest('.floating-chat-header')) return;
+    if ((e.target as HTMLElement).closest('button')) return; // don't drag when clicking buttons
     e.preventDefault();
-    dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      origX: position.x,
-      origY: position.y,
-    };
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: posX, origY: posY };
 
-    const handleMouseMove = (ev: MouseEvent) => {
+    const handleMove = (ev: MouseEvent) => {
       if (!dragRef.current) return;
-      const dx = ev.clientX - dragRef.current.startX;
-      const dy = ev.clientY - dragRef.current.startY;
-      setFloatingChatPosition(
+      setPopupPosition(
         currentPanel,
-        dragRef.current.origX + dx,
-        dragRef.current.origY + dy,
+        dragRef.current.origX + (ev.clientX - dragRef.current.startX),
+        dragRef.current.origY + (ev.clientY - dragRef.current.startY),
       );
     };
 
-    const handleMouseUp = () => {
+    const handleUp = () => {
       dragRef.current = null;
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      commitPopupState(currentPanel);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [position, currentPanel, setFloatingChatPosition]);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+  }, [posX, posY, currentPanel, setPopupPosition, commitPopupState]);
+
+  // --- Resize handlers (bottom-right corner) ---
+  const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    resizeRef.current = { startX: e.clientX, startY: e.clientY, origW: popupWidth, origH: popupHeight };
+    document.body.style.userSelect = 'none';
+
+    const handleMove = (ev: MouseEvent) => {
+      if (!resizeRef.current) return;
+      const newW = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH,
+        resizeRef.current.origW + (ev.clientX - resizeRef.current.startX)));
+      const newH = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT,
+        resizeRef.current.origH + (ev.clientY - resizeRef.current.startY)));
+      setPopupSize(currentPanel, newW, newH);
+    };
+
+    const handleUp = () => {
+      resizeRef.current = null;
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      commitPopupState(currentPanel);
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+  }, [popupWidth, popupHeight, currentPanel, setPopupSize, commitPopupState]);
 
   return (
     <>
@@ -405,13 +403,14 @@ export function FloatingChat() {
       {isOpen && (
         <>
           <div
-            ref={panelRef}
             className="floating-chat-panel"
             style={{
-              left: `${position.x}px`,
-              top: `${position.y}px`,
+              left: `${posX}px`,
+              top: `${posY}px`,
+              width: `${popupWidth}px`,
+              height: `${popupHeight}px`,
             }}
-            onMouseDown={handleMouseDown}
+            onMouseDown={handleDragMouseDown}
           >
             <div className="floating-chat-header">
               {/* Menu button (upper-left) */}
@@ -433,14 +432,21 @@ export function FloatingChat() {
               <button
                 className="floating-chat-close"
                 onClick={closeFloatingChat}
-                title="Close (state preserved)"
+                title="Close"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
+
             <div className="floating-chat-body">
               <ChatArea panel={currentPanel} scope="view" />
             </div>
+
+            {/* Resize handle (bottom-right corner) */}
+            <div
+              className="floating-chat-resize-handle"
+              onMouseDown={handleResizeMouseDown}
+            />
           </div>
 
           {/* Thread picker modal */}
@@ -453,7 +459,7 @@ export function FloatingChat() {
         </>
       )}
 
-      {/* FAB button — always visible */}
+      {/* FAB button — visible when popup is closed */}
       {!isOpen && (
         <button
           className="floating-chat-fab"
@@ -473,30 +479,32 @@ export function FloatingChat() {
 }
 ```
 
-Notes:
-- No `panel` prop — reads `currentPanel` from store directly.
-- FAB is visible when `!isOpen`; panel is visible when `isOpen`.
-- Drag updates go through the store, so they survive remounts.
-- Menu button stops event propagation so the header drag doesn't fight with the button click.
-- The existing `<ChatArea panel={currentPanel} scope="view" />` is reused — its internal logic already handles "no active thread → harness picker" so `openFloatingChat`'s first-click behavior doesn't need special component rendering.
+Key differences from the old version:
+- No `panel` prop — reads `currentPanel` from store
+- No local position/open state — reads from `viewStates[panel].popup`
+- Drag updates go through store actions (persist on mouseup)
+- Resize handle added (bottom-right corner)
+- Menu button added (upper-left)
+- FAB conditionally hidden on views without chat
+- No warm-state tracking — `openFloatingChat` reads `threads.view[0]`
 
 ---
 
-### 5. `open-robin-client/src/components/ThreadPickerModal.tsx` — new component
+### 4. `open-robin-client/src/components/ThreadPickerModal.tsx` — new component
 
 ```tsx
 /**
  * @module ThreadPickerModal
  * @role Modal for switching between view-scoped threads.
  *
- * SPEC-26d: opened by clicking the menu button in FloatingChat's header.
- * Shows all view-scoped threads for the current panel, sorted most
- * recent first. Has a "+ New Chat" button at the top that runs the
- * harness picker flow and creates a new thread.
+ * SPEC-26d: opened by the menu button in FloatingChat's header.
+ * Shows all view-scoped threads for the current panel, MRU sorted.
+ * "+ New Chat" at the top creates a new thread via the harness picker.
  */
 
 import { useEffect, useCallback } from 'react';
 import { usePanelStore } from '../state/panelStore';
+import type { Thread } from '../types';
 
 interface ThreadPickerModalProps {
   panel: string;
@@ -506,7 +514,6 @@ interface ThreadPickerModalProps {
 export function ThreadPickerModal({ panel, onClose }: ThreadPickerModalProps) {
   const threads = usePanelStore((s) => s.threads.view);
   const currentThreadId = usePanelStore((s) => s.currentThreadIds.view);
-  const setActiveViewChat = usePanelStore((s) => s.setActiveViewChat);
   const ws = usePanelStore((s) => s.ws);
 
   // Close on Escape
@@ -519,19 +526,11 @@ export function ThreadPickerModal({ panel, onClose }: ThreadPickerModalProps) {
   }, [onClose]);
 
   const handleNewChat = useCallback(() => {
-    // Clear the current view thread — this triggers ChatArea's harness
-    // picker when the popup re-renders. Close the modal so the picker
-    // is visible.
-    setActiveViewChat(panel, ''); // empty = no warm chat
-    // Actually we want to CLEAR, not set empty. Use the store action:
+    // Clear the current view thread so ChatArea shows the harness picker.
     const store = usePanelStore.getState();
     store.setCurrentThreadId('view', null);
-    // The ChatArea inside the popup will now show its harness picker,
-    // and picking a harness will send thread:open-assistant which creates
-    // a new thread; the thread-handlers.ts 3a logic then auto-sets the
-    // new thread as the warm chat.
     onClose();
-  }, [panel, setActiveViewChat, onClose]);
+  }, [onClose]);
 
   const handlePick = useCallback((threadId: string) => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -540,20 +539,10 @@ export function ThreadPickerModal({ panel, onClose }: ThreadPickerModalProps) {
       scope: 'view',
       threadId,
     }));
-    // The thread:opened response handler will call setActiveViewChat
-    // automatically (per step 3b).
     onClose();
   }, [ws, onClose]);
 
-  // Sort threads by updated_at DESC (server already returns in MRU order
-  // via thread:list, but make sure we sort here in case the store order
-  // has drifted)
-  const sortedThreads = [...threads].sort((a, b) => {
-    // If server provides updated_at on entry, sort by that; else fall
-    // back to the order we got them in (which is MRU from server-side)
-    return 0;
-  });
-
+  // threads.view is already MRU-sorted from the server
   return (
     <div className="rv-modal-backdrop" onClick={onClose}>
       <div
@@ -575,10 +564,10 @@ export function ThreadPickerModal({ panel, onClose }: ThreadPickerModalProps) {
         </button>
 
         <div className="rv-thread-picker-list">
-          {sortedThreads.length === 0 ? (
+          {threads.length === 0 ? (
             <div className="rv-thread-picker-empty">No previous chats for this view.</div>
           ) : (
-            sortedThreads.map((thread) => (
+            threads.map((thread: Thread) => (
               <button
                 key={thread.threadId}
                 className={`rv-thread-picker-item ${thread.threadId === currentThreadId ? 'rv-thread-picker-item--active' : ''}`}
@@ -600,57 +589,54 @@ export function ThreadPickerModal({ panel, onClose }: ThreadPickerModalProps) {
 }
 ```
 
-**Note on sorting:** the server's `thread:list` response already returns threads in MRU order (per ThreadIndex's `.orderBy('updated_at', 'desc')`), so the list is already sorted when it arrives. The `.sort((a, b) => 0)` is a placeholder no-op — you can delete it. The key insight is that the current warm thread is most-recently-touched (via `thread:open-assistant` + the server's `touch` call), so it'll be at position 0 naturally.
-
 ---
 
-### 6. `open-robin-client/src/components/App.tsx` — mount FloatingChat at the app shell
+### 5. `open-robin-client/src/components/App.tsx` — mount FloatingChat at the app shell
 
-**6a. Import FloatingChat.**
+**5a. Import.**
 
-Add to the imports at the top of App.tsx:
 ```tsx
 import { FloatingChat } from './FloatingChat';
 ```
 
-**6b. Mount it at the end of the main app render tree.**
+**5b. Mount at the end of the main render tree.**
 
-Find the top-level return in the `App` component. After the `</div>` that closes the panel container or the app root, add:
+After the panel container (or alongside Toast / ModalOverlay), add:
+
 ```tsx
 <FloatingChat />
 ```
 
-It should sit OUTSIDE the panel container so it's not memoized/remounted per panel — it reads `currentPanel` directly from the store and re-renders itself.
+The component reads `currentPanel` internally. It handles `hasChat` visibility gating.
 
 ---
 
-### 7. `open-robin-client/src/components/wiki/WikiExplorer.tsx` — remove inline FloatingChat
+### 6. `open-robin-client/src/components/wiki/WikiExplorer.tsx` — remove inline mount
 
-**7a. Remove the import.**
+**6a. Remove import.**
 
 ```tsx
 import { FloatingChat } from '../FloatingChat';
 ```
-↑ DELETE this line.
+DELETE.
 
-**7b. Remove the mount.**
+**6b. Remove JSX mount.**
 
 ```tsx
 <FloatingChat panel="rv-wiki-viewer" />
 ```
-↑ DELETE this line (or the whole JSX block that contains just this).
-
-**Caveat on the panel prop:** the old mount passed `"rv-wiki-viewer"` which looks suspicious (might be a prefix typo — the actual panel id is probably `wiki-viewer`). Either way, the new universal mount reads `currentPanel` from the store, so the hardcoded prop goes away.
+DELETE.
 
 ---
 
-### 8. `open-robin-client/src/components/App.css` — FloatingChat + modal styles
+### 7. `open-robin-client/src/components/App.css` — popup + modal styles
 
-The existing FloatingChat CSS is already in App.css (or a dedicated file). Augment it for the new menu button and modal.
+**7a. FloatingChat enhancements.**
 
-**8a. Add menu button style.**
+Existing floating-chat CSS is already in App.css. Augment:
 
 ```css
+/* SPEC-26d: menu button in the popup header */
 .floating-chat-menu-btn {
   background: transparent;
   border: none;
@@ -659,14 +645,13 @@ The existing FloatingChat CSS is already in App.css (or a dedicated file). Augme
   padding: 4px;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
 .floating-chat-menu-btn:hover {
   color: var(--theme-primary, #888);
 }
 
-/* Menu on left, title in middle (flex-grow), close on right */
+/* Header layout: menu left, title center (flex-grow), close right */
 .floating-chat-header {
   display: flex;
   align-items: center;
@@ -681,9 +666,47 @@ The existing FloatingChat CSS is already in App.css (or a dedicated file). Augme
   font-size: 13px;
   color: var(--text-primary, #ddd);
 }
+
+/* Popup panel — now with explicit width/height from inline style */
+.floating-chat-panel {
+  position: fixed;
+  z-index: var(--z-popup, 300);
+  background: var(--bg-surface, #1a1a1a);
+  border: 1px solid var(--theme-border, #444);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-medium, 0 4px 16px rgba(0, 0, 0, 0.4));
+  overflow: hidden;
+}
+
+.floating-chat-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Resize handle — small triangle/affordance at the bottom-right corner */
+.floating-chat-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  /* Optional: a subtle visual indicator */
+  background: linear-gradient(135deg, transparent 50%, var(--text-dim, #555) 50%);
+  opacity: 0.3;
+  border-radius: 0 0 8px 0;
+}
+
+.floating-chat-resize-handle:hover {
+  opacity: 0.6;
+}
 ```
 
-**8b. Modal backdrop and container.**
+**7b. Modal styles (same as previous draft — ThreadPickerModal).**
 
 ```css
 .rv-modal-backdrop {
@@ -777,24 +800,69 @@ The existing FloatingChat CSS is already in App.css (or a dedicated file). Augme
   border-color: var(--theme-primary, #888);
 }
 
-.rv-thread-picker-name {
-  font-size: 13px;
-}
+.rv-thread-picker-name { font-size: 13px; }
+.rv-thread-picker-meta { font-size: 11px; color: var(--text-dim, #888); }
+.rv-thread-picker-empty { padding: 16px; text-align: center; color: var(--text-dim, #888); font-size: 13px; }
+```
 
-.rv-thread-picker-meta {
-  font-size: 11px;
-  color: var(--text-dim, #888);
-}
+---
 
-.rv-thread-picker-empty {
-  padding: 16px;
-  text-align: center;
-  color: var(--text-dim, #888);
-  font-size: 13px;
+### 8. `open-robin-client/src/lib/ws-client.ts` — sync popup open state on view load
+
+After the existing `state:result` handler sets `store.setViewState(msg.view, msg.state)`, add:
+
+```ts
+// SPEC-26d: if the loaded view state says popup was open AND this is
+// the current panel, sync the popup visibility.
+const currentPanel = usePanelStore.getState().currentPanel;
+if (msg.view === currentPanel && msg.state?.popup?.open) {
+  usePanelStore.getState().openFloatingChat();
 }
 ```
 
-(Use CSS variables where the existing design system has them; fall back to literals otherwise. The executor can refine tokens to match existing conventions.)
+This handles the "return to a view where the popup was left open" and the "browser refresh restores popup if the state file says open" scenarios.
+
+---
+
+### 9. `open-robin-server/lib/view-state/index.js` — minor update for deep merge
+
+The existing `writeViewStatePatch` merges `collapsed` and `widths`. It needs to also merge `popup`:
+
+```js
+async function writeViewStatePatch(projectRoot, viewId, username, patch) {
+  const current = (await readViewState(projectRoot, viewId, username)) || {};
+  const merged = {
+    collapsed: { ...(current.collapsed || {}), ...(patch.collapsed || {}) },
+    widths:    { ...(current.widths    || {}), ...(patch.widths    || {}) },
+    popup:     { ...(current.popup     || {}), ...(patch.popup     || {}) },
+  };
+  await writeViewState(projectRoot, viewId, username, merged);
+  return merged;
+}
+```
+
+One line added to the merge — `popup: { ... }`. Same atomic-write pattern.
+
+Also update `resolveViewState` to include popup defaults:
+
+```js
+async function resolveViewState(projectRoot, viewId, username) {
+  const userState = await readViewState(projectRoot, viewId, username);
+  const defaults = getDefaults(projectRoot, viewId);
+
+  return {
+    collapsed: { /* ... existing ... */ },
+    widths:    { /* ... existing ... */ },
+    popup: {
+      open:   userState?.popup?.open   ?? false,
+      x:      userState?.popup?.x      ?? -1,
+      y:      userState?.popup?.y      ?? -1,
+      width:  userState?.popup?.width  ?? 420,
+      height: userState?.popup?.height ?? 520,
+    },
+  };
+}
+```
 
 ---
 
@@ -808,83 +876,75 @@ npx tsc --noEmit
 npm run build
 ```
 
-Both must pass.
-
-### Live validation — the 12-item checklist
-
-Hard-refresh after `npm run build` + server restart.
+### Live validation — 18-item checklist
 
 **FAB presence:**
-1. On any chat-enabled view (code-viewer, issues-viewer, etc.), the FAB chat_bubble button is visible in the bottom-right corner.
-2. Project chat column (left) is still visible and functional (26c-2 intact).
-3. No right-side chat column. Content area fills from the left chat column to the right edge of the screen.
+1. Chat-enabled view (code-viewer) → FAB visible in bottom-right.
+2. Non-chat view (calendar-viewer) → NO FAB. Just content.
+3. Project chat left column still works independently (26c-2 intact).
 
-**First click in a fresh view:**
-4. Click the FAB on a view with no warm chat. The floating panel opens. Inside, the ChatArea shows the harness picker (its existing "no active thread → pick a harness" behavior).
-5. Pick Kimi. The panel's ChatArea transitions to the live chat state. Send a user message; get a reply. The new thread is created with `scope=view` and the correct view_id.
+**First click (empty view):**
+4. Click FAB with no view threads. Popup opens. ChatArea shows harness picker.
+5. Pick Kimi. Thread created (`scope=view`). Chat area becomes live. Send a message.
 
-**Close + reopen (warm state):**
-6. Click the X (upper-right). The popup disappears. The FAB is visible again.
-7. Click the FAB. The popup re-opens with the SAME conversation state (not a fresh harness picker). Send another message to confirm the wire is still live or auto-reconnects.
+**Close + reopen (MRU default):**
+6. Click X. Popup closes. FAB reappears.
+7. Click FAB. Popup re-opens with the same thread (it's MRU top).
+8. Send another message to confirm the wire is live.
 
-**Menu button:**
-8. Click the menu button (upper-left, material `menu` icon). The ThreadPickerModal opens.
-9. The warm thread is at the top of the list (because it's most-recently-updated).
-10. Below it, a "+ New Chat" button with an add icon.
-11. Click an existing thread. The popup switches to that thread's conversation. The picked thread becomes the new warm chat.
-12. Click the + New Chat button. The current view thread clears, the harness picker appears in the popup. Pick a harness, create another thread. It's now the warm chat.
+**Menu + thread picker:**
+9. Click menu button (upper-left, `menu` icon). Modal opens.
+10. Modal shows the thread from step 5 (at the top — MRU).
+11. Click "+ New Chat". Popup shows harness picker. Pick a harness. New thread created.
+12. Click menu again. Two threads listed. Previous MRU is now second.
+13. Click the older thread. Popup switches to it. Modal closes.
 
-**Per-view warm state:**
-13. Create warm chats in two different views (e.g., code-viewer and issues-viewer). Close both popups via X.
-14. Click FAB in code-viewer. Warm chat restored.
-15. Switch to issues-viewer. FAB is visible. Popup is closed (not automatically reopened). Click FAB. Issues-viewer's warm chat restored.
-16. Switch back to code-viewer. FAB closed state. Click FAB. Code-viewer's warm chat restored.
+**Per-view independence:**
+14. Create a view thread in code-viewer. Close the popup.
+15. Switch to issues-viewer. Click FAB → harness picker (no threads yet for this view).
+16. Create a thread in issues-viewer. Close.
+17. Switch back to code-viewer. Click FAB → code-viewer's thread (not issues-viewer's).
 
-**Drag + position remembered:**
-17. Drag the popup to a new position via the header.
-18. Close the popup. Reopen. Position is preserved (within the same view session).
-19. Switch to a different view. Click FAB. New view's popup is at its own remembered position (or the default if none).
-
-**Refresh wipes:**
-20. Refresh the browser. All warm state gone. FAB is visible, clicking it = first-click-in-view behavior (harness picker) everywhere.
+**Drag + resize + persistence:**
+18. Drag the popup header to a new position. Close. Reopen. Position preserved.
+19. Drag the bottom-right resize handle. Popup grows/shrinks. Close. Reopen. Size preserved.
+20. Refresh the browser. Open code-viewer. State from the JSON file loads — position and size preserved. Open state depends on whether it was open when the JSON was last written.
 
 **Modal dismissal:**
-21. Open the menu modal. Click outside the modal box. Modal closes.
-22. Open the modal. Press Escape. Modal closes.
+21. Open modal. Click outside. Closes.
+22. Open modal. Press Escape. Closes.
 
 ### What breaks if you get it wrong
 
 | Failure | Root cause | Fix |
 |---|---|---|
-| FAB doesn't appear | FloatingChat not mounted at app shell, or `isOpen === true` permanently | Check App.tsx mount location and initial state `floatingChatOpen: false` |
-| Clicking FAB does nothing | `openFloatingChat` not wired to the button | Check onClick |
-| First click opens empty popup (no harness picker) | ChatArea's no-thread behavior isn't triggering | Verify `currentThreadIds.view === null` when popup first opens; the ChatArea scope='view' should render its picker in that state |
-| Second click creates a new thread instead of restoring | `viewChatStates[panel].activeThreadId` not being set after thread creation | Check step 3a — thread-handlers.ts `thread:created` must call `setActiveViewChat` |
-| Warm state bleeds across views | Using global state instead of `viewChatStates[panel]` | Check panelStore — `viewChatStates` must be `Record<string, ViewChatState>` keyed by panel |
-| Popup reappears after switching views | `setCurrentPanel` not clearing `floatingChatOpen` | Check step 2d |
-| Drag moves the whole window | Click propagation — mousedown not stopped | Check handleMouseDown only starts drag when target is inside `.floating-chat-header` |
-| Menu button doesn't open modal | Event propagation to the header drag | Check `e.stopPropagation()` in the menu button onClick |
-| Modal picker shows project threads | Using `threads.project` instead of `threads.view` | Check the selector in ThreadPickerModal |
-| Wiki-viewer breaks | WikiExplorer's old inline mount wasn't removed, or the new universal mount fights with it | Check step 7 — both WikiExplorer import and mount should be gone |
-| Position not preserved | Not using the store's `setFloatingChatPosition` | Check handleMouseMove — it writes to the store, not local state |
+| FAB shows on calendar-viewer | `hasChat` check missing | Read `panelConfigs.find(c => c.id === currentPanel)?.hasChat` |
+| First click does nothing | `openFloatingChat` not wired to FAB onClick | Check the wiring |
+| First click creates a thread instead of showing harness picker | `threads.view` is non-empty from a different session | Pre-prod wipe, or the store's `threads.view` has stale data from a prior view |
+| Popup reopens with wrong thread | `threads.view[0]` is not the expected one | Verify the server's MRU ordering via `thread:list` response |
+| Menu shows project threads | ThreadPickerModal reading `threads.project` | Must read `threads.view` |
+| "+ New Chat" doesn't clear the current thread | `setCurrentThreadId('view', null)` not called | Check `handleNewChat` implementation |
+| Popup position not persisted | `commitPopupState` not called on drag end | Check handleUp in drag handler |
+| Resize exceeds min/max | Clamp missing | `Math.max(MIN, Math.min(MAX, value))` in resize handler |
+| Wiki-viewer broken | Old inline FloatingChat mount still exists | Check step 6 — both import and JSX mount must be gone |
+| Popup fights with drag on button click | Button clicks bubble to the header's mousedown | Check `e.stopPropagation()` on button clicks AND `if (closest('button')) return` in drag handler |
+| Popup state doesn't survive view switch | `state:set` not persisting popup | Check `commitPopupState` is called on close and after drag/resize |
 
 ---
 
 ## Do not do
 
-- **Do not** add traffic lights (red/yellow/green). Dropped per the simplification conversation.
-- **Do not** add a dock for minimized chats. Dropped.
-- **Do not** add a right-click easter egg on the FAB. Dropped.
-- **Do not** add multiple popups at once. One per current view, single instance.
-- **Do not** persist warm state to disk, localStorage, or SQLite. RAM only. Refresh wipes.
-- **Do not** implement FIFO or flushing rules. Explicitly deferred.
-- **Do not** touch any server code. This spec is 100% client-side.
-- **Do not** touch the project chat column, Sidebar, ResizeHandle, viewStates (the left-column one from 26c-2 — different slice!), or any of 26c/26c-2's work.
-- **Do not** touch the wire protocol. `thread:open-assistant` and `thread:list` already handle view-scope from 26b.
-- **Do not** rename FloatingChat.tsx — reuse the file in place.
-- **Do not** create a separate `FAB.tsx` component. The FAB lives inside FloatingChat.tsx (current structure preserved).
-- **Do not** touch agents-viewer, runner, frontmatter catalog, CSS architecture migration.
-- **Do not** bundle 26c-2's left-column viewStates slice with this spec's viewChatStates slice. They have similar names but are unrelated — viewStates is per-view UI prefs (collapse + widths), viewChatStates is per-view floating popup warm state. Keep them separate.
+- **Do not** track `activeThreadId` per view. Just read `threads.view[0]`. The system is self-correcting — picking a thread makes it MRU.
+- **Do not** create a separate `viewChatStates` store slice. Extend the existing `viewStates` with a `popup` sub-object.
+- **Do not** add any server code beyond the one-line deep-merge update in `view-state/index.js`.
+- **Do not** add traffic lights, dock, right-click shortcut, or multiple popups.
+- **Do not** implement FIFO flushing or workspace-switch reset.
+- **Do not** touch the project chat column, Sidebar, ResizeHandle, or viewStates collapse/widths.
+- **Do not** touch the wire protocol (`thread:*` messages). Existing `thread:open-assistant { scope: 'view' }` is sufficient.
+- **Do not** persist warm state (which thread is "the active one"). The MRU list is the only source of truth. No `activeThreadId` field in the store or the JSON file.
+- **Do not** create a separate `FAB.tsx` component. The FAB lives inside FloatingChat.tsx.
+- **Do not** add multiple resize handles (edges + corners). Start with one handle at the bottom-right corner. Richer resize can come later.
+- **Do not** touch agents-viewer, runner, frontmatter catalog, CSS migration.
 
 ---
 
@@ -893,83 +953,65 @@ Hard-refresh after `npm run build` + server restart.
 ```
 SPEC-26d: view chat as floating popup (FAB + menu + modal)
 
-Delivers the floating popup for view-scoped chats. Together with
-26c-2's left-column work, this completes the asymmetric dual-chat
-design: project chat as a left sidebar column, view chat as a
-draggable floating popup with per-view warm state.
+Delivers the floating popup for view-scoped chats, completing the
+asymmetric dual-chat layout: project chat as a left sidebar column
+(26c + 26c-2), view chat as a draggable/resizable floating popup.
+
+Simplification over the previous draft: no warm-state tracking.
+The popup just opens to the MRU view thread (threads.view[0]). If
+no view threads exist, ChatArea shows the harness picker inline.
+Picking a thread via the menu sends thread:open-assistant which
+makes it MRU top — the system is self-correcting.
 
 New files:
-  - ThreadPickerModal.tsx — scrollable list of view threads for
-    the current panel, "+ New Chat" button at top, picks switch the
-    popup and close the modal. Escape and backdrop click dismiss.
+  - ThreadPickerModal.tsx — modal listing view-scoped threads for
+    the current panel (MRU order). "+ New Chat" at the top runs the
+    harness picker. Click a thread → activate + close modal.
 
 Reworked:
-  - FloatingChat.tsx — mounted once at the app shell level (no
-    longer per-component). Reads currentPanel from the store.
-    FAB button always visible (chat_bubble). Click → openFloatingChat
-    store action decides behavior: first click = ChatArea's harness
-    picker, subsequent = restore warm chat. Menu button (upper-left,
-    material:menu) opens ThreadPickerModal. X button (upper-right)
-    closes with state preserved. Draggable header, position stored
-    per view in the store (remembered across open/close within the
-    same session).
-  - panelStore.ts — new slice:
-      floatingChatOpen: boolean (global, resets on view switch)
-      viewChatStates: Record<string, { activeThreadId, position }>
-        (per-panel warm state, persists in RAM until refresh)
-      Actions: openFloatingChat, closeFloatingChat, setActiveViewChat,
-      setFloatingChatPosition. setCurrentPanel now sets
-      floatingChatOpen = false on view switch.
-  - thread-handlers.ts — thread:created and thread:opened for
-    scope='view' now call setActiveViewChat(currentPanel, threadId)
-    so the created/opened thread becomes the warm chat for the
-    current view.
-  - App.tsx — <FloatingChat /> mounted at the top-level return,
-    outside PanelContent. Single instance.
-  - App.css — menu button styles, modal backdrop/container styles,
-    thread picker list styles.
-  - types/index.ts — ViewChatState type added.
+  - FloatingChat.tsx — no longer takes a panel prop; reads
+    currentPanel from the store. FAB visible on chat-enabled views
+    only (hasChat gate). Popup state (open/position/size) comes from
+    viewStates[panel].popup (not local component state). Draggable
+    by header; resizable via bottom-right corner handle. Menu button
+    (upper-left) → ThreadPickerModal. X (upper-right) → close with
+    state preserved. Drag/resize commit to server on mouseup via
+    existing state:set wire messages from 26c-2.
+
+Extended:
+  - panelStore.ts — viewStates gains popup sub-object. New actions:
+    openFloatingChat (reads threads.view[0]), closeFloatingChat,
+    setPopupPosition, setPopupSize, commitPopupState.
+  - types/index.ts — PopupState interface.
+  - lib/view-state/index.js — one-line addition: deep-merge popup
+    field in writeViewStatePatch + defaults in resolveViewState.
+  - ws-client.ts — state:result handler syncs popup.open on view
+    load so returning to a view with the popup left open finds it
+    open again.
 
 Removed:
-  - WikiExplorer.tsx — the inline <FloatingChat panel="rv-wiki-viewer" />
-    mount and its import are gone. Wiki-viewer now uses the
-    universal FAB like every other view.
+  - WikiExplorer.tsx — inline <FloatingChat panel="..."> mount
+    replaced by the universal mount in App.tsx.
 
-Warm state semantics:
-  - Each view remembers its currently-active view thread as its
-    "warm chat" (viewChatStates[panel].activeThreadId).
-  - First FAB click in a view with no warm chat opens the harness
-    picker (via ChatArea's existing no-thread behavior).
-  - Subsequent FAB clicks in the same view restore the warm chat
-    directly — no new thread created.
-  - Picking a different thread via the menu modal replaces the
-    warm chat.
-  - Creating a new thread via "+ New Chat" replaces the warm chat
-    with the newly-created thread.
-  - Switching views hides the popup but preserves each view's warm
-    state independently. Returning to a view and clicking FAB
-    restores that view's warm chat.
-  - Browser refresh wipes all warm state (current reality; future
-    workspace-switch + flushing rules will formalize lifecycle).
+Added CSS:
+  - Menu button + header flex layout
+  - Resize handle (bottom-right corner, nwse-resize cursor)
+  - Modal backdrop + thread picker list styles
 
-Per-view drag position: viewChatStates[panel].position. Drag the
-header to update. Preserved within the session. Default is
-bottom-right with padding.
+Per-view popup state persisted via 26c-2's existing viewStates
+JSON file at ai/views/<view>/state/<username>.json:
+  { ..., popup: { open, x, y, width, height } }
 
-No server changes. No new wire messages. No new persistence. This
-is entirely client-side — leverages 26b's view-scope routing as-is.
+No new wire messages. No new server modules. One server-side
+one-liner for the popup merge in writeViewStatePatch.
 
-Live-validated via 22-step browser checklist: FAB presence,
-first-click harness picker, close/reopen warm state restoration,
-menu modal, new chat via modal, thread switching, per-view
-independence, drag + position memory, refresh wipes, modal escape
-and backdrop dismissal.
+Live-validated: FAB presence + first-click harness picker +
+MRU-default restore + menu modal + new chat + thread switching +
+per-view independence + drag + resize + position/size persistence
++ refresh behavior + modal dismiss (escape + backdrop).
 
 Part of SPEC-26 (dual-chat paradigm, asymmetric final form).
-This is the last core phase. Remaining 26-series work (dual-wire,
-harness wizard per side, etc.) is future if/when needed; the
-current design intentionally ships with the single-wire model and
-reuses the existing harness picker.
+This is the last core 26 phase.
 
 Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 ```
@@ -978,28 +1020,21 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 
 ## Report back
 
-1. **Diff stats.** `git diff --stat main`. Expected:
-   - New `ThreadPickerModal.tsx` (~120 lines)
-   - `FloatingChat.tsx` rewritten (~150 lines net, similar size to before)
-   - `panelStore.ts` medium (~80 net for the new slice + action implementations + setCurrentPanel update)
-   - `thread-handlers.ts` small (~10 net for the two setActiveViewChat calls)
-   - `App.tsx` small (~5 — import + mount at top level)
-   - `WikiExplorer.tsx` small (~-5 — remove import + inline mount)
-   - `App.css` medium (~100 for menu button + modal styles)
-   - `types/index.ts` small (~10 for ViewChatState)
+1. **Diff stats.** Expected: FloatingChat.tsx (~150 lines rewritten), new ThreadPickerModal.tsx (~100), panelStore.ts (~60 net), App.tsx small (~5), WikiExplorer.tsx small (~-5), App.css medium (~120), types/index.ts small (~10), ws-client.ts small (~5), view-state/index.js small (~5).
 
-2. **Static checks.** tsc, npm build — both pass.
+2. **Static checks.** tsc + npm build.
 
-3. **Server restart and HTTP 200 confirmation.**
+3. **Live validation.** Run all 22 items. Focus on:
+   - First-click → harness picker works inside the popup
+   - Subsequent click → MRU thread loads correctly
+   - Menu modal → new chat clears view thread and shows picker
+   - Per-view independence (two views, different threads)
+   - Drag AND resize work, positions persist
 
-4. **Live validation walkthrough.** Run all 22 checklist items. Report each.
+4. **State file audit.** `cat ai/views/code-viewer/state/<username>.json` after using the popup. Confirm `popup` sub-object is present alongside the existing `collapsed` and `widths`.
 
-5. **Two tricky moments to watch specifically:**
-   - **First-click behavior:** the harness picker should appear INSIDE the floating popup when you first click the FAB in a view with no warm chat. It should NOT be a separate modal or inline on the page. This requires ChatArea scope='view' to render its "no thread" state gracefully when wrapped inside FloatingChat.
-   - **The "+ New Chat" modal flow:** picking "+ New Chat" clears the current view thread, closes the modal, and the open popup's ChatArea should then show the harness picker. If this doesn't work, the cause is usually that `setActiveViewChat('')` doesn't propagate to `currentThreadIds.view`, so ChatArea still thinks there's a thread open.
+5. **Surprises.** Especially: does the `state:result` handler correctly sync `popup.open` on view return? Does the WikiExplorer removal cause any wiki-specific breakage?
 
-6. **Files touched outside the change list.** Expected: zero.
-
-7. **Any weird interaction with 26c-2's collapse or resize.** The floating popup sits on top of the app layout — shouldn't interfere with the left-column grid. But verify: does dragging the popup near the left edge land it OVER the sidebar/chat columns cleanly (as an overlay), or does something weird happen with z-index?
+6. **Files outside the change list.** Expected: zero except the one-line view-state/index.js update (listed).
 
 Hand the report back to the orchestrator.

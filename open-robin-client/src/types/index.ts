@@ -102,7 +102,10 @@ export type WebSocketMessageType =
   | 'wire_ready'
   | 'wire_disconnected'
   | 'parse_error'
-  | 'thread:create:confirm';
+  | 'thread:create:confirm'
+  // View UI state (SPEC-26c-2)
+  | 'state:result'
+  | 'state:error';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
@@ -139,6 +142,20 @@ export interface WebSocketMessage {
   // SPEC-26b: every thread:* response and wire_ready carries scope
   scope?: Scope;
   viewId?: string | null;
+}
+
+// SPEC-26c-2: per-view UI state (collapse + pane widths)
+export type Pane = 'leftSidebar' | 'leftChat';
+
+export interface ViewUIState {
+  collapsed: {
+    leftSidebar: boolean;
+    leftChat: boolean;
+  };
+  widths: {
+    leftSidebar: number;
+    leftChat: number;
+  };
 }
 
 // SPEC-26: dual-chat paradigm. Every thread lives in one of two scopes.
