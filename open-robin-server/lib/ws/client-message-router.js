@@ -88,9 +88,14 @@ function createClientMessageRouter({
       }
 
       if (clientMsg.type === 'thread:open-assistant') {
-        console.log('[WS] thread:open-assistant received, threadId:', clientMsg.threadId?.slice(0, 8) || '(new)');
+        // SPEC-26b: extract scope early; used throughout this case to route
+        // state access to the correct manager/thread. Defaults to 'view' for
+        // backward compat with pre-26b clients.
+        const scope = clientMsg.scope === 'project' ? 'project' : 'view';
+        console.log('[WS] thread:open-assistant received, threadId:', clientMsg.threadId?.slice(0, 8) || '(new)', 'scope:', scope);
 
         // Close current wire if one is open (switching threads or reopening).
+        // Single-wire model preserved in 26b — see SPEC. 26d adds dual-wire.
         if (session.wire) {
           console.log('[WS] Closing previous wire before opening assistant thread');
           session.wire.kill('SIGTERM');
@@ -100,16 +105,18 @@ function createClientMessageRouter({
         // Dispatcher: create or resume based on whether msg.threadId exists.
         await ThreadWebSocketHandler.handleThreadOpenAssistant(ws, clientMsg);
 
-        // After the handler runs, the per-ws state should have the current thread ID.
+        // After the handler runs, the per-ws state should have the current
+        // thread ID for the requested scope.
         const state = ThreadWebSocketHandler.getState(ws);
-        const threadId = state?.threadId;
+        const threadId = state?.threadIds?.[scope];
         if (!threadId) {
-          console.error('[WS] No threadId after handleThreadOpenAssistant — dispatch failed');
+          console.error(`[WS] No threadId for scope=${scope} after handleThreadOpenAssistant — dispatch failed`);
           return;
         }
 
-        console.log('[WS] Spawning wire for thread:', threadId);
+        console.log(`[WS] Spawning wire for ${scope} thread:`, threadId);
         session.currentThreadId = threadId;
+        session.currentScope = scope;  // SPEC-26b: track which scope owns the active wire
         const wire = spawnThreadWire(threadId, projectRoot);
         session.wire = wire;
         registerWire(threadId, wire, projectRoot, ws);
@@ -126,12 +133,13 @@ function createClientMessageRouter({
         // Fire wire_ready for BOTH create and resume — this harmonizes the two
         // paths (previously only thread:create sent it, which was a latent bug
         // in the resume flow: the connecting overlay would not clear).
-        ws.send(JSON.stringify({ type: 'wire_ready', threadId }));
+        ws.send(JSON.stringify({ type: 'wire_ready', threadId, scope }));
 
-        // Register with ThreadManager
-        if (state?.threadManager) {
+        // Register with the scope-appropriate ThreadManager
+        const manager = state?.threadManagers?.[scope];
+        if (manager) {
           console.log('[WS] Registering with ThreadManager...');
-          await state.threadManager.openSession(threadId, wire, ws);
+          await manager.openSession(threadId, wire, ws);
           console.log('[WS] ThreadManager registration complete');
         }
         return;
@@ -153,7 +161,8 @@ function createClientMessageRouter({
       }
 
       if (clientMsg.type === 'thread:list') {
-        await ThreadWebSocketHandler.sendThreadList(ws);
+        // SPEC-26b: forward optional scope field; sendThreadList defaults to 'view'.
+        await ThreadWebSocketHandler.sendThreadList(ws, clientMsg.scope);
         return;
       }
 
@@ -240,7 +249,9 @@ function createClientMessageRouter({
 
       // Prompt - look up wire from global registry
       if (clientMsg.type === 'prompt') {
-        console.log('[WS] PROMPT received:', clientMsg.user_input?.slice(0, 50), 'threadId:', clientMsg.threadId?.slice(0,8));
+        // SPEC-26b: scope comes from clientMsg or the session's active scope.
+        const scope = clientMsg.scope === 'project' ? 'project' : (session.currentScope || 'view');
+        console.log('[WS] PROMPT received:', clientMsg.user_input?.slice(0, 50), 'threadId:', clientMsg.threadId?.slice(0,8), 'scope:', scope);
 
         // Get wire from global registry using threadId from message
         const threadId = clientMsg.threadId;
@@ -255,15 +266,15 @@ function createClientMessageRouter({
 
         // Track message in thread (need to ensure thread is "open" for this ws)
         const threadState = ThreadWebSocketHandler.getState(ws);
-        if (!threadState?.threadId && threadId) {
-          // This connection doesn't have this thread open - set it
-          console.log('[WS] Setting thread for this connection:', threadId.slice(0,8));
-          const state = ThreadWebSocketHandler.getState(ws);
-          if (state) state.threadId = threadId;
+        if (threadState && threadId && !threadState.threadIds?.[scope]) {
+          // This connection doesn't have this thread open for this scope - set it
+          console.log(`[WS] Setting ${scope} thread for this connection:`, threadId.slice(0,8));
+          threadState.threadIds[scope] = threadId;
         }
 
         await ThreadWebSocketHandler.handleMessageSend(ws, {
-          content: clientMsg.user_input
+          content: clientMsg.user_input,
+          scope
         });
         console.log('[WS] Message tracked in thread');
 
@@ -296,8 +307,10 @@ function createClientMessageRouter({
       }
 
       if (clientMsg.type === 'response') {
+        // SPEC-26b: scope-aware lookup of active thread for wire routing.
+        const scope = session.currentScope || 'view';
         const threadState = ThreadWebSocketHandler.getState(ws);
-        const threadId = threadState?.threadId;
+        const threadId = threadState?.threadIds?.[scope];
         const wire = threadId ? getWireForThread(threadId) : session.wire;
         if (wire) {
           sendToWire(wire, 'response', clientMsg.payload, clientMsg.requestId);

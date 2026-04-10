@@ -204,11 +204,13 @@ function createWireMessageRouter({ session, ws, threadWebSocketHandler, emit, ch
 
             // Save assistant message to CHAT.md (with metadata)
             // Note: SQLite persistence is handled by audit-subscriber listening to chat:turn_end
+            // SPEC-26b: forward session.currentScope so the assistant message lands on the right scope's thread.
             threadWebSocketHandler.addAssistantMessage(
               ws,
               session.currentTurn.text,
               session.hasToolCalls,
-              metadata
+              metadata,
+              session.currentScope || 'view'
             );
 
             emit('chat:turn_end', {

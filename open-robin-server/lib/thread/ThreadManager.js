@@ -1,9 +1,16 @@
 /**
- * ThreadManager - Main thread management orchestrator
+ * ThreadManager - Single-scope thread orchestrator
  *
- * Combines ThreadIndex and ChatFile to provide full thread lifecycle management.
- * Delegates session management to SessionManager.
- * Handles session lifecycle: active → grace-period → suspended
+ * One ThreadManager instance is bound to one (projectId, scope, viewId)
+ * tuple. Project-scoped managers handle threads shared across all views
+ * in the project; view-scoped managers handle threads tied to a single
+ * view. SPEC-26b. The WS coordinator (ThreadWebSocketHandler) holds two
+ * managers per connection — one for each scope.
+ *
+ * Combines ThreadIndex (SQLite metadata) and ChatFile (markdown
+ * persistence) to provide full thread lifecycle management. Delegates
+ * session management to SessionManager. Handles session lifecycle:
+ * active → grace-period → suspended.
  */
 
 const path = require('path');
@@ -20,32 +27,34 @@ const DEFAULT_CONFIG = {
 
 class ThreadManager {
   /**
-   * @param {string} panelId - Panel identifier (e.g., 'code-viewer', 'agent:bot-name')
-   * @param {object} [config]
-   * @param {string} [config.projectRoot] - Project root — required for the unified chat storage path (SPEC-24c)
+   * @param {object} config
+   * @param {'project'|'view'} config.scope - Thread scope (SPEC-26b)
+   * @param {string|null} [config.viewId] - View name when scope='view'; null for scope='project'
+   * @param {string} config.projectRoot - Absolute project root path (required)
    * @param {number} [config.maxActiveSessions]
    * @param {number} [config.idleTimeoutMinutes]
    */
-  constructor(panelId, config = {}) {
-    this.panelId = panelId;
-    this.projectRoot = config.projectRoot || null;
-    this.config = { ...DEFAULT_CONFIG, ...config };
-
-    // SPEC-26a: derive project_id from the project folder name. Multi-project
-    // namespacing — when the workspace switcher lands, two projects with the
-    // same view name won't collide because project_id differs.
-    if (!this.projectRoot) {
+  constructor(config = {}) {
+    if (!config.projectRoot) {
+      throw new Error('ThreadManager: projectRoot is required (SPEC-26b)');
+    }
+    if (config.scope !== 'project' && config.scope !== 'view') {
       throw new Error(
-        `ThreadManager: projectRoot is required. Panel: ${panelId}. ` +
-        'SPEC-26a: project_id is derived from basename(projectRoot).'
+        `ThreadManager: scope must be 'project' or 'view', got "${config.scope}" (SPEC-26b)`
       );
     }
+    if (config.scope === 'view' && !config.viewId) {
+      throw new Error("ThreadManager: viewId is required when scope='view' (SPEC-26b)");
+    }
+
+    this.scope = config.scope;
+    this.viewId = config.scope === 'view' ? config.viewId : null;
+    this.projectRoot = config.projectRoot;
     this.projectId = path.basename(this.projectRoot);
+    this.config = { ...DEFAULT_CONFIG, ...config };
 
     /** @type {ThreadIndex} */
-    // SPEC-26a: scope='view' in 26a preserves existing single-chat behavior.
-    // 26b introduces project-scoped ThreadManagers alongside view-scoped ones.
-    this.index = new ThreadIndex(this.projectId, 'view', panelId);
+    this.index = new ThreadIndex(this.projectId, this.scope, this.viewId);
 
     /** @type {SessionManager} */
     this.sessionManager = new SessionManager(
@@ -58,39 +67,31 @@ class ThreadManager {
   }
 
   /**
-   * Build the unified per-user chat directory (SPEC-24c).
+   * Build the scope-appropriate per-user chat directory.
    *
-   * All chats live at ai/views/chat/threads/<username>/ regardless of
-   * which panel initiated them. The sidebar in each panel still scopes
-   * its thread list via SQLite's panel_id column — the filesystem
-   * layout is flat for collaboration-friendly git push/pull.
+   * SPEC-26b: branches by scope.
+   *   - project scope → ai/views/chat/threads/<user>/  (the 24c unified location)
+   *   - view scope    → ai/views/<view>/chat/threads/<user>/  (per-view, restored from pre-24c)
    *
-   * Returns null if projectRoot is not set (ChatFile construction
-   * will throw in that case — see _createChatFile).
-   *
-   * @returns {string|null}
+   * @returns {string}
    */
   _getViewsDir() {
-    if (!this.projectRoot) return null;
-    return path.join(this.projectRoot, 'ai', 'views', 'chat', 'threads', getUsername());
+    const baseViews = path.join(this.projectRoot, 'ai', 'views');
+    if (this.scope === 'project') {
+      return path.join(baseViews, 'chat', 'threads', getUsername());
+    }
+    // scope === 'view'
+    return path.join(baseViews, this.viewId, 'chat', 'threads', getUsername());
   }
 
   /**
-   * Create a ChatFile for the given thread. Requires a views directory —
-   * if _getViewsDir() returns null (no projectRoot), throws instead of
-   * silently producing a broken ChatFile. Legacy CHAT.md mode was removed
-   * in SPEC-24b.
+   * Create a ChatFile for the given thread. _getViewsDir() is now
+   * guaranteed non-null by the constructor's projectRoot check.
    * @param {string} threadId
    * @returns {ChatFile}
    */
   _createChatFile(threadId) {
     const viewsDir = this._getViewsDir();
-    if (!viewsDir) {
-      throw new Error(
-        `ThreadManager._createChatFile: no viewsDir available for panel ${this.panelId}. ` +
-        `projectRoot must be set. Legacy CHAT.md mode was removed in SPEC-24b.`
-      );
-    }
     return new ChatFile({ viewsDir, threadId });
   }
 
@@ -291,8 +292,9 @@ class ThreadManager {
     await this.index.activate(threadId);
     await this.index.markResumed(threadId);
 
-    // Delegate session state to SessionManager
-    const session = this.sessionManager.openSession(threadId, this.panelId, wireProcess, ws);
+    // Delegate session state to SessionManager. viewId is null for project
+    // scope — SessionManager stores this as an inert field and never reads it.
+    const session = this.sessionManager.openSession(threadId, this.viewId, wireProcess, ws);
 
     return session;
   }

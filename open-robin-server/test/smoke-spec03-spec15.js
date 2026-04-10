@@ -57,7 +57,7 @@ const EXPECTED_EXPORTS = [
   'handleThreadRename', 'handleThreadDelete', 'handleThreadCopyLink',
   'handleMessageSend', 'addAssistantMessage',
   'getCurrentThreadId', 'getCurrentThreadManager',
-  '_getThreadManagers', '_getWsState'
+  '_getProjectThreadManagers', '_getViewThreadManagers', '_getWsState'
 ];
 
 try {
@@ -107,13 +107,19 @@ section('SPEC-03: Test exports');
 
 try {
   const TWH = require('../lib/thread/ThreadWebSocketHandler');
-  const managers = TWH._getThreadManagers();
+  const projectManagers = TWH._getProjectThreadManagers();
+  const viewManagers = TWH._getViewThreadManagers();
   const wsState = TWH._getWsState();
 
-  if (managers instanceof Map) {
-    ok('_getThreadManagers returns Map');
+  if (projectManagers instanceof Map) {
+    ok('_getProjectThreadManagers returns Map');
   } else {
-    fail('_getThreadManagers does not return Map', `got: ${typeof managers}`);
+    fail('_getProjectThreadManagers does not return Map', `got: ${typeof projectManagers}`);
+  }
+  if (viewManagers instanceof Map) {
+    ok('_getViewThreadManagers returns Map');
+  } else {
+    fail('_getViewThreadManagers does not return Map', `got: ${typeof viewManagers}`);
   }
   if (wsState instanceof Map) {
     ok('_getWsState returns Map');
