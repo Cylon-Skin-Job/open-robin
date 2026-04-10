@@ -31,8 +31,21 @@ class ThreadManager {
     this.projectRoot = config.projectRoot || null;
     this.config = { ...DEFAULT_CONFIG, ...config };
 
+    // SPEC-26a: derive project_id from the project folder name. Multi-project
+    // namespacing — when the workspace switcher lands, two projects with the
+    // same view name won't collide because project_id differs.
+    if (!this.projectRoot) {
+      throw new Error(
+        `ThreadManager: projectRoot is required. Panel: ${panelId}. ` +
+        'SPEC-26a: project_id is derived from basename(projectRoot).'
+      );
+    }
+    this.projectId = path.basename(this.projectRoot);
+
     /** @type {ThreadIndex} */
-    this.index = new ThreadIndex(panelId);
+    // SPEC-26a: scope='view' in 26a preserves existing single-chat behavior.
+    // 26b introduces project-scoped ThreadManagers alongside view-scoped ones.
+    this.index = new ThreadIndex(this.projectId, 'view', panelId);
 
     /** @type {SessionManager} */
     this.sessionManager = new SessionManager(

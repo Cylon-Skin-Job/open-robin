@@ -9,10 +9,21 @@ const { getDb } = require('../db');
 
 class ThreadIndex {
   /**
-   * @param {string} panelId - Panel identifier for scoped queries
+   * @param {string} projectId - Project identifier (basename of projectRoot)
+   * @param {'project'|'view'} scope - Thread scope
+   * @param {string|null} viewId - View name when scope='view'; null when scope='project'
    */
-  constructor(panelId) {
-    this.panelId = panelId;
+  constructor(projectId, scope, viewId) {
+    if (!projectId) throw new Error('ThreadIndex: projectId is required');
+    if (scope !== 'project' && scope !== 'view') {
+      throw new Error(`ThreadIndex: scope must be 'project' or 'view', got "${scope}"`);
+    }
+    if (scope === 'view' && !viewId) {
+      throw new Error('ThreadIndex: viewId is required when scope="view"');
+    }
+    this.projectId = projectId;
+    this.scope = scope;
+    this.viewId = scope === 'view' ? viewId : null;
   }
 
   /**
@@ -26,9 +37,15 @@ class ThreadIndex {
    */
   async list() {
     const db = getDb();
-    const rows = await db('threads')
-      .where('panel_id', this.panelId)
-      .orderBy('updated_at', 'desc');
+    const query = db('threads')
+      .where('project_id', this.projectId)
+      .where('scope', this.scope);
+
+    if (this.scope === 'view') {
+      query.where('view_id', this.viewId);
+    }
+
+    const rows = await query.orderBy('updated_at', 'desc');
 
     return rows.map((row) => ({
       threadId: row.thread_id,
@@ -65,7 +82,9 @@ class ThreadIndex {
 
     await db('threads').insert({
       thread_id: threadId,
-      panel_id: this.panelId,
+      project_id: this.projectId,
+      scope: this.scope,
+      view_id: this.viewId,  // null when scope='project'
       name,
       created_at: createdAt,
       message_count: 0,
@@ -75,7 +94,15 @@ class ThreadIndex {
       harness_config: harnessConfig,
     });
 
-    return { name, createdAt, messageCount: 0, status: 'suspended', harnessId };
+    return {
+      name,
+      createdAt,
+      messageCount: 0,
+      status: 'suspended',
+      harnessId,
+      scope: this.scope,
+      viewId: this.viewId,
+    };
   }
 
   /**
@@ -172,7 +199,16 @@ class ThreadIndex {
    * @returns {Promise<number>}
    */
   async rebuild() {
-    const rows = await getDb()('threads').where('panel_id', this.panelId);
+    const db = getDb();
+    const query = db('threads')
+      .where('project_id', this.projectId)
+      .where('scope', this.scope);
+
+    if (this.scope === 'view') {
+      query.where('view_id', this.viewId);
+    }
+
+    const rows = await query;
     return rows.length;
   }
 
@@ -186,6 +222,8 @@ class ThreadIndex {
       createdAt: row.created_at,
       messageCount: row.message_count,
       status: row.status,
+      scope: row.scope,
+      viewId: row.view_id,
     };
     if (row.resumed_at) entry.resumedAt = row.resumed_at;
     if (row.harness_id) entry.harnessId = row.harness_id;
