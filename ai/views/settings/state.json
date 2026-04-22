@@ -18,5 +18,14 @@
     "threadId": null
   },
   "currentThreadId": "2026-04-19T18-54-25-495",
-  "secondaryThreadId": null
+  "secondaryThreadId": null,
+  "tints": {
+    "leftPanel": false,
+    "rightPanel": false,
+    "cards": false,
+    "borders": {
+      "threads": false,
+      "chat": false
+    }
+  }
 }

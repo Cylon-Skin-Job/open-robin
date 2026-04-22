@@ -27,7 +27,8 @@ const MAX_W = 800;
 const MAX_H = 700;
 const DEFAULT_PADDING = 24;
 
-const MINIMIZE_ANIMATION_MS = 450;
+// 550ms genie shape + 100ms fade crossfade = 650ms total.
+const MINIMIZE_ANIMATION_MS = 650;
 const DOCK_OFFSET = 24;
 const DOCK_SIZE = 48;
 
@@ -53,7 +54,7 @@ function useGenieAnimation(rootRef: React.RefObject<HTMLElement | null>) {
 
   const [isMinimizing, setIsMinimizing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
-  const [deltas, setDeltas] = useState<{ dx: number; dy: number } | null>(null);
+  const [deltas, setDeltas] = useState<{ dx: number; dy: number; sx: number; sy: number } | null>(null);
   const timerRef = useRef<number | null>(null);
 
   // Cleanup any pending timer on unmount.
@@ -63,13 +64,23 @@ function useGenieAnimation(rootRef: React.RefObject<HTMLElement | null>) {
     };
   }, []);
 
-  const computeDeltas = useCallback((): { dx: number; dy: number } | null => {
+  // Compute the translate delta + per-axis scale so the final keyframe lands
+  // the popup as a 48×48 disk with its bottom-right pinned to the dock
+  // button's bottom-right corner (same spot as the actual dock button, so
+  // the crossfade aligns pixel-for-pixel).
+  const computeDeltas = useCallback(() => {
     const el = rootRef.current;
     if (!el) return null;
     const rect = el.getBoundingClientRect();
-    const dockCx = window.innerWidth - DOCK_OFFSET - DOCK_SIZE / 2;
-    const dockCy = window.innerHeight - DOCK_OFFSET - DOCK_SIZE / 2;
-    return { dx: dockCx - rect.right, dy: dockCy - rect.bottom };
+    if (rect.width === 0 || rect.height === 0) return null;
+    const dockBRx = window.innerWidth - DOCK_OFFSET;
+    const dockBRy = window.innerHeight - DOCK_OFFSET;
+    return {
+      dx: dockBRx - rect.right,
+      dy: dockBRy - rect.bottom,
+      sx: DOCK_SIZE / rect.width,
+      sy: DOCK_SIZE / rect.height,
+    };
   }, [rootRef]);
 
   const handleMinimize = useCallback(() => {
@@ -110,6 +121,8 @@ function useGenieAnimation(rootRef: React.RefObject<HTMLElement | null>) {
   if (animating && deltas) {
     styleVars['--minimize-dx'] = `${deltas.dx}px`;
     styleVars['--minimize-dy'] = `${deltas.dy}px`;
+    styleVars['--minimize-scale-x'] = String(deltas.sx);
+    styleVars['--minimize-scale-y'] = String(deltas.sy);
   }
 
   return { handleMinimize, modifier, styleVars, animating };

@@ -16,8 +16,21 @@
   display: flex;
   flex-direction: column;
   padding: 16px;
-  overflow: hidden;
+  /* overflow: visible so the CLI picker dropdown can escape the sidebar
+   * width. The thread list inside handles its own scroll via overflow-y. */
+  overflow: visible;
   min-height: 0;
+  position: relative;
+}
+
+/* TINTS_SPEC §5a: opt-in accent blend on the threads sidebar background. */
+.rv-panel[data-tint-left="true"] .sidebar {
+  background: color-mix(in srgb, var(--sidebar-surface-bg, #161616) 88%, var(--ws-primary, #ec4899) 12%);
+}
+
+/* TINTS_SPEC §5d: opt-in theme-border on the threads column right edge. */
+.rv-panel[data-tint-border-threads="true"] .sidebar {
+  border-right-color: var(--theme-border, rgba(255, 255, 255, 0.38));
 }
 
 .sidebar-header {
@@ -34,8 +47,8 @@
   padding: 10px;
   margin-bottom: 16px;
   background: var(--sidebar-surface-bg, #161616);
-  border: none;
-  border-radius: 8px;
+  border: 1px solid var(--neutral-chrome-border, rgba(255, 255, 255, 0.12));
+  border-radius: 4px;
   color: var(--text-dim);
   font-size: 14px;
   display: flex;
@@ -60,6 +73,11 @@
   min-height: 0;
 }
 
+/* TINTS_SPEC §5e: opt-in theme-border on the chat column right edge. */
+.rv-panel[data-tint-border-chat="true"] .chat-area {
+  border-right-color: var(--theme-border, rgba(255, 255, 255, 0.38));
+}
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -69,6 +87,9 @@
   gap: 12px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  background: #000;
+  border-radius: 10px;
+  margin: 0 10px;
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -94,8 +115,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border-top: 1px solid var(--neutral-chrome-border, rgba(255, 255, 255, 0.12));
-  padding: 14px 12px 12px;
+  padding: 14px 10px 12px;
 }
 
 .context-usage {
@@ -137,23 +157,41 @@
 
 /* --- SECONDARY_CHAT_SPEC: singleton secondary chat (replaces SPEC-26d popup) --- */
 
-/* Floating mode: absolutely-positioned popup, draggable by header, resizable from bottom-right. */
+/* Floating mode: absolutely-positioned popup, draggable by header, resizable from bottom-right.
+ * Glass that pops: light-tinted surface with a subtle diagonal gradient for depth,
+ * stronger blur + saturation boost so colors behind come through vivid, a top-edge
+ * inset highlight for the "rim of light" feel, and a lifted shadow for lift. */
 .rv-secondary-popup {
   position: fixed;
-  background: var(--bg-solid, #0d0d0d);
-  border: 1px solid var(--ws-panel-border, var(--theme-border, #333));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.20);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 12px 40px rgba(0, 0, 0, 0.55);
   z-index: 501;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* Sticky-right mode: grid child inside the active panel. */
+/* Sticky-right mode: grid child inside the active panel. Same glass. */
 .rv-secondary-sticky {
-  background: var(--bg-solid, #0d0d0d);
-  border-left: 1px solid var(--ws-panel-border, var(--theme-border, #333));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-left: 1px solid rgba(255, 255, 255, 0.20);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -162,16 +200,17 @@
 }
 
 /* 40px header with three traffic-light buttons (upper-left) + a dedicated
- * grab zone to the right. The header itself no longer sets cursor: grab —
- * only the drag zone does, so button cursors don't compete. */
+ * grab zone to the right. Background is transparent so the popup's glass
+ * shows through — keeps the header visually unified with the body. No
+ * bottom border: the black inset chat panel below separates the header
+ * by contrast instead of a hairline. */
 .rv-secondary-header {
   display: flex;
   align-items: center;
   gap: 8px;
   height: var(--chat-header-height, 40px);
   padding: 0 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid var(--ws-panel-border, var(--theme-border, #333));
+  background: transparent;
   user-select: none;
   flex-shrink: 0;
 }
@@ -206,13 +245,37 @@
 .rv-secondary-tl--yellow { background: #febc2e; }
 .rv-secondary-tl--green  { background: #28c840; }
 
-/* Body wraps the embedded ChatArea. */
+/* CLI_IDENTITY_SPEC: harness icon + name in secondary popup header */
+.rv-secondary-header-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs, 4px);
+  font-size: var(--font-sm, 12px);
+  color: var(--text-dim);
+  margin-left: 4px;
+}
+
+.rv-secondary-header-identity .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--cli-accent, var(--text-dim));
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.rv-secondary-header-identity-name {
+  color: var(--cli-accent, var(--text-primary));
+}
+
+/* Body wraps the embedded ChatArea. Transparent itself; the messages area
+ * inside is a solid black panel with rounded bottom corners, and the
+ * composer area is left transparent so the popup's glass shows through. */
 .rv-secondary-body {
   flex: 1;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  background: transparent;
+  padding: 0 0 5px;
 }
 
 .rv-secondary-body .chat-area {
@@ -221,11 +284,33 @@
   flex-direction: column;
   border: none;
   min-height: 0;
+  background: transparent;
 }
 
+/* Messages panel: solid black, 10px radius on all corners. */
 .rv-secondary-body .chat-messages {
   flex: 1;
   overflow-y: auto;
+  background: #000;
+  border-radius: 10px;
+  margin: 0 10px;
+}
+
+/* Composer area: transparent so the popup's glassmorphism shows through.
+ * Global .chat-footer has 12px horizontal padding that was pushing the
+ * input pill inward past the messages panel; override it here so the
+ * pill sits at 5px from the popup edges — wider than the 10px-inset
+ * messages panel above. */
+.rv-secondary-body .chat-footer {
+  background: transparent;
+  border-top: none;
+  padding: 14px 10px 12px;
+  margin: 0;
+}
+
+.rv-secondary-body .chat-input-wrapper {
+  background: #000;
+  border-radius: 10px;
 }
 
 /* Genie-style animation. Forward (0% → 100%) = minimize: phase 1 squeezes
@@ -234,33 +319,71 @@
  * `animation-direction: reverse`, so the popup grows out of the dock.
  * `transform-origin: bottom right` pins the anchor through the scale so
  * the translate delta lands on the dock button. */
+/* Function order is identical in every frame so CSS can interpolate the
+ * transform chain. perspective → rotateX → translate → scale. The final
+ * 100ms (85% → 100%) holds the shape as a 48×48 disk at the dock and
+ * fades opacity 1 → 0, while the dock button fades in simultaneously. */
 @keyframes rv-secondary-minimize {
   0% {
-    transform: scaleX(1) scaleY(1);
+    transform:
+      perspective(1200px)
+      rotateX(0deg)
+      translateX(0px) translateY(0px)
+      scaleX(1) scaleY(1);
+    border-radius: 0px;
     opacity: 1;
   }
-  40% {
-    transform: scaleX(0.18) scaleY(1.08);
+  15% {
+    /* Stretch peak at ~100ms (15% of 650ms). Sides pinched, content
+     * stretched vertically, tilted back. */
+    transform:
+      perspective(1200px)
+      rotateX(15deg)
+      translateX(0px) translateY(0px)
+      scaleX(0.22) scaleY(1.35);
+    border-radius: 0px;
+    opacity: 1;
+  }
+  85% {
+    /* Landed at the dock as a fully-opaque round 48×48 disk. Tilt eases
+     * back to flat so the circle doesn't look like an ellipse from behind. */
+    transform:
+      perspective(1200px)
+      rotateX(0deg)
+      translateX(var(--minimize-dx, 0px)) translateY(var(--minimize-dy, 0px))
+      scaleX(var(--minimize-scale-x, 0.1)) scaleY(var(--minimize-scale-y, 0.1));
+    border-radius: 50%;
     opacity: 1;
   }
   100% {
+    /* Fade out in place — transform and shape identical to 85%. */
     transform:
-      translate(var(--minimize-dx, 0px), var(--minimize-dy, 0px))
-      scale(0.04);
+      perspective(1200px)
+      rotateX(0deg)
+      translateX(var(--minimize-dx, 0px)) translateY(var(--minimize-dy, 0px))
+      scaleX(var(--minimize-scale-x, 0.1)) scaleY(var(--minimize-scale-y, 0.1));
+    border-radius: 50%;
     opacity: 0;
   }
 }
 
+/* Dock button fade-in on mount — pairs with the popup's final 100ms
+ * fade-out so the handoff looks like a crossfade at the same position. */
+@keyframes rv-secondary-dock-btn-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .rv-secondary-popup--minimizing,
 .rv-secondary-sticky--minimizing {
-  animation: rv-secondary-minimize 450ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  animation: rv-secondary-minimize 650ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
   transform-origin: bottom right;
   pointer-events: none;
 }
 
 .rv-secondary-popup--restoring,
 .rv-secondary-sticky--restoring {
-  animation: rv-secondary-minimize 450ms cubic-bezier(0.4, 0, 0.6, 1) reverse forwards;
+  animation: rv-secondary-minimize 650ms cubic-bezier(0.4, 0, 0.6, 1) reverse forwards;
   transform-origin: bottom right;
   pointer-events: none;
 }
@@ -282,7 +405,9 @@
   opacity: 0.6;
 }
 
-/* Minimized: round dock button fixed to bottom-right. */
+/* Minimized: round dock button fixed to bottom-right. Fades in on mount
+ * (100ms) to pair with the popup's final fade-out, so the handoff looks
+ * like a crossfade at the same bottom-right anchor. */
 .rv-secondary-dock-btn {
   position: fixed;
   bottom: 24px;
@@ -300,6 +425,7 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   z-index: 500;
   transition: transform 150ms, box-shadow 150ms;
+  animation: rv-secondary-dock-btn-fade-in 100ms ease-out backwards;
 }
 
 .rv-secondary-dock-btn:hover {
@@ -311,9 +437,12 @@
   font-size: 1.5rem;
 }
 
-/* Thread-list indented row when a secondary is open (§4). */
+/* Thread-list indented row when a secondary is open (§4). Uses the same
+ * highlight as the primary's active thread so the side chat's thread is
+ * visually marked as open too. */
 .chat-item--secondary-indent {
   margin-left: 16px;
+  background: color-mix(in srgb, var(--cli-accent, #00d4ff) 8%, transparent);
 }
 
 .chat-item--secondary-indent .chat-item-text::before {
@@ -491,17 +620,19 @@
   color: var(--text-primary);
 }
 
+/* Thread kebab dropdown — same chrome as .rv-dropdown for consistency
+ * across all menus in the app. */
 .thread-menu-dropdown {
   position: absolute;
   right: 8px;
   top: 32px;
-  background: var(--bg-secondary, var(--bg-solid, #1e1e1e));
-  border: 1px solid var(--theme-border);
-  border-radius: 6px;
-  padding: 4px 0;
-  min-width: 120px;
-  z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: var(--sidebar-surface-bg, #161616);
+  border: 1px solid var(--neutral-chrome-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-md, 4px);
+  padding: var(--space-2xs, 2px) 0;
+  min-width: 180px;
+  z-index: var(--z-overlay, 1000);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* Promote the containing .chat-item above later siblings so the open
@@ -513,35 +644,19 @@
   z-index: 1000;
 }
 
-.thread-menu-dropdown button {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  background: none;
-  border: none;
-  color: var(--text-primary);
-  text-align: left;
-  cursor: pointer;
-  font-size: 13px;
+/* Thread kebab menu items now use .rv-dropdown-item (see App.css) so the
+ * icon-text flex layout, hover, and disabled states come from the shared
+ * menu-item system. */
+
+.chat-item:hover {
+  background: color-mix(in srgb, var(--cli-accent, #00d4ff) 8%, transparent);
 }
 
-.thread-menu-dropdown button:hover:not([disabled]) {
-  background: rgba(var(--theme-primary-rgb), 0.1);
-}
-
-.thread-menu-dropdown button[disabled] {
-  color: var(--text-dim, #777);
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.chat-item:hover:not(.active) {
-  background: var(--glass-bg);
-}
-
-/* Selected state - icon transforms, no border change */
+/* Active thread — uses the same hover tint as a persistent highlight so
+ * the user can see at a glance which thread is currently open. Tinted by
+ * the thread's CLI accent (`--cli-accent` inline on each row). */
 .chat-item.active {
-  background: transparent;
+  background: color-mix(in srgb, var(--cli-accent, #00d4ff) 14%, transparent);
 }
 
 .chat-item-text {
@@ -552,6 +667,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+}
+
+/* CLI_IDENTITY_SPEC: harness icon in thread list rows. Colored by the row's
+ * `--cli-accent` (inline style on the parent `.chat-item`). */
+.rv-thread-row-icon {
+  font-size: 16px;
+  color: var(--cli-accent, var(--text-dim));
+  margin-right: var(--space-xs, 4px);
+  opacity: 0.95;
+  vertical-align: -2px;
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 .chat-item-meta {
@@ -570,9 +696,9 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  background: var(--document-code-bg, #161616);
+  background: #000;
   border: 1px solid var(--neutral-chrome-border, rgba(255, 255, 255, 0.12));
-  border-radius: 20px;
+  border-radius: 10px;
   padding: 8px 12px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }

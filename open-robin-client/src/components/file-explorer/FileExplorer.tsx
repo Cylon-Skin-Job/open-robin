@@ -4,7 +4,7 @@ import { useFileTreeListener, loadExpandedFolders } from '../../hooks/useFileTre
 import { useViewLayoutStyles } from '../../hooks/useSharedWorkspaceStyles';
 import { FileTree } from './FileTree';
 import { FileViewer } from './FileViewer';
-import { RightSecondaryResize } from '../ResizeHandle';
+import { RightColResize } from '../ResizeHandle';
 
 export function FileExplorer() {
   useViewLayoutStyles('code-viewer');
@@ -40,7 +40,7 @@ export function FileExplorer() {
        * to viewStates[code-viewer].widths.rightSecondary — the same width
        * variable the sticky secondary chat uses. Drag either and both resize. */}
       <div className="file-tree-sidebar">
-        <RightSecondaryResize panel="code-viewer" />
+        <RightColResize panel="code-viewer" />
         {error && (
           <div className="file-explorer-error">
             <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>error</span>

@@ -408,11 +408,36 @@ function createCrudHandlers({ wsState, sendThreadList, closeThread, pendingReord
     }
   }
 
+  /**
+   * Handle thread:touch — bump the thread's updated_at (MRU sort key) and
+   * re-broadcast the thread list. Purely cosmetic re-sort; no wire, no
+   * history. Used by the client to bump the primary thread back above a
+   * just-closed secondary thread so the primary stays on top of the list.
+   * @param {import('ws').WebSocket} ws
+   * @param {object} msg
+   * @param {string} msg.threadId
+   * @param {'project'|'view'} [msg.scope]
+   */
+  async function handleThreadTouch(ws, msg) {
+    const state = wsState.get(ws);
+    if (!state) return;
+    const scope = msg.scope === 'project' ? 'project' : 'view';
+    const manager = state.threadManagers?.[scope];
+    if (!manager) return;
+    try {
+      await manager.index.touch(msg.threadId);
+      await sendThreadList(ws, scope);
+    } catch (err) {
+      console.error('[ThreadWS] Touch failed:', err);
+    }
+  }
+
   return {
     handleThreadOpenAssistant,
     handleThreadRename,
     handleThreadDelete,
-    handleThreadCopyLink
+    handleThreadCopyLink,
+    handleThreadTouch,
   };
 }
 

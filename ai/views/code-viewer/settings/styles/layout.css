@@ -59,6 +59,18 @@
   position: relative;
 }
 
+/* TINTS_SPEC §5b: opt-in accent blend on the view's right column. The
+ * docked sticky chat sibling is also covered for parity with the spec
+ * audit, though its background is normally glass and the blend has
+ * limited visual effect there. */
+.rv-panel[data-tint-right="true"] .file-tree-sidebar {
+  background: color-mix(in srgb, var(--sidebar-surface-bg, #161616) 88%, var(--ws-primary, #ec4899) 12%);
+}
+
+.rv-panel[data-tint-right="true"] .rv-secondary-sticky > .chat-area {
+  background: color-mix(in srgb, var(--chat-surface-bg, #1a1a1a) 88%, var(--ws-primary, #ec4899) 12%);
+}
+
 .file-explorer {
   padding: 0.5rem 0;
   height: 100%;

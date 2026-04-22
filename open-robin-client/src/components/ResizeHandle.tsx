@@ -138,10 +138,18 @@ export function LeftChatResize({ panel }: { panel: string }) {
   return <div {...props} />;
 }
 
-/** Right column — shared by the view's right pane (e.g. code-viewer file tree)
- *  and the sticky secondary chat. Left-edge handle: drag left grows. */
+/** Sticky secondary chat column. Left-edge handle: drag left grows.
+ *  Writes to widths.rightSecondary (chat-only slot). */
 export function RightSecondaryResize({ panel }: { panel: string }) {
   const props = useResizeDrag({ panel, pane: 'rightSecondary', edge: 'left', defaultWidth: 300 });
+  return <div {...props} />;
+}
+
+/** View's right column (e.g. code-viewer file tree). Left-edge handle.
+ *  Writes to widths.rightCol, independent of the sticky chat's width so the
+ *  file tree returns to its own size when the chat undocks. */
+export function RightColResize({ panel }: { panel: string }) {
+  const props = useResizeDrag({ panel, pane: 'rightCol', edge: 'left', defaultWidth: 220 });
   return <div {...props} />;
 }
 

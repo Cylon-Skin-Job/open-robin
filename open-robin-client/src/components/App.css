@@ -278,20 +278,18 @@
 }
 
 /* Right-column resize handle: lives on the left edge of either the file
- * tree sidebar (code-viewer) or the sticky secondary chat. Both parents
- * use position: relative so this sits absolutely over the left edge. */
-.rv-resize-handle[data-pane="rightSecondary"] {
+ * tree sidebar (code-viewer → pane="rightCol") or the sticky secondary
+ * chat (pane="rightSecondary"). Both parents use position: relative so
+ * this sits absolutely over the left edge. Visible strip is 1px to match
+ * the in-grid chat handle; hit target comes from the base ::before (±4px). */
+.rv-resize-handle[data-pane="rightSecondary"],
+.rv-resize-handle[data-pane="rightCol"] {
   position: absolute;
-  left: -4px;
+  left: 0;
   top: 0;
   bottom: 0;
-  width: 8px;
+  width: 1px;
   z-index: 6;
-}
-
-.rv-resize-handle[data-pane="rightSecondary"]::before {
-  left: 0;
-  right: 0;
 }
 
 /* SPEC-26c-2: collapsed rail — sidebar/chat collapses to a 40px strip
@@ -336,7 +334,6 @@
   position: relative;
   overflow: visible;
   padding: 0 var(--space-sm, 8px) 0 0;
-  border-bottom: 1px solid var(--neutral-chrome-border, rgba(255, 255, 255, 0.12));
 }
 
 .rv-chat-header-right {
@@ -375,6 +372,27 @@
   color: var(--theme-primary, #00d4ff);
 }
 
+/* CLI_IDENTITY_SPEC: harness icon + name in primary chat header */
+.rv-chat-header-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs, 4px);
+  font-size: var(--font-sm, 12px);
+  color: var(--text-dim);
+  margin-left: calc(var(--space-sm, 8px) + 10px);
+}
+
+.rv-chat-header-identity .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--cli-accent, var(--text-dim));
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.rv-chat-header-identity-name {
+  color: var(--cli-accent, var(--text-primary));
+  font-size: 1.5em;
+}
+
 /* Mirror of .rv-collapse-btn: absolutely positioned, sized to its 20px icon. */
 .rv-chat-header-btn--left {
   position: absolute;
@@ -385,9 +403,18 @@
   padding: 0;
 }
 
-.rv-chat-header-btn--left .material-symbols-outlined,
+.rv-chat-header-btn .material-symbols-outlined,
 .rv-collapse-btn .material-symbols-outlined {
   font-size: 20px;
+}
+
+/* Menu-item icons (shared across rv-dropdown and thread-menu-dropdown).
+ * Default Material Symbols are 24px; size them down so they read inline
+ * with the 12–13px text. */
+.rv-dropdown-item .material-symbols-outlined {
+  font-size: 18px;
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 /* Shared dropdown base for chat-header dropdowns */
@@ -418,7 +445,34 @@
   right: calc(15px + 28px + var(--space-xs, 4px));
 }
 
+/* Each row in the CLI picker carries its CLI's accent as `--cli-accent`.
+ * Icon colors + hover tint pick that up so rows feel identifiably themed. */
+.rv-cli-picker-dropdown .rv-dropdown-item .material-symbols-outlined {
+  color: var(--cli-accent, var(--text-primary));
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.rv-cli-picker-dropdown .rv-dropdown-item:hover:not([disabled]) {
+  background: color-mix(in srgb, var(--cli-accent, #ffffff) 10%, transparent);
+}
+
+/* When the dropdown lives inside the sidebar (triggered from the sidebar's
+ * "New Thread" button), center it under the button instead. 16px sidebar
+ * padding + ~40px button height + 4px gap puts the top at ~60px. */
+.sidebar .rv-cli-picker-dropdown {
+  top: 60px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
 .rv-thread-dropdown {
+  top: calc(var(--chat-header-height, 40px) - 4px);
+  right: 15px;
+}
+
+/* More-vert menu in the chat header: threads toggle / thread id / view md. */
+.rv-chat-more-dropdown {
   top: calc(var(--chat-header-height, 40px) - 4px);
   right: 15px;
 }

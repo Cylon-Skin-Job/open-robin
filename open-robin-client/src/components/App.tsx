@@ -22,6 +22,13 @@ import './App.css';
 // SPEC-26c-2: defaults for the 3-column layout
 const DEFAULT_WIDTHS = { leftSidebar: 220, leftChat: 320 };
 const DEFAULT_COLLAPSED = { leftSidebar: false, leftChat: false };
+// TINTS_SPEC §8c: all-off fallback when viewState hasn't loaded yet.
+const DEFAULT_TINTS = {
+  leftPanel:  false,
+  rightPanel: false,
+  cards:      false,
+  borders: { threads: false, chat: false },
+};
 
 /**
  * Memoized panel content — only re-renders when its own panel prop changes,
@@ -73,20 +80,24 @@ function PanelWrapper({ panelId, hasChat, layoutClass, isActive }: {
   const secondaryMode = usePanelStore((s) => s.secondary?.mode ?? null);
   const widths = viewState?.widths ?? DEFAULT_WIDTHS;
   const collapsed = viewState?.collapsed ?? DEFAULT_COLLAPSED;
+  const tints = viewState?.tints ?? DEFAULT_TINTS;
 
   // Only the active panel renders the sticky secondary (one grid track
   // at a time; the popup persists state across panel switches but the
   // column is painted in whichever panel is currently active).
   const secondarySticky = isActive && secondaryMode === 'sticky-right';
-  const rightSecondaryWidth = widths.rightSecondary ?? 300;
+  // When sticky chat is docked, the shared --right-col-w follows the chat
+  // width so the file tree visually matches. When undocked, it reverts to
+  // the view's own right-column width (widths.rightCol), so the file tree
+  // is never stuck at the chat's docked width after the user hits green.
+  const rightColWidth = secondarySticky
+    ? (widths.rightSecondary ?? 300)
+    : (widths.rightCol ?? 220);
 
   const gridStyle: CSSProperties = hasChat ? {
     '--left-sidebar-w':   `${collapsed.leftSidebar ? 0 : widths.leftSidebar}px`,
     '--left-chat-w':      `${collapsed.leftChat    ? 40 : widths.leftChat   }px`,
-    // PER_THREAD_CHAT_STATE: right-col width is shared between the view's
-    // right column (e.g. code-viewer file tree) and the sticky secondary
-    // chat when docked. Resizing either affects both via this one var.
-    '--right-col-w': `${rightSecondaryWidth}px`,
+    '--right-col-w':      `${rightColWidth}px`,
   } as CSSProperties : {};
 
   const panelClasses = [
@@ -100,6 +111,11 @@ function PanelWrapper({ panelId, hasChat, layoutClass, isActive }: {
     <div
       data-panel={panelId}
       data-secondary-sticky={secondarySticky ? 'true' : undefined}
+      data-tint-left={tints.leftPanel ? 'true' : undefined}
+      data-tint-right={tints.rightPanel ? 'true' : undefined}
+      data-tint-cards={tints.cards ? 'true' : undefined}
+      data-tint-border-threads={tints.borders.threads ? 'true' : undefined}
+      data-tint-border-chat={tints.borders.chat ? 'true' : undefined}
       className={panelClasses}
       style={gridStyle}
     >
