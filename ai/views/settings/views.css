@@ -86,7 +86,7 @@
   flex-direction: column;
   gap: 12px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  scrollbar-color: var(--scrollbar-thumb, rgba(255, 255, 255, 0.12)) var(--scrollbar-track, transparent);
   background: #000;
   border-radius: 10px;
   margin: 0 10px;
@@ -684,6 +684,13 @@
   font-size: 11px;
   color: var(--text-secondary);
   opacity: 0.7;
+}
+
+/* Active-harness status dot rendered inside a thread row. */
+.rv-thread-status-dot--active {
+  color: var(--status-ok, #4caf50);
+  margin-left: var(--space-xs, 4px);
+  font-size: 8px;
 }
 
 /* --- Composer --- */

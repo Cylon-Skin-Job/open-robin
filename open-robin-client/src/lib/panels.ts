@@ -2,10 +2,9 @@
  * @module panels
  * @role Shared panel discovery and config loading
  * @reads ai/views/index.json, ai/views/{id}/index.json, ai/views/{id}/content.json,
- *        layout: ai/views/{id}/settings/layout.json (most panels) or
- *        ai/views/code-viewer/settings/styles/layout.json (code-viewer)
+ *        ai/views/{id}/settings/layout.json
  * Workspace CSS: fetchPanelWorkspaceFile / fetchViewsRootFile (__panels__ → ai/views/…).
- * Chat/thread styles: settings/styles/views.css (see VIEWS_SETTINGS_STYLES_VIEWS; bundled in client).
+ * Chat/thread styles: settings/views.css (see VIEWS_SETTINGS_STYLES_VIEWS).
  *
  * Loads panel definitions from the repo filesystem via WebSocket.
  * Knows nothing about any specific panel type — content.json declares
@@ -15,13 +14,6 @@
 import { usePanelStore } from '../state/panelStore';
 
 // --- Types ---
-
-export interface PanelTheme {
-  primary: string;
-  sidebar_bg: string;
-  content_bg: string;
-  panel_border: string;
-}
 
 // SPEC-26c: PanelLayout type removed. Layout is now a binary derived from
 // hasChat in App.tsx — chat-enabled views render the 5-column dual-chat
@@ -61,7 +53,6 @@ export interface PanelConfig {
   chatConfig: ChatConfig | null;
   layoutConfig: LayoutConfig | null;
   contentConfig: ContentConfig | null;
-  theme: PanelTheme;
   rank?: number;
   /** True if panel has a ui/ folder with module.js (runtime-loaded plugin) */
   hasUiFolder?: boolean;
@@ -73,14 +64,11 @@ export interface PanelConfig {
  * Request a file from a panel via WebSocket.
  * Returns a promise that resolves with the file content or rejects on error.
  */
-/** Relative to ai/views/{panelId}/ (e.g. settings/styles.css). Uses __panels__ resolver — not the file-explorer content root. */
-export const PANEL_WORKSPACE_STYLES_FILENAME = 'settings/styles.css' as const;
-
-/** Under ai/views/ — shared across panels (pilot: code-viewer loads these + per-panel layout). */
-export const VIEWS_SETTINGS_STYLES_THEMES = 'settings/styles/themes.css' as const;
-export const VIEWS_SETTINGS_STYLES_COMPONENTS = 'settings/styles/components.css' as const;
-/** Chat + thread list + composer (bundled via main.tsx; same path over __panels__ for optional runtime fetch). */
-export const VIEWS_SETTINGS_STYLES_VIEWS = 'settings/styles/views.css' as const;
+/** Under ai/views/settings/ — workspace-wide CSS loaded by useSharedWorkspaceStyles. */
+export const VIEWS_SETTINGS_STYLES_THEMES     = 'settings/themes.css' as const;
+export const VIEWS_SETTINGS_STYLES_COMPONENTS = 'settings/components.css' as const;
+/** Chat + thread list + composer. */
+export const VIEWS_SETTINGS_STYLES_VIEWS      = 'settings/views.css' as const;
 
 /** Fetch a file under ai/views/ (same mechanism as panel discovery). */
 export function fetchViewsRootFile(ws: WebSocket, pathUnderViews: string): Promise<string> {
@@ -89,7 +77,7 @@ export function fetchViewsRootFile(ws: WebSocket, pathUnderViews: string): Promi
 
 /**
  * Read a file from under ai/views/{panelId}/ regardless of display type.
- * Use this for settings/styles.css, index.json, etc. (Not for browsing project files on code-viewer.)
+ * Use this for index.json, settings/themes.css, etc. (Not for browsing project files on code-viewer.)
  */
 export function fetchPanelWorkspaceFile(
   ws: WebSocket,
@@ -152,14 +140,7 @@ export async function loadPanelConfig(ws: WebSocket, panelId: string): Promise<P
     // Load content.json — declares display type and chat config
     const contentConfig: ContentConfig | null = await fetchPanelJson(ws, panelId, 'content.json');
 
-    const layoutPath =
-      panelId === 'code-viewer'
-        ? 'settings/styles/layout.json'
-        : 'settings/layout.json';
-    let layoutConfig: LayoutConfig | null = await fetchPanelJson(ws, panelId, layoutPath);
-    if (panelId === 'code-viewer' && !layoutConfig) {
-      layoutConfig = await fetchPanelJson(ws, panelId, 'settings/layout.json');
-    }
+    const layoutConfig: LayoutConfig | null = await fetchPanelJson(ws, panelId, 'settings/layout.json');
 
     // Chat is determined by content.json, not by probing the filesystem
     const chatConfig = contentConfig?.chat || null;
@@ -180,12 +161,6 @@ export async function loadPanelConfig(ws: WebSocket, panelId: string): Promise<P
       chatConfig,
       layoutConfig,
       contentConfig,
-      theme: {
-        primary: json.settings?.theme?.primary || '#888888',
-        sidebar_bg: json.settings?.theme?.sidebar_bg || '#111111',
-        content_bg: json.settings?.theme?.content_bg || '#0d0d0d',
-        panel_border: json.settings?.theme?.panel_border || '#88888833',
-      },
       rank: json.rank,
       hasUiFolder,
     };
@@ -267,12 +242,3 @@ export async function rediscoverPanels(ws: WebSocket): Promise<void> {
   }
 }
 
-/**
- * Apply a panel theme as CSS custom properties on a target element.
- */
-export function applyPanelTheme(el: HTMLElement, theme: PanelTheme) {
-  el.style.setProperty('--ws-primary', theme.primary);
-  el.style.setProperty('--ws-sidebar-bg', theme.sidebar_bg);
-  el.style.setProperty('--ws-content-bg', theme.content_bg);
-  el.style.setProperty('--ws-panel-border', theme.panel_border);
-}

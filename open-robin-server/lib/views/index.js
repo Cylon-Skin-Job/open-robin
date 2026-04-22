@@ -7,8 +7,7 @@
  * Each display type has its own resolver module.
  *
  * Nothing in this module touches the database. Everything comes from
- * the filesystem (index.json, content.json, settings/layout.json;
- * code-viewer uses settings/styles/layout.json with legacy fallback).
+ * the filesystem (index.json, content.json, settings/layout.json).
  */
 
 const path = require('path');
@@ -71,31 +70,18 @@ function loadContentConfig(projectRoot, viewId) {
 }
 
 /**
- * Load a view's layout settings.
- * code-viewer: settings/styles/layout.json (co-located with layout.css), else settings/layout.json.
- * Other views: settings/layout.json only.
+ * Load a view's layout settings from ai/views/<viewId>/settings/layout.json.
  * @param {string} projectRoot
  * @param {string} viewId
  * @returns {object|null}
  */
 function loadLayoutConfig(projectRoot, viewId) {
-  const viewsRoot = getViewsRoot(projectRoot);
-  const paths =
-    viewId === 'code-viewer'
-      ? [
-          path.join(viewsRoot, viewId, 'settings', 'styles', 'layout.json'),
-          path.join(viewsRoot, viewId, 'settings', 'layout.json'),
-        ]
-      : [path.join(viewsRoot, viewId, 'settings', 'layout.json')];
-
-  for (const filePath of paths) {
-    try {
-      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    } catch {
-      /* try next */
-    }
+  const filePath = path.join(getViewsRoot(projectRoot), viewId, 'settings', 'layout.json');
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch {
+    return null;
   }
-  return null;
 }
 
 /**

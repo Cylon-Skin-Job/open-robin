@@ -10,7 +10,7 @@
 import { usePanelStore } from '../state/panelStore';
 import { fetchPanelFile } from '../lib/panels';
 import { scopePanelCss } from '../lib/scopePanelCss';
-import type { PanelConfig, PanelTheme } from '../lib/panels';
+import type { PanelConfig } from '../lib/panels';
 
 // --- Public types ---
 
@@ -19,8 +19,6 @@ export interface PanelContext {
   panel: string;
   /** Parsed index.json config */
   config: PanelConfig;
-  /** Theme from index.json */
-  theme: PanelTheme;
 
   /** Send an event to the WebSocket server */
   emit(type: string, data?: Record<string, unknown>): void;
@@ -113,7 +111,6 @@ export function createContext(config: PanelConfig): PanelContext {
   const ctx: PanelContext = {
     panel: config.id,
     config,
-    theme: config.theme,
 
     emit(type: string, data?: Record<string, unknown>) {
       const socket = ws();

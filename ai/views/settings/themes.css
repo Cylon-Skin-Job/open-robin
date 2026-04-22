@@ -1,42 +1,39 @@
+/*
+ * Workspace theme — the canonical source for every theme-controllable CSS
+ * custom property. The header color picker will write this file.
+ *
+ * Per-view override: drop a `themes.css` into `ai/views/<view>/settings/styles/`
+ * and the loader applies it scoped to that panel, so any token redefined there
+ * wins for just that view.
+ *
+ * What lives here (theme-editable):
+ *   - Accent family: --theme-primary, --theme-primary-rgb, --theme-border,
+ *     --theme-border-glow, --ws-primary, --ws-primary-rgb
+ *   - Workspace chrome fills: --ws-sidebar-bg, --ws-content-bg, --ws-panel-border
+ *
+ * What does NOT live here (structural — in src/styles/variables.css):
+ *   - Neutrals (--bg-solid, --panel-chrome-bg, --sidebar-surface-bg, etc.)
+ *   - Text hierarchy (--text-white, --text-primary, etc.)
+ *   - Scrollbar, status, syntax tokens
+ *   - Spacing / sizing / z-index
+ *
+ * Also: optional overrides for syntax / tab icons still land here (original
+ * purpose of this file). Defaults bundle from src/styles/document.css.
+ */
+
 :root {
-  /* Accent color */
-  --color-primary: #81c784;
-  --color-primary-rgb: 129, 199, 132;
-  --color-primary-ghost: rgba(129, 199, 132, 0.05);
-  --color-primary-fill: rgba(129, 199, 132, 0.08);
-  --color-primary-dim: rgba(129, 199, 132, 0.12);
-  --color-primary-border: rgba(129, 199, 132, 0.25);
+  /* Accent family. --theme-primary is canonical; --ws-primary is the shorter
+   * name CSS consumers use. Keeping both aliased prevents a codebase-wide
+   * rename until the picker retires the split. */
+  --theme-primary:      #00d4ff;
+  --theme-primary-rgb:  0, 212, 255;
+  --theme-border:       rgba(0, 212, 255, 0.38);
+  --theme-border-glow:  rgba(0, 212, 255, 0.68);
+  --ws-primary:         var(--theme-primary);
+  --ws-primary-rgb:     var(--theme-primary-rgb);
 
-  /* Background scale */
-  --bg-void: #f5f5f5;
-  --bg-inset: #eeeeee;
-  --bg-base: #ffffff;
-  --bg-card: #fafafa;
-  --bg-hover: #f0f0f0;
-
-  /* Borders */
-  --border-subtle: #e0e0e0;
-  --border-default: #d0d0d0;
-
-  /* Text */
-  --text-primary: #1a1a1a;
-  --text-secondary: #555555;
-  --text-dim: #999999;
-
-  /* Scrollbar */
-  --scrollbar-thumb: #d0d0d0;
-  --scrollbar-thumb-hover: rgba(129, 199, 132, 0.33);
-
-  /* Shadows */
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
-
-  /* Transitions */
-  --transition-fast: 150ms;
-
-  /* Status */
-  --status-on: #4caf50;
-  --status-off: #666666;
-  --status-error: #f44336;
-  --status-warn: #ff9800;
+  /* Workspace chrome fills — consumed by wiki / tickets / panel shells. */
+  --ws-sidebar-bg:      #0a1a1f;
+  --ws-content-bg:      #0d0d0d;
+  --ws-panel-border:    rgba(0, 212, 255, 0.2);
 }

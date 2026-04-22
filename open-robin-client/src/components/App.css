@@ -164,7 +164,7 @@
   visibility: visible;
 }
 
-/* Sidebar + chat column: ai/views/settings/styles/views.css */
+/* Sidebar + chat column: ai/views/settings/views.css */
 
 /* Content Area — flex column so the active panel (file explorer, wiki, etc.) can fill height */
 .rv-content-area {
@@ -716,7 +716,7 @@
   user-select: none;
 }
 
-/* Floating chat: ai/views/settings/styles/views.css */
+/* Floating chat: ai/views/settings/views.css */
 
 /* Send dropdown - narrower than standard hover modals */
 .rv-send-dropdown-modal {

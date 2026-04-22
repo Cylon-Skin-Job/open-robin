@@ -10,12 +10,6 @@
   "sort": "updated",
   "created": "2026-03-12T18:17:00-07:00",
   "settings": {
-    "theme": {
-      "primary": "#00d4ff",
-      "sidebar_bg": "#0a1a1f",
-      "content_bg": "#0d0d0d",
-      "panel_border": "#00d4ff33"
-    },
     "maxActiveSessions": 5,
     "gracePeriodSeconds": 60,
     "evictionPolicy": "lru",

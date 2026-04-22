@@ -5,7 +5,8 @@
  *
  * - useSharedWorkspaceStyles(): loads themes + components + views globally
  *   (unscoped, since chat chrome applies app-wide). Call once from App.
- * - useViewLayoutStyles(panelId): loads optional ai/views/{panelId}/settings/styles/layout.css
+ * - useViewLayoutStyles(panelId): loads optional ai/views/{panelId}/settings/layout.css
+ *   + optional ai/views/{panelId}/settings/themes.css (per-view theme override)
  *   scoped to [data-panel="{panelId}"]. Silently no-ops on ENOENT/timeout.
  * - resetSharedStyles(): clears the shared-load guard + style tags so the next
  *   render reloads from a newly-switched workspace.
@@ -74,16 +75,18 @@ export function useViewLayoutStyles(panelId: string) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
     let cancelled = false;
-    const styleId = `${VIEW_LAYOUT_STYLE_PREFIX}${panelId}`;
+    const layoutStyleId = `${VIEW_LAYOUT_STYLE_PREFIX}${panelId}`;
+    const themeStyleId = `${VIEW_LAYOUT_STYLE_PREFIX}${panelId}-theme`;
 
-    fetchPanelWorkspaceFile(ws, panelId, 'settings/styles/layout.css')
+    // settings/layout.css — structural per-view chrome, scoped.
+    fetchPanelWorkspaceFile(ws, panelId, 'settings/layout.css')
       .then((css) => {
         if (cancelled) return;
         const trimmed = css?.trim();
         if (!trimmed) return;
-        document.getElementById(styleId)?.remove();
+        document.getElementById(layoutStyleId)?.remove();
         const el = document.createElement('style');
-        el.id = styleId;
+        el.id = layoutStyleId;
         el.textContent = scopePanelCss(css, panelId);
         document.head.appendChild(el);
       })
@@ -91,9 +94,28 @@ export function useViewLayoutStyles(panelId: string) {
         /* ENOENT / timeout — no layout.css for this view, that's fine */
       });
 
+    // settings/themes.css — optional per-view theme override. Same filename
+    // as the workspace theme file; scoped to [data-panel="<id>"] so the
+    // workspace cascade remains the default and only this view sees it.
+    fetchPanelWorkspaceFile(ws, panelId, 'settings/themes.css')
+      .then((css) => {
+        if (cancelled) return;
+        const trimmed = css?.trim();
+        if (!trimmed) return;
+        document.getElementById(themeStyleId)?.remove();
+        const el = document.createElement('style');
+        el.id = themeStyleId;
+        el.textContent = scopePanelCss(css, panelId);
+        document.head.appendChild(el);
+      })
+      .catch(() => {
+        /* ENOENT — no per-view theme override, that's the common case */
+      });
+
     return () => {
       cancelled = true;
-      document.getElementById(styleId)?.remove();
+      document.getElementById(layoutStyleId)?.remove();
+      document.getElementById(themeStyleId)?.remove();
     };
   }, [panelId, ws]);
 }

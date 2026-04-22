@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { usePanelStore } from '../state/panelStore';
 import { useWorkspaceStore } from '../state/workspaceStore';
-import { applyPanelTheme } from '../lib/panels';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useSharedWorkspaceStyles } from '../hooks/useSharedWorkspaceStyles';
 import { ToolsPanel } from './ToolsPanel';
@@ -141,7 +140,6 @@ function App() {
   const setCurrentPanel = usePanelStore((state) => state.setCurrentPanel);
   const ws = usePanelStore((state) => state.ws);
   const configs = usePanelStore((state) => state.panelConfigs);
-  const getConfig = usePanelStore((state) => state.getPanelConfig);
   const isConnected = ws?.readyState === WebSocket.OPEN;
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -158,21 +156,9 @@ function App() {
 
   const loading = configs.length === 0;
 
-  // Apply panel theme as CSS custom properties
-  useEffect(() => {
-    const config = getConfig(currentPanel);
-    if (config && containerRef.current) {
-      applyPanelTheme(containerRef.current, config.theme);
-      containerRef.current.style.setProperty('--theme-primary', config.theme.primary);
-      const hex = config.theme.primary;
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
-      containerRef.current.style.setProperty('--theme-primary-rgb', `${r}, ${g}, ${b}`);
-      containerRef.current.style.setProperty('--theme-border', `rgba(${r}, ${g}, ${b}, 0.38)`);
-      containerRef.current.style.setProperty('--theme-border-glow', `rgba(${r}, ${g}, ${b}, 0.68)`);
-    }
-  }, [currentPanel, getConfig, configs]);
+  // Per-panel runtime theming was retired: theme tokens now live in
+  // ai/views/settings/themes.css (workspace) with optional overrides at
+  // ai/views/<view>/settings/themes.css. No JS setProperty.
 
   // Once discovery completes, set currentPanel to first available if current isn't valid
   useEffect(() => {
