@@ -1,0 +1,22 @@
+{
+  "widths": {
+    "leftSidebar": 220,
+    "leftChat": 372.8046875,
+    "rightSecondary": 425.51171875,
+    "rightCol": 287.625
+  },
+  "collapsed": {
+    "leftSidebar": false,
+    "leftChat": false
+  },
+  "popup": {
+    "open": false,
+    "x": 1096,
+    "y": 283,
+    "width": 511,
+    "height": 700,
+    "threadId": null
+  },
+  "currentThreadId": "2026-04-19T18-54-25-495",
+  "secondaryThreadId": null
+}
