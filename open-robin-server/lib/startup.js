@@ -25,7 +25,7 @@ const fs = require('fs');
 
 const { initDb, getDb, closeDb, DB_PATH } = require('./db');
 const createRobinHandlers = require('./robin/ws-handlers');
-const createClipboardHandlers = require('./clipboard/ws-handlers');
+const createClipboardHandlers = require('./secrets/clipboard/handlers');
 const createThemeHandlers = require('./ws/theme-handlers');
 const { createHandlers: createSecretsHandlers } = require('./secrets/index');
 const themesService = require('./theme/themes-service');
@@ -58,7 +58,6 @@ async function start({ server, sessions, getProjectRoot }) {
 
   // 2. Handlers — depend on DB being ready
   const robinHandlers = createRobinHandlers({ getDb, sessions, getProjectRoot });
-  const clipboardHandlers = createClipboardHandlers({ getDb });
 
   // 3. Audit subscriber — listens to event bus, persists exchange metadata
   startAuditSubscriber();
@@ -109,6 +108,10 @@ async function start({ server, sessions, getProjectRoot }) {
   // Required via explicit /index path: bare `./secrets` would resolve to
   // lib/secrets.js (the keychain wrapper), not the WS handler aggregator.
   const secretsHandlers = createSecretsHandlers({ getAllClients });
+
+  // 3.7e. Clipboard handlers — keychain-backed; depends on getAllClients for
+  // broadcast on append/use/touch/delete/clear.
+  const clipboardHandlers = createClipboardHandlers({ getAllClients });
   const harnessStatusService = require('./harness/harness-status-service');
   harnessStatusService.revalidateAll().catch((err) => {
     console.error('[Startup] harness revalidateAll failed:', err.message);

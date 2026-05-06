@@ -10,9 +10,24 @@
  */
 
 const { execFile } = require('child_process');
+const crypto = require('crypto');
 
 const ACCOUNT = 'open-robin';
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]*$/;
+
+// Best-effort cross-module hook. Computes sha256(value) on every successful
+// keychain write and asks the clipboard backend to purge any matching row.
+// See CLIPBOARD_KEYCHAIN_REDESIGN.md §3k. Failure here never blocks the save
+// — it's privacy hygiene, not load-bearing.
+async function purgeClipboardEcho(value) {
+  try {
+    const hash = crypto.createHash('sha256').update(value).digest('hex');
+    const clipboardBackend = require('./secrets/clipboard/backend');
+    await clipboardBackend.deleteByContentHash(hash);
+  } catch (err) {
+    console.warn('[secrets] clipboard purge skipped:', err.message);
+  }
+}
 
 // ── Error class ──────────────────────────────────────────────
 
@@ -94,6 +109,7 @@ async function set(key, value) {
     '-w', value,
     '-U'
   ]);
+  await purgeClipboardEcho(value);
 }
 
 async function del(key) {

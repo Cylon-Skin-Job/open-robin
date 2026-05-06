@@ -24,7 +24,7 @@ const { initDb, getDb } = require('./lib/db');
 const createRobinHandlers = require('./lib/robin/ws-handlers');
 
 // Clipboard manager
-const createClipboardHandlers = require('./lib/clipboard/ws-handlers');
+const createClipboardHandlers = require('./lib/secrets/clipboard/handlers');
 
 // File explorer handlers
 const { createFileExplorerHandlers } = require('./lib/file-explorer');
