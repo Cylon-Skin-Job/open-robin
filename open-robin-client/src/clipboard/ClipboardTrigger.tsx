@@ -22,6 +22,7 @@ import {
 import { useClipboardStore } from './clipboard-store';
 import { listPage, useEntry, deleteEntry } from './clipboard-api';
 import type { ClipboardEntry } from './types';
+import './Clipboard.css';
 
 interface ClipboardTriggerProps {
   onInsert?: (text: string) => void;
@@ -160,7 +161,7 @@ export function ClipboardTrigger({ onInsert }: ClipboardTriggerProps) {
               >
                 {entry.type === 'secret' && (
                   <span
-                    className="material-symbols-outlined clipboard-row-icon"
+                    className="material-symbols-outlined rv-clipboard-row-icon"
                     aria-label="secret"
                   >
                     lock
@@ -172,8 +173,9 @@ export function ClipboardTrigger({ onInsert }: ClipboardTriggerProps) {
                 />
                 <button
                   type="button"
-                  className="clipboard-row-delete"
+                  className="rv-clipboard-row-delete"
                   title="Remove this entry"
+                  aria-label="Remove this clipboard entry"
                   onClick={(e) => handleDelete(e, entry)}
                 >
                   <span className="material-symbols-outlined">delete</span>

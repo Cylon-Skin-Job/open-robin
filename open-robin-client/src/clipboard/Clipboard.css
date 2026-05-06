@@ -1,0 +1,58 @@
+/*
+ * Clipboard popup row affordances.
+ *
+ * The popup itself uses .rv-hover-icon-modal-* classes from
+ * components/hover-icon-modal/HoverIconModal.css. This file styles only
+ * the clipboard-specific additions: the leading lock icon for secret
+ * rows and the trailing trash button for per-row delete.
+ */
+
+.rv-clipboard-row-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--text-secondary, #888);
+  font-variation-settings: 'FILL' 1;
+}
+
+.rv-clipboard-row-delete {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.rv-hover-icon-modal-row:hover .rv-clipboard-row-delete,
+.rv-hover-icon-modal-row.selected .rv-clipboard-row-delete,
+.rv-clipboard-row-delete:focus-visible {
+  opacity: 1;
+}
+
+.rv-clipboard-row-delete:hover {
+  background: var(--neutral-chrome-bg, rgba(255, 255, 255, 0.08));
+  color: var(--danger-color, #e57373);
+}
+
+.rv-clipboard-row-delete:focus-visible {
+  outline: 2px solid var(--accent-color, #ff6b35);
+  outline-offset: 1px;
+}
+
+.rv-clipboard-row-delete:active {
+  transform: scale(0.95);
+}
+
+.rv-clipboard-row-delete .material-symbols-outlined {
+  font-size: 18px;
+  line-height: 1;
+}
