@@ -18,6 +18,7 @@
 'use strict';
 
 const { compute: fingerprint } = require('../api-keys/fingerprint');
+const { endsWithKnownExtension } = require('../../file-extensions');
 
 const DISPLAY_PREVIEW_MAX_CHARS = 80;
 
@@ -57,16 +58,19 @@ const PREFIXES = [
 ];
 
 // Shape-match rules — fire only if no prefix matched and the allow-list didn't
-// short-circuit. Catches generic opaque tokens.
+// short-circuit. Character sets are deliberately tight so paths, URLs, and
+// long natural strings don't get fingerprinted as secrets.
 const SHAPES = [
-  { regex: /^[0-9a-fA-F]+$/,    minLength: 32 }, // long hex
-  { regex: /^[A-Za-z0-9_\-]+$/, minLength: 40 }, // long base64url
-  { regex: /^\S+$/,             minLength: 64, forbid: '://' }, // long opaque (no whitespace, no URL)
+  { regex: /^[0-9a-fA-F]+$/,        minLength: 32 }, // long hex
+  { regex: /^[A-Za-z0-9_\-]+$/,     minLength: 40 }, // long base64url
+  { regex: /^[A-Za-z0-9._\-+=]+$/,  minLength: 64 }, // long opaque token (alphanumerics + safe punctuation, no slash/colon)
 ];
 
 function isAllowedNonSecret(s) {
   if (s.length < 16) return true;
   if (s.includes('://')) return true;
+  if (s.includes('/') || s.includes('\\')) return true;        // file paths, URL paths, glob patterns
+  if (endsWithKnownExtension(s)) return true;                  // bare filenames (no slash) — see lib/file-extensions.js
   if (/(\*\*|^## |```)/m.test(s)) return true;
   // Any whitespace beyond a single trailing newline.
   const stripped = s.endsWith('\n') ? s.slice(0, -1) : s;

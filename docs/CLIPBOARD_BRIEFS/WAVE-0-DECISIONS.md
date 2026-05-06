@@ -49,14 +49,18 @@
 |-------|-----------|
 | Hex string, no spaces | length ≥ 32 |
 | Base64url string, no spaces | length ≥ 40 |
-| Single-line string with no whitespace and no `://`, length ≥ 64 | catches generic opaque tokens |
+| Alphanumeric token with safe punctuation (`. _ - + =`), length ≥ 64 | catches generic opaque tokens; deliberately excludes `/` and `:` |
 
 ### Non-matches (explicit allow-list — do NOT mark as secret)
 
 - Strings containing whitespace beyond a single trailing newline (paragraphs, code).
 - Strings containing `://` (URLs).
+- Strings containing `/` or `\` (file paths, URL paths, glob patterns).
+- Strings ending in a known file extension per `open-robin-server/lib/file-extensions.js` (bare filenames).
 - Strings with markdown markers (`**`, `## `, `\`\`\``).
 - Strings shorter than 16 characters (too short to be useful credentials; preview-truncation already handles them).
+
+**Note 2026-05-06:** the opaque shape rule and the `/` + extension allow-list rules were tightened after a screenshot-path false-positive surfaced in v1. Earlier wording was "no whitespace and no `://`, length ≥ 64" which fingerprinted any 64+ char path. The current charset (`A-Za-z0-9._\-+=`) is the correct narrowing.
 
 **Why this list:** Covers the providers most likely to appear in this user's clipboard (Stripe, GitHub, Anthropic, OpenAI, Google, AWS, Slack, GitLab, npm, DigitalOcean) plus the universal JWT and Bearer-header shapes. Prefix matches are O(1); shape matches are bounded regex. False positives on the shape rules are acceptable — fingerprinting a non-secret hash is a UX nit, not a leak.
 

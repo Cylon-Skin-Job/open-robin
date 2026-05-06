@@ -58,8 +58,9 @@ describe('detect — shape matches (synthetic)', () => {
     expect(out.type).toBe('secret');
     expect(out.preview).toMatch(FINGERPRINT_RE);
   });
-  test('long opaque (64+, no whitespace, no ://) is secret', () => {
-    const out = detect('!@#$%^&*()'.repeat(7)); // 70 non-whitespace chars
+  test('long opaque alphanumeric token (64+) is secret', () => {
+    // Charset is letters+digits+. _ - + = ; no slashes, no colons.
+    const out = detect('Token.v2_payload-segmentABCDEFGHIJKLMNOPQRSTUVWXYZ.0123456789=abcdef');
     expect(out.type).toBe('secret');
   });
 });
@@ -88,6 +89,46 @@ describe('detect — non-matches', () => {
   test('inline code with backtick is code, not secret', () => {
     const out = detect('use `npm install` to set up the project');
     expect(out.type).toBe('code');
+  });
+
+  test('macOS screenshot path with no spaces is not secret', () => {
+    const out = detect('/Users/somebody/Desktop/screenshot-2026-05-06_10-30-45.png');
+    expect(out.type).not.toBe('secret');
+  });
+
+  test('absolute project path is not secret', () => {
+    const out = detect('/Users/somebody/projects/open-robin/open-robin-server/lib/secrets/clipboard/secret-detector.js');
+    expect(out.type).not.toBe('secret');
+  });
+
+  test('long screenshot filename is not secret', () => {
+    const out = detect('/private/var/folders/abcdef/T/com.apple.Preview/screenshots/Screen-Shot-2026-05-06-at-10.30.45.AM.png');
+    expect(out.type).not.toBe('secret');
+  });
+
+  test('Windows-style path is not secret', () => {
+    const out = detect('C:\\Users\\somebody\\AppData\\Local\\Temp\\screenshot-2026-05-06.png');
+    expect(out.type).not.toBe('secret');
+  });
+
+  test('file:// URL is not secret', () => {
+    const out = detect('file:///Users/somebody/Desktop/screenshot-2026-05-06.png');
+    expect(out.type).not.toBe('secret');
+  });
+
+  test('bare long filename with known extension is not secret', () => {
+    const out = detect('a-very-long-screenshot-name-with-timestamp-2026-05-06_10-30-45-AM.png');
+    expect(out.type).not.toBe('secret');
+  });
+
+  test('bare long log filename is not secret', () => {
+    const out = detect('open-robin-server-debug-trace-output-from-2026-05-06-incident.log');
+    expect(out.type).not.toBe('secret');
+  });
+
+  test('bare long source-file name is not secret', () => {
+    const out = detect('clipboard-keychain-redesign-implementation-wave-three-final-pass.tsx');
+    expect(out.type).not.toBe('secret');
   });
 });
 
