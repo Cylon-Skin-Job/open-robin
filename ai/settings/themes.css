@@ -35,8 +35,8 @@
   --cli-accent:        var(--chrome-accent);
   --tile-color:        var(--chrome-accent);
   --accent-dim:        #a17b6b;
-  --chat-bubble-bg:    var(--chrome-accent);
-  --chat-bubble-fg:    var(--chrome-accent-fg);
+  --chat-bubble-bg:    var(--bg-secondary);
+  --chat-bubble-fg:    var(--text-white);
   --nav-icon-color:    var(--accent-dim);
   --nav-text-color:    var(--accent-dim);
   --ws-sidebar-bg:   color-mix(in srgb, color-mix(in srgb, #1c1c1c 90%, #d67d57 10%) 92%, #d67d57 8%);

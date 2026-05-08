@@ -6,7 +6,7 @@
     "rightCol": 243.89453125
   },
   "collapsed": {
-    "leftSidebar": true,
+    "leftSidebar": false,
     "leftChat": false
   },
   "popup": {
@@ -17,6 +17,6 @@
     "height": 520,
     "threadId": "2026-04-19T22-29-40-441"
   },
-  "currentThreadId": "2026-04-19T22-29-40-441",
+  "currentThreadId": "2026-04-12T17-28-44-269",
   "secondaryThreadId": "2026-04-19T22-29-40-441"
 }

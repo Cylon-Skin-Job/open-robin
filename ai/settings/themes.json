@@ -1579,14 +1579,14 @@
       "borderTint": 42,
       "chromeLuminance": 100,
       "chromeTint": 49,
-      "chatBubbleChrome": true,
+      "chatBubbleChrome": false,
       "accentLuminance": 48,
       "accentTint": 42,
       "themeCode": false,
       "mode": "dark",
       "tints": {
         "borders": {
-          "chat": false
+          "chat": true
         }
       },
       "builtin": false,

@@ -1547,15 +1547,42 @@
 .rv-secrets-confirm-inline {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   font-size: 12px;
   color: var(--text-primary, #fff);
+}
+
+.rv-secrets-confirm-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rv-secrets-confirm-text code {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 11px;
   color: var(--text-primary, #fff);
+}
+
+.rv-secrets-key-row:has(.rv-secrets-confirm-inline) {
+  grid-template-columns: 1fr;
+}
+
+.rv-secrets-key-row:has(.rv-secrets-confirm-inline) .rv-secrets-key-main,
+.rv-secrets-key-row:has(.rv-secrets-confirm-inline) .rv-secrets-key-meta {
+  display: none;
+}
+
+.rv-secrets-key-row:has(.rv-secrets-confirm-inline) .rv-secrets-key-right {
+  width: 100%;
+}
+
+.rv-secrets-key-row:has(.rv-secrets-confirm-inline) .rv-secrets-confirm-inline {
+  width: 100%;
+  justify-content: flex-end;
 }
 
 .rv-secrets-add-btn {
