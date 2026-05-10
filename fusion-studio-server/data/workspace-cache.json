@@ -1,232 +1,4 @@
 {
-  "open-robin": {
-    "projectRoot": null,
-    "currentPanel": "wiki-viewer",
-    "panels": {},
-    "projectChats": {},
-    "threads": {
-      "project": [],
-      "view": []
-    },
-    "currentThreadIds": {
-      "project": null,
-      "view": null
-    },
-    "currentScope": null,
-    "wireReady": false,
-    "contextUsage": 0,
-    "panelConfigs": [
-      {
-        "id": "doc-viewer",
-        "name": "Docs",
-        "description": "Scratch space for ideas, mockups, specs, and todos that emerge from conversation",
-        "type": "tiled-rows",
-        "icon": "open_run",
-        "hasChat": true,
-        "chatConfig": {
-          "type": "threaded",
-          "position": "right"
-        },
-        "layoutConfig": {
-          "chatPosition": "right",
-          "chatWidth": 400,
-          "threadListWidth": 250,
-          "threadListVisible": true,
-          "popup": null
-        },
-        "contentConfig": {
-          "display": "tiled-rows",
-          "chat": {
-            "type": "threaded",
-            "position": "right"
-          }
-        },
-        "rank": 0,
-        "category": "tool",
-        "hasUiFolder": false
-      },
-      {
-        "id": "file-viewer",
-        "name": "Files",
-        "description": "Primary coding assistant — write, edit, and explore source files",
-        "type": "file-explorer",
-        "icon": "code_blocks",
-        "hasChat": true,
-        "chatConfig": {
-          "type": "threaded",
-          "position": "right"
-        },
-        "layoutConfig": {
-          "chatWidth": 400
-        },
-        "contentConfig": {
-          "display": "file-explorer",
-          "chat": {
-            "type": "threaded",
-            "position": "right"
-          }
-        },
-        "rank": 1,
-        "category": "tool",
-        "hasUiFolder": false
-      },
-      {
-        "id": "issues-viewer",
-        "name": "Issues",
-        "description": "Ticket router — receives tickets from all panels, routes to agents by type and domain",
-        "type": "tabbed",
-        "icon": "business_messages",
-        "hasChat": true,
-        "chatConfig": {
-          "type": "rolling-daily",
-          "position": "right"
-        },
-        "layoutConfig": {
-          "chatPosition": "right",
-          "chatWidth": 400,
-          "threadListWidth": 250,
-          "threadListVisible": false,
-          "popup": null
-        },
-        "contentConfig": {
-          "display": "tabbed",
-          "chat": {
-            "type": "rolling-daily",
-            "position": "right"
-          }
-        },
-        "rank": 3,
-        "category": "tool",
-        "hasUiFolder": false
-      },
-      {
-        "id": "wiki-viewer",
-        "name": "Wiki",
-        "description": "Living reference layer — browse topics, read pages, create update tickets",
-        "type": "navigation",
-        "icon": "full_coverage",
-        "hasChat": true,
-        "chatConfig": {
-          "type": "rolling-daily",
-          "position": "popup"
-        },
-        "layoutConfig": {
-          "chatPosition": "popup",
-          "chatWidth": null,
-          "threadListWidth": null,
-          "threadListVisible": false,
-          "popup": {
-            "x": null,
-            "y": null,
-            "width": 380,
-            "height": 500
-          }
-        },
-        "contentConfig": {
-          "display": "navigation",
-          "chat": {
-            "type": "rolling-daily",
-            "position": "popup"
-          }
-        },
-        "rank": 4,
-        "category": "tool",
-        "hasUiFolder": false
-      },
-      {
-        "id": "agents-viewer",
-        "name": "Agents",
-        "description": "Agent command center — tiles UI for all background agents, their status, runs, and pending tickets",
-        "type": "tiled-rows",
-        "icon": "smart_toy",
-        "hasChat": true,
-        "chatConfig": {
-          "type": "rolling-daily",
-          "position": "right"
-        },
-        "layoutConfig": {
-          "chatPosition": "right",
-          "chatWidth": 400,
-          "threadListWidth": 250,
-          "threadListVisible": false,
-          "popup": null
-        },
-        "contentConfig": {
-          "display": "tiled-rows",
-          "chat": {
-            "type": "rolling-daily",
-            "position": "right"
-          }
-        },
-        "rank": 5,
-        "category": "tool",
-        "hasUiFolder": false
-      }
-    ],
-    "viewStates": {
-      "doc-viewer": {
-        "collapsed": {
-          "leftSidebar": true,
-          "leftChat": false
-        },
-        "widths": {
-          "leftSidebar": 220,
-          "leftChat": 320,
-          "rightSecondary": 356.71484375
-        },
-        "popup": {
-          "open": false,
-          "x": -1,
-          "y": -1,
-          "width": 420,
-          "height": 520,
-          "threadId": null
-        },
-        "currentThreadId": null,
-        "secondaryThreadId": null,
-        "tints": {
-          "leftPanel": false,
-          "rightPanel": false,
-          "cards": false,
-          "borders": {
-            "threads": false,
-            "chat": false
-          }
-        }
-      },
-      "file-viewer": {
-        "collapsed": {
-          "leftSidebar": true,
-          "leftChat": false
-        },
-        "widths": {
-          "leftSidebar": 339.16796875,
-          "leftChat": 320,
-          "rightSecondary": 350.27734375
-        },
-        "popup": {
-          "open": false,
-          "x": -1,
-          "y": -1,
-          "width": 420,
-          "height": 520,
-          "threadId": null
-        },
-        "currentThreadId": null,
-        "secondaryThreadId": null,
-        "tints": {
-          "leftPanel": false,
-          "rightPanel": false,
-          "cards": false,
-          "borders": {
-            "threads": false,
-            "chat": false
-          }
-        }
-      }
-    },
-    "_savedAt": 1778451330665
-  },
   "media-editor": {
     "projectRoot": null,
     "currentPanel": "wiki-viewer",
@@ -682,7 +454,7 @@
       {
         "id": "file-viewer",
         "name": "Files",
-        "description": "Primary coding assistant — write, edit, and explore source files",
+        "description": "Primary coding assistant \u2014 write, edit, and explore source files",
         "type": "file-explorer",
         "icon": "code_blocks",
         "hasChat": true,
@@ -707,7 +479,7 @@
       {
         "id": "issues-viewer",
         "name": "Issues",
-        "description": "Ticket router — receives tickets from all panels, routes to agents by type and domain",
+        "description": "Ticket router \u2014 receives tickets from all panels, routes to agents by type and domain",
         "type": "tabbed",
         "icon": "business_messages",
         "hasChat": true,
@@ -736,7 +508,7 @@
       {
         "id": "wiki-viewer",
         "name": "Wiki",
-        "description": "Living reference layer — browse topics, read pages, create update tickets",
+        "description": "Living reference layer \u2014 browse topics, read pages, create update tickets",
         "type": "navigation",
         "icon": "full_coverage",
         "hasChat": true,
@@ -770,7 +542,7 @@
       {
         "id": "agents-viewer",
         "name": "Agents",
-        "description": "Agent command center — tiles UI for all background agents, their status, runs, and pending tickets",
+        "description": "Agent command center \u2014 tiles UI for all background agents, their status, runs, and pending tickets",
         "type": "tiled-rows",
         "icon": "smart_toy",
         "hasChat": true,
@@ -1014,7 +786,7 @@
     },
     "_savedAt": 1778451401081
   },
-  "fusion-studio-home": {
+  "fs-dev": {
     "projectRoot": null,
     "currentPanel": "wiki-viewer",
     "panels": {},
@@ -1063,7 +835,7 @@
       {
         "id": "file-viewer",
         "name": "Files",
-        "description": "Primary coding assistant — write, edit, and explore source files",
+        "description": "Primary coding assistant \u2014 write, edit, and explore source files",
         "type": "file-explorer",
         "icon": "code_blocks",
         "hasChat": true,
@@ -1088,7 +860,7 @@
       {
         "id": "issues-viewer",
         "name": "Issues",
-        "description": "Ticket router — receives tickets from all panels, routes to agents by type and domain",
+        "description": "Ticket router \u2014 receives tickets from all panels, routes to agents by type and domain",
         "type": "tabbed",
         "icon": "business_messages",
         "hasChat": true,
@@ -1117,7 +889,7 @@
       {
         "id": "wiki-viewer",
         "name": "Wiki",
-        "description": "Living reference layer — browse topics, read pages, create update tickets",
+        "description": "Living reference layer \u2014 browse topics, read pages, create update tickets",
         "type": "navigation",
         "icon": "full_coverage",
         "hasChat": true,
@@ -1151,7 +923,7 @@
       {
         "id": "agents-viewer",
         "name": "Agents",
-        "description": "Agent command center — tiles UI for all background agents, their status, runs, and pending tickets",
+        "description": "Agent command center \u2014 tiles UI for all background agents, their status, runs, and pending tickets",
         "type": "tiled-rows",
         "icon": "smart_toy",
         "hasChat": true,
@@ -1179,112 +951,15 @@
       }
     ],
     "viewStates": {
-      "file-viewer": {
-        "widths": {
-          "leftSidebar": 239.7578125,
-          "leftChat": 386.02734375,
-          "rightSecondary": 425.51171875,
-          "rightCol": 243.89453125
-        },
-        "collapsed": {
-          "leftSidebar": false,
-          "leftChat": false
-        },
-        "popup": {
-          "open": false,
-          "x": -1,
-          "y": -1,
-          "width": 420,
-          "height": 520,
-          "threadId": null
-        },
-        "currentThreadId": "2026-04-19T18-54-25-495",
-        "secondaryThreadId": null,
-        "tints": {
-          "leftPanel": false,
-          "rightPanel": false,
-          "cards": false,
-          "contentPanels": false,
-          "borders": {
-            "threads": false,
-            "chat": false
-          }
-        }
-      },
       "doc-viewer": {
-        "widths": {
-          "leftSidebar": 239.7578125,
-          "leftChat": 386.02734375,
-          "rightSecondary": 425.51171875,
-          "rightCol": 243.89453125
-        },
-        "collapsed": {
-          "leftSidebar": false,
-          "leftChat": false
-        },
-        "popup": {
-          "open": false,
-          "x": -1,
-          "y": -1,
-          "width": 420,
-          "height": 520,
-          "threadId": null
-        },
-        "currentThreadId": "2026-04-19T18-54-25-495",
-        "secondaryThreadId": null,
-        "tints": {
-          "leftPanel": false,
-          "rightPanel": false,
-          "cards": false,
-          "contentPanels": false,
-          "borders": {
-            "threads": false,
-            "chat": false
-          }
-        }
-      },
-      "issues-viewer": {
-        "widths": {
-          "leftSidebar": 239.7578125,
-          "leftChat": 461.09765625,
-          "rightSecondary": 425.51171875,
-          "rightCol": 243.89453125
-        },
         "collapsed": {
           "leftSidebar": true,
           "leftChat": false
         },
-        "popup": {
-          "open": false,
-          "x": -1,
-          "y": -1,
-          "width": 420,
-          "height": 520,
-          "threadId": null
-        },
-        "currentThreadId": "2026-04-19T18-54-25-495",
-        "secondaryThreadId": null,
-        "tints": {
-          "leftPanel": false,
-          "rightPanel": false,
-          "cards": false,
-          "contentPanels": false,
-          "borders": {
-            "threads": false,
-            "chat": false
-          }
-        }
-      },
-      "agents-viewer": {
         "widths": {
-          "leftSidebar": 239.7578125,
-          "leftChat": 372.8046875,
-          "rightSecondary": 425.51171875,
-          "rightCol": 243.89453125
-        },
-        "collapsed": {
-          "leftSidebar": false,
-          "leftChat": false
+          "leftSidebar": 220,
+          "leftChat": 320,
+          "rightSecondary": 356.71484375
         },
         "popup": {
           "open": false,
@@ -1294,45 +969,42 @@
           "height": 520,
           "threadId": null
         },
-        "currentThreadId": "2026-04-19T18-54-25-495",
+        "currentThreadId": null,
         "secondaryThreadId": null,
         "tints": {
           "leftPanel": false,
           "rightPanel": false,
           "cards": false,
-          "contentPanels": false,
           "borders": {
             "threads": false,
             "chat": false
           }
         }
       },
-      "wiki-viewer": {
-        "widths": {
-          "leftSidebar": 239.7578125,
-          "leftChat": 300,
-          "rightSecondary": 425.51171875,
-          "rightCol": 243.89453125
-        },
+      "file-viewer": {
         "collapsed": {
           "leftSidebar": true,
           "leftChat": false
         },
+        "widths": {
+          "leftSidebar": 339.16796875,
+          "leftChat": 320,
+          "rightSecondary": 350.27734375
+        },
         "popup": {
           "open": false,
-          "x": 1092,
-          "y": 143,
-          "width": 486,
+          "x": -1,
+          "y": -1,
+          "width": 420,
           "height": 520,
           "threadId": null
         },
-        "currentThreadId": "2026-04-19T18-54-25-495",
+        "currentThreadId": null,
         "secondaryThreadId": null,
         "tints": {
           "leftPanel": false,
           "rightPanel": false,
           "cards": false,
-          "contentPanels": false,
           "borders": {
             "threads": false,
             "chat": false
@@ -1340,6 +1012,6 @@
         }
       }
     },
-    "_savedAt": 1778446796516
+    "_savedAt": 1778451330665
   }
 }

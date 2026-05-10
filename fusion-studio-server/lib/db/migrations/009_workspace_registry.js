@@ -16,8 +16,8 @@
  * Data changes:
  *   - DELETE FROM workspace_themes WHERE workspace_id IN (... NULL repo_path)
  *   - DELETE FROM workspaces WHERE repo_path IS NULL
- *   - INSERT dev workspace ('open-robin', realpath'd project root)
- *   - INSERT OR IGNORE system_config row ('last_active_workspace_id', 'open-robin')
+ *   - INSERT dev workspace ('fs-dev', realpath'd project root)
+ *   - INSERT OR IGNORE system_config row ('last_active_workspace_id', 'fs-dev')
  *
  * Why a table rebuild: SQLite cannot add NOT NULL or UNIQUE to an existing
  * column via ALTER TABLE. Explicit rename → create → copy → drop matches
@@ -74,7 +74,7 @@ exports.up = async function (knex) {
   const projectRoot = process.platform === 'darwin' ? resolvedRoot.toLowerCase() : resolvedRoot;
 
   await knex('workspaces').insert({
-    id: 'open-robin',
+    id: 'fs-dev',
     label: 'Open Robin',
     icon: 'code',
     description: 'Open Robin development workspace',
@@ -87,7 +87,7 @@ exports.up = async function (knex) {
   await knex('system_config')
     .insert({
       key: 'last_active_workspace_id',
-      value: 'open-robin',
+      value: 'fs-dev',
       updated_at: Date.now(),
     })
     .onConflict('key')
@@ -123,7 +123,7 @@ exports.down = async function (knex) {
   await knex.raw('DROP TABLE workspaces_old');
 
   // 3. Drop the dev workspace (it doesn't belong to the pre-009 world).
-  await knex('workspaces').where('id', 'open-robin').del();
+  await knex('workspaces').where('id', 'fs-dev').del();
 
   // 4. Restore the 7 placeholder rows so down truly undoes up. onConflict
   //    ignore keeps this safe if they've already been re-added somewhere.

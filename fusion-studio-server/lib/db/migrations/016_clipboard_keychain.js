@@ -3,7 +3,7 @@
  *
  * Drops the legacy `clipboard_items` table (plaintext value column).
  * Creates `clipboard_index` — metadata only; values move to macOS Keychain at
- * service = "clipboard:<id>", account = "open-robin".
+ * service = "clipboard:<id>", account = "fusion-studio".
  *
  * Per §4 of CLIPBOARD_KEYCHAIN_REDESIGN.md: nuke, do not migrate. Existing
  * rows are pre-leak and not preserved.
