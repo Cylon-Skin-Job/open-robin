@@ -2,7 +2,7 @@
  * @module RobinOverlay
  * @role Full-screen system panel overlay
  *
- * Open Robin sits above workspaces as the system supervisor.
+ * Fusion Studio sits above workspaces as the system supervisor.
  * Chat on the left, tabbed settings with list/detail split on the right.
  *
  * All data (tabs, items, wiki content, CLI registry) comes from robin.db
@@ -147,7 +147,7 @@ export function RobinOverlay({ open, onClose }: RobinOverlayProps) {
       <div className="rv-robin-overlay-header">
         <div className="rv-robin-overlay-header-left">
           <span className="material-symbols-outlined rv-robin-overlay-header-icon">raven</span>
-          <span className="rv-robin-overlay-header-name">Open Robin</span>
+          <span className="rv-robin-overlay-header-name">Fusion Studio</span>
           <span className="rv-robin-overlay-header-subtitle">System Panel</span>
         </div>
         <button className="rv-robin-exit-btn" onClick={onClose}>
@@ -183,7 +183,7 @@ export function RobinOverlay({ open, onClose }: RobinOverlayProps) {
             })}
           </div>
           <div className="rv-robin-chat-input">
-            <textarea rows={2} placeholder="Ask Open Robin anything..." />
+            <textarea rows={2} placeholder="Ask Fusion Studio anything..." />
           </div>
         </div>
 

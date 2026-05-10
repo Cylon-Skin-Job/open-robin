@@ -328,7 +328,7 @@ class QwenHarness extends BaseCLIHarness {
           protocolVersion: 1,
           capabilities: {},
           clientInfo: {
-            name: 'open-robin',
+            name: 'fusion-studio',
             version: '1.0.0'
           }
         }

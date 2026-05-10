@@ -123,7 +123,7 @@ function createWireLifecycle({ session, ws, connectionId, onWireMessage }) {
     console.log('[Wire] Initializing wire...');
     sendToWire(wire, 'initialize', {
       protocol_version: '1.4',
-      client: { name: 'open-robin', version: '0.1.0' },
+      client: { name: 'fusion-studio', version: '0.1.0' },
       capabilities: { supports_question: true }
     }, id);
     console.log('[Wire] Initialize sent with id:', id);

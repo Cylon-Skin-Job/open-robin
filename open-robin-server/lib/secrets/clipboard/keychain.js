@@ -2,7 +2,7 @@
  * Keychain accessor for clipboard values.
  *
  * One job: read/write/delete keychain entries at
- *   account = "open-robin", service = "clipboard:<id>"
+ *   account = "fusion-studio", service = "clipboard:<id>"
  *
  * Distinct from lib/secrets.js (which validates UPPER_SNAKE service names
  * for API keys); the clipboard service-name shape is `clipboard:<n>` where
@@ -16,7 +16,7 @@
 
 const { execFile } = require('child_process');
 
-const ACCOUNT = 'open-robin';
+const ACCOUNT = 'fusion-studio';
 const SERVICE_PREFIX = 'clipboard:';
 
 class ClipboardKeychainError extends Error {

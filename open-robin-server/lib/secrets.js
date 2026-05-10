@@ -5,14 +5,14 @@
  * No events, no DOM, no business logic, no caching.
  *
  * Convention:
- *   Account:  "open-robin"
+ *   Account:  "fusion-studio"
  *   Service:  Key name in UPPER_SNAKE_CASE (e.g. GITLAB_TOKEN)
  */
 
 const { execFile } = require('child_process');
 const crypto = require('crypto');
 
-const ACCOUNT = 'open-robin';
+const ACCOUNT = 'fusion-studio';
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]*$/;
 
 // Best-effort cross-module hook. Computes sha256(value) on every successful

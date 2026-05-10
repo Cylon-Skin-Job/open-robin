@@ -20,7 +20,7 @@ const VALUE_HINT = 'Min 8 characters.';
 const EMPTY_COPY =
   'No API keys stored yet. Add keys and tokens your scripts need to talk to outside services.';
 const BACKEND_UNAVAILABLE_COPY =
-  "Couldn't reach secrets storage. Try again, or restart Open Robin.";
+  "Couldn't reach secrets storage. Try again, or restart Fusion Studio.";
 
 interface Props {
   onClose: () => void;

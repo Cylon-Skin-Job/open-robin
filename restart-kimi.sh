@@ -1,13 +1,13 @@
 #!/bin/bash
-# Restart script for open-robin — project-scoped.
+# Restart script for fusion-studio — project-scoped.
 # Kills only this project's server (by pidfile + full path), never generic node server.js.
 
 set -e
 
 PROJECT_DIR="$HOME/projects/open-robin"
 SERVER_PATH="$PROJECT_DIR/open-robin-server/server.js"
-PID_FILE="/tmp/open-robin.pid"
-LOG_FILE="/tmp/open-robin.log"
+PID_FILE="/tmp/fusion-studio.pid"
+LOG_FILE="/tmp/fusion-studio.log"
 PORT=3001
 
 # 1. Kill previous instance by pidfile, if present.

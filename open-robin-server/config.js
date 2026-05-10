@@ -1,4 +1,4 @@
-// Config Manager for open-robin-server
+// Config Manager for fusion-studio-server
 // Handles persistence of settings, chat history, and project state
 
 const fs = require('fs');

@@ -21,7 +21,7 @@ function getToken() {
   if (cachedToken) return cachedToken;
   try {
     cachedToken = execFileSync('/usr/bin/security', [
-      'find-generic-password', '-a', 'open-robin', '-s', 'GITLAB_TOKEN', '-w'
+      'find-generic-password', '-a', 'fusion-studio', '-s', 'GITLAB_TOKEN', '-w'
     ], { encoding: 'utf8' }).trim();
     return cachedToken;
   } catch (err) {

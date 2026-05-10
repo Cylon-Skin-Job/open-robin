@@ -287,7 +287,7 @@ function createClientMessageRouter({
         const id = generateId();
         sendToWire(session.wire, 'initialize', {
           protocol_version: '1.4',
-          client: { name: 'open-robin', version: '0.1.0' },
+          client: { name: 'fusion-studio', version: '0.1.0' },
           capabilities: { supports_question: true }
         }, id);
         return;

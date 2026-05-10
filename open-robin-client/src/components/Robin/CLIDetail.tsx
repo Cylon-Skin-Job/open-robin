@@ -61,7 +61,7 @@ export function CLIRegistry({ items }: { items: CliItem[] }) {
           Add a CLI
         </div>
         <div className="rv-robin-detail-subtitle">
-          Choose an AI assistant to connect to Open Robin. You'll need the CLI installed on your
+          Choose an AI assistant to connect to Fusion Studio. You'll need the CLI installed on your
           machine first — each one has its own setup instructions.
         </div>
       </div>

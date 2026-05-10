@@ -301,7 +301,7 @@ class CodexHarness extends BaseCLIHarness {
         method: 'initialize',
         params: {
           protocolVersion: 1,
-          clientInfo: { name: 'open-robin', version: '1.0.0' }
+          clientInfo: { name: 'fusion-studio', version: '1.0.0' }
         }
       };
       proc.stdin.write(JSON.stringify(initRequest) + '\n');
