@@ -65,7 +65,7 @@ exports.up = async function (knex) {
 
   await knex.raw('DROP TABLE workspaces_old');
 
-  // 4. Seed the dev-time workspace pointing at the open-robin project root.
+  // 4. Seed the dev-time workspace pointing at the fs-dev project root.
   //    __dirname is .../fusion-studio-server/lib/db/migrations, so the project
   //    root is four levels up. Canonicalize the same way path-service will
   //    (realpath + lowercase on darwin) so dedup comparisons line up.
