@@ -16,7 +16,7 @@ const { normalizeTokenUsage } = require('../../model-catalog');
  * Qwen CLI harness implementation using ACP (Agent Client Protocol).
  *
  * Wraps `@qwen-code/qwen-code` CLI and translates its ACP JSON-RPC protocol
- * to canonical events for the Kimi IDE unified chat interface.
+ * to canonical events for the Fusion Studio unified chat interface.
  *
  * Qwen Code CLI is a fork of Google Gemini CLI and supports the same ACP
  * protocol, enabling bidirectional multi-turn conversations via stdin/stdout.

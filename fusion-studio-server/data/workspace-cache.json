@@ -225,7 +225,7 @@
         }
       }
     },
-    "_savedAt": 1778450561511
+    "_savedAt": 1778451330665
   },
   "media-editor": {
     "projectRoot": null,
@@ -631,11 +631,11 @@
         }
       }
     },
-    "_savedAt": 1778379559482
+    "_savedAt": 1778451395382
   },
   "fusion-home": {
     "projectRoot": null,
-    "currentPanel": "file-viewer",
+    "currentPanel": "wiki-viewer",
     "panels": {},
     "projectChats": {},
     "threads": {
@@ -929,7 +929,7 @@
       "wiki-viewer": {
         "widths": {
           "leftSidebar": 239.7578125,
-          "leftChat": 300,
+          "leftChat": 427.82421875,
           "rightSecondary": 425.51171875,
           "rightCol": 243.89453125
         },
@@ -959,7 +959,7 @@
         }
       }
     },
-    "_savedAt": 1778446926786
+    "_savedAt": 1778451400191
   },
   "karens-lab": {
     "projectRoot": null,
@@ -1012,7 +1012,7 @@
         }
       }
     },
-    "_savedAt": 1778446927486
+    "_savedAt": 1778451401081
   },
   "fusion-studio-home": {
     "projectRoot": null,

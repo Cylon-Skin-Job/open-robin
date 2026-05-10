@@ -1,5 +1,5 @@
 /**
- * Kimi IDE Server with Thread Management
+ * Fusion Studio Server with Thread Management
  * 
  * This version includes persistent, named conversations with lifecycle management.
  * 

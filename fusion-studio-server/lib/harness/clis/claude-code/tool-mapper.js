@@ -1,6 +1,6 @@
 /**
  * Claude Code uses specific tool names in its ACP implementation.
- * We map these to the Kimi IDE canonical names for consistent UI and event handling.
+ * We map these to the Fusion Studio canonical names for consistent UI and event handling.
  */
 const CLAUDE_TO_CANONICAL_MAP = {
   'Bash': 'shell',
