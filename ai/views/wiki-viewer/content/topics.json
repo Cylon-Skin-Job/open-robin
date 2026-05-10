@@ -1,14 +1,7 @@
 {
   "version": "1.0",
-  "last_updated": "2026-05-10T15:35:00Z",
+  "last_updated": "2026-05-10T22:51:22.545Z",
   "collections": [
-    {
-      "id": "home",
-      "label": "Home",
-      "rank": 0,
-      "sort": "ranked",
-      "frozen": false
-    },
     {
       "id": "project",
       "label": "Project",
@@ -427,28 +420,6 @@
         "Session-Scoping",
         "Background-Agents"
       ],
-      "sources": []
-    },
-    "home/getting-started": {
-      "slug": "Getting-Started",
-      "collection": "home",
-      "collectionLabel": "Home",
-      "collectionRank": 0,
-      "rank": 10,
-      "frozen": false,
-      "edges_out": ["Workspaces-Explained"],
-      "edges_in": [],
-      "sources": []
-    },
-    "home/workspaces-explained": {
-      "slug": "Workspaces-Explained",
-      "collection": "home",
-      "collectionLabel": "Home",
-      "collectionRank": 0,
-      "rank": 20,
-      "frozen": false,
-      "edges_out": ["Getting-Started"],
-      "edges_in": [],
       "sources": []
     },
     "system-tools/custom-theme-css": {

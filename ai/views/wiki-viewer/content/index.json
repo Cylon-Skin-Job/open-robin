@@ -10,7 +10,7 @@
   "created": "2026-03-27T00:00:00Z",
   "updated": "2026-05-03T00:00:00Z",
   "frozen": false,
-  "children": ["home", "project", "system-tools", "enforcement"],
+  "children": ["project", "system-tools", "enforcement"],
   "edges_out": null,
   "edges_in": null,
   "sources": null,

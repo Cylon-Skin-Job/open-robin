@@ -20,6 +20,7 @@ import { EdgePanel } from './EdgePanel';
 export function WikiExplorer() {
   useViewLayoutStyles('wiki-viewer');
   const activeTopic = useWikiStore((s) => s.activeTopic);
+  const activeWorkspaceId = useWikiStore((s) => s.activeWorkspaceId);
   const ws = usePanelStore((s) => s.ws);
 
   const onIndex = useCallback((content: string) => {
@@ -51,6 +52,13 @@ export function WikiExplorer() {
     onFileContent,
     onError,
   });
+
+  // Re-request topics.json when workspace switches — usePanelData only
+  // triggers on ws connect, not on workspace change.
+  useEffect(() => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    request('topics.json');
+  }, [activeWorkspaceId, ws, request]);
 
   // Load PAGE.md when active topic changes
   useEffect(() => {
