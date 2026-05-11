@@ -218,7 +218,9 @@ app.get('/api/view-config', async (req, res) => {
 });
 
 // Fallback to index.html for SPA routing
-app.get(/.*/, (req, res) => {
+// Exclude /api/* and /material-symbols/* so backend routes and static assets
+// are not swallowed by the SPA fallback.
+app.get(/^(?!\/api\/|\/material-symbols\/)/, (req, res) => {
   res.sendFile(path.join(clientDistPath, 'index.html'));
 });
 
@@ -535,6 +537,27 @@ startServer({
     clipboardHandlers = result.clipboardHandlers;
     themeHandlers = result.themeHandlers;
     secretsHandlers = result.secretsHandlers;
+
+    // Serve Material Symbols from Fusion Home (runtime asset, not bundled).
+    // Looked up from DB so the path stays correct even if Fusion Home moves.
+    const db = getDb();
+    db('workspaces').where('id', 'fusion-home').first()
+      .then((workspace) => {
+        if (workspace && workspace.repo_path) {
+          const symbolsPath = path.join(workspace.repo_path, 'material-symbols');
+          if (fs.existsSync(symbolsPath)) {
+            app.use('/material-symbols', express.static(symbolsPath));
+            console.log(`[Server] Serving material symbols from ${symbolsPath}`);
+          } else {
+            console.warn('[Server] Fusion Home material-symbols not found at', symbolsPath);
+          }
+        } else {
+          console.warn('[Server] Fusion Home workspace not found — material symbols unavailable');
+        }
+      })
+      .catch((err) => {
+        console.error('[Server] Failed to resolve Fusion Home path:', err.message);
+      });
   })
   .catch(err => {
     console.error('[Server] Startup failed:', err);

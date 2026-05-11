@@ -130,7 +130,7 @@ export function PageViewer() {
           <span className="material-symbols-outlined">arrow_forward</span>
         </button>
         <span className="rv-wiki-breadcrumb">
-          {topics[activeTopic]?.slug || activeTopic}
+          {(topics[activeTopic]?.slug || activeTopic).replace(/-/g, ' ')}
         </span>
         <div className="rv-wiki-nav-actions">
           <button

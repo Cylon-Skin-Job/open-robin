@@ -22,6 +22,7 @@ import { useWorkspaceStore } from '../../state/workspaceStore';
 import { usePanelStore } from '../../state/panelStore';
 import { useFileStore } from '../../state/fileStore';
 import { useWikiStore } from '../../state/wikiStore';
+import { preloadIcons } from '../icon-registry';
 import { rediscoverPanels } from '../panels';
 import { loadRootTree } from '../file-tree';
 import { showModal, onModalAction } from '../modal';
@@ -32,8 +33,9 @@ export function handleWorkspaceMessage(msg: WebSocketMessage): boolean {
   const store = useWorkspaceStore.getState();
 
   switch (msg.type) {
-    case 'workspace:init':
-      store.setWorkspaces(msg.workspaces ?? []);
+    case 'workspace:init': {
+      const workspaces = msg.workspaces ?? [];
+      store.setWorkspaces(workspaces);
       store.setActiveWorkspaceId(msg.activeWorkspaceId ?? null);
       store.setWorkspaceType((msg as any).workspaceType ?? 'code');
       if (msg.homePath) store.setHomePath(msg.homePath);
@@ -68,12 +70,27 @@ export function handleWorkspaceMessage(msg: WebSocketMessage): boolean {
       if (wsConn && wsConn.readyState === WebSocket.OPEN && panelStore.currentPanel && panelStore.currentPanel !== panelBefore) {
         wsConn.send(JSON.stringify({ type: 'set_panel', panel: panelStore.currentPanel }));
       }
+      // Preload workspace icon SVGs from Fusion Home so the ribbon
+      // renders inline SVGs instead of font glyphs on first paint.
+      const iconNames = workspaces.map((w: any) => w.icon || 'folder').filter(Boolean);
+      if (iconNames.length > 0) {
+        preloadIcons(iconNames).catch(() => {});
+      }
+
       store.markInit();
       return true;
+    }
 
-    case 'workspace:registry_changed':
-      store.setWorkspaces(msg.workspaces ?? []);
+    case 'workspace:registry_changed': {
+      const updatedWorkspaces = msg.workspaces ?? [];
+      store.setWorkspaces(updatedWorkspaces);
+      // Preload any newly added workspace icons
+      const updatedIcons = updatedWorkspaces.map((w: any) => w.icon || 'folder').filter(Boolean);
+      if (updatedIcons.length > 0) {
+        preloadIcons(updatedIcons).catch(() => {});
+      }
       return true;
+    }
 
     case 'workspace:switched': {
       const workspaceId = msg.to ?? null;

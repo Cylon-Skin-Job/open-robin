@@ -11,6 +11,7 @@
 
 import { useEffect } from 'react';
 import { useWorkspaceStore } from '../state/workspaceStore';
+import { Icon } from './Icon';
 import type { Workspace } from '../types';
 import './WorkspaceRibbon.css';
 
@@ -73,9 +74,10 @@ export function WorkspaceRibbon() {
                 onClick={() => onItemClick(w)}
                 title={w.label}
               >
-                <span className="material-symbols-outlined rv-workspace-ribbon-item-icon">
-                  {w.icon || 'folder'}
-                </span>
+                <Icon
+                  name={w.icon || 'folder'}
+                  className="rv-workspace-ribbon-item-icon"
+                />
                 <span className="rv-workspace-ribbon-item-label">{w.label}</span>
                 <button
                   className="rv-workspace-ribbon-item-remove"

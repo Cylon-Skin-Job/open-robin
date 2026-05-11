@@ -7,6 +7,10 @@
 import { useWikiStore } from '../../state/wikiStore';
 import type { TopicMeta } from '../../state/wikiStore';
 
+function displaySlug(slug: string): string {
+  return slug.replace(/-/g, ' ');
+}
+
 export function TopicList() {
   const topics = useWikiStore((s) => s.topics);
   const collections = useWikiStore((s) => s.collections);
@@ -46,7 +50,7 @@ export function TopicList() {
                   onClick={() => navigateToTopic(meta.slug)}
                 >
                   <span className="rv-wiki-topic-indicator">{isActive ? '\u25C9' : '\u25CB'}</span>
-                  <span className="rv-wiki-topic-name">{meta.slug}</span>
+                  <span className="rv-wiki-topic-name">{displaySlug(meta.slug)}</span>
                 </button>
               );
             })}
