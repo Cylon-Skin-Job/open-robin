@@ -553,13 +553,13 @@
 .rv-tp-btn--primary {
   background: var(--theme-primary);
   border-color: var(--theme-primary);
-  color: #000;
+  color: #000; /* FIXED: on-theme-primary fill; --theme-primary-fg token pending Phase 5 */
 }
 
 .rv-tp-btn--primary:hover:not(:disabled) {
   background: var(--theme-primary);
   filter: brightness(1.1);
-  color: #000;
+  color: #000; /* FIXED: on-theme-primary fill; --theme-primary-fg token pending Phase 5 */
 }
 
 .rv-tp-btn:disabled {

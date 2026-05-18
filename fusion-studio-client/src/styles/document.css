@@ -150,9 +150,8 @@
 
 .hljs-section { color: var(--hljs-section); font-weight: bold; }
 
-/* Tab strip file-type tint — intentional platform brand colors, NOT theme
- * accents. Themes should not re-skin these (JavaScript is yellow, TypeScript
- * is blue, etc.). Left as literal hex on purpose. */
+/* FIXED: Language brand colors — JS yellow, TS/TSX blue, CSS/HTML brand hues, etc.
+   These are canonical language identifiers, not theme-controlled. */
 .rv-file-icon-js   { color: #f7df1e; }
 .rv-file-icon-ts   { color: #3178c6; }
 .rv-file-icon-tsx  { color: #3178c6; }

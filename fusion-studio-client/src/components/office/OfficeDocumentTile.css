@@ -50,6 +50,10 @@
   font-size: 0.75rem;
 }
 
+/* FIXED: Document preview surfaces use paper-white (#faf9f6) and near-black
+   text (#1c1c1c) unconditionally. These are not theme-adjustable; the tile
+   simulates a printed page. Link colors (#2563eb, #1d4ed8) are standard
+   web-blue, also fixed. rgba(0,0,0,...) borders are on a light surface. */
 /* Preview container — letter-like aspect ratio, light page like editor */
 .rv-office-doc-tile-preview {
   position: relative;

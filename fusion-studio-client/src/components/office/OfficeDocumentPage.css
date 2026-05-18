@@ -379,6 +379,8 @@
   background: var(--bg-surface, #1e1e1e);
 }
 
+/* FIXED: Document page surface (#faf9f6, #1c1c1c) — light paper aesthetic,
+   not theme-adjustable. rgba(0,0,0,0.55) is a dark overlay on the light surface. */
 /* Crepe page — letter-like sheet with shadow and margins */
 .rv-office-document-editor .milkdown {
   max-width: 816px;
