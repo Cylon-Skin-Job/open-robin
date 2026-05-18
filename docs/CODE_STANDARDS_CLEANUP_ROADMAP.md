@@ -78,16 +78,17 @@ Every CSS chunk's research step includes:
 
 | Phase | Name | Risk | Touches project CSS? | Approximate chunks |
 |---|---|---|---|---|
-| 0 | Session debris cleanup | Trivial | No | 5 small commits |
-| 1 | Hardcoded value extraction (CSS variables) | Low | **Yes** | 5 chunks |
-| 2 | `.rv-` class prefix migration | Low–Medium | Yes (class names rendered in CSS) | 5 chunks |
-| 3 | Inline-style extraction | Low | No | 3 chunks |
-| 4 | `App.css` decomposition | **Medium-High** | Yes | 5 chunks |
-| 5 | Dead-code purge | Trivial | No | 1 chunk |
-| 6 | File-size splits (>400 lines) | Medium per file | No | 10 chunks |
-| 7 | Component → state-layer architecture decision | **High; needs decision first** | No | TBD, blocked on decision |
+| 0 | Session debris cleanup | Trivial | No | 5 small commits ✅ done |
+| 1 | `--chrome-accent` / `--accent-dim` semantic swap | Low–Medium | **Yes (both repos)** | 6 chunks |
+| 2 | Hardcoded value extraction (CSS variables) | Low | **Yes** | 5 chunks |
+| 3 | `.rv-` class prefix migration | Low–Medium | Yes (class names rendered in CSS) | 5 chunks |
+| 4 | Inline-style extraction | Low | No | 3 chunks |
+| 5 | `App.css` decomposition | **Medium-High** | Yes | 5 chunks |
+| 6 | Dead-code purge | Trivial | No | 1 chunk |
+| 7 | File-size splits (>400 lines) | Medium per file | No | 10 chunks |
+| 8 | Component → state-layer architecture decision | **High; needs decision first** | No | TBD, blocked on decision |
 
-Phases run in numerical order. Phase 4 must come after Phase 1–3 because moving rules out of `App.css` is much safer once those rules already use tokens, are `.rv-`-prefixed, and have no inline-style competitors.
+Phases run in numerical order. Phase 1 (variable swap) must land before Phase 2 (hex extraction) because Phase 2 uses these variable names as replacement targets — wrong names during Phase 2 would re-embed the confusion in every new `var(...)` call. Phase 5 must come after Phases 2–4 because moving rules out of `App.css` is much safer once those rules already use tokens, are `.rv-`-prefixed, and have no inline-style competitors.
 
 ---
 
