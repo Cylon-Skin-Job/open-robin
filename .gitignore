@@ -4,6 +4,8 @@ dist/
 build/
 .DS_Store
 *.log
+*.log.old
+wire-debug.log*
 test-results/
 .gitlab_wikis.json
 kimi_wikis.json
