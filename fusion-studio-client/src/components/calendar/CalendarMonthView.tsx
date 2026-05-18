@@ -1,5 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useCalendarStore } from '../../state/calendarStore';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { CalendarDayCell } from './CalendarDayCell';
 import { useCalendarGrid, type CalendarEvent, type Calendar } from './useCalendarGrid';
 import './CalendarViewer.css';
@@ -31,23 +30,11 @@ export const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
   const [range, setRange] = useState({ startOffset: INITIAL_START_OFFSET, endOffset: INITIAL_END_OFFSET });
   const [visibleOffset, setVisibleOffset] = useState(0);
   const pendingScrollAdjust = useRef<{ oldScrollTop: number; oldScrollHeight: number } | null>(null);
-  // FIXME(calendar-store-refactor): fetchEventsForMonth was added to the consumers
-  // but never landed on the store. Re-enable once the store exposes it.
-  // const fetchEventsForMonth = useCalendarStore((s) => s.fetchEventsForMonth);
 
   console.log('[CalendarMonthView] events count:', events.length, 'calendars count:', calendars.length);
   const gridMonths = useCalendarGrid(baseDate, events, calendars, range.startOffset, range.endOffset);
   console.log('[CalendarMonthView] gridMonths count:', gridMonths.length, 'total weeks:', gridMonths.reduce((acc, m) => acc + m.weeks.length, 0));
   const lastCenteredBaseDate = useRef<number | null>(null);
-
-  // FIXME(calendar-store-refactor): progressive loading disabled while the
-  // fetchEventsForMonth store action is missing.
-  // useEffect(() => {
-  //   for (let offset = range.startOffset; offset <= range.endOffset; offset++) {
-  //     const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + offset, 1);
-  //     fetchEventsForMonth(d.getFullYear(), d.getMonth());
-  //   }
-  // }, [baseDate, range.startOffset, range.endOffset, fetchEventsForMonth]);
 
   // Center the scroll on the base month (offset 0) on initial load / when baseDate changes
   useLayoutEffect(() => {

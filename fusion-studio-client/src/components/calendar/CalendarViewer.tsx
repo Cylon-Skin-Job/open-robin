@@ -14,8 +14,6 @@ export const CalendarViewer: React.FC = () => {
   const permissionDenied = useCalendarStore((s) => s.permissionDenied);
   const error = useCalendarStore((s) => s.error);
   const fetchCalendars = useCalendarStore((s) => s.fetchCalendars);
-  // FIXME(calendar-store-refactor): fetchEventsForMonth not yet on the store.
-  // const fetchEventsForMonth = useCalendarStore((s) => s.fetchEventsForMonth);
   const setSelectedDate = useCalendarStore((s) => s.setSelectedDate);
   const toggleCalendarEnabled = useCalendarStore((s) => s.toggleCalendarEnabled);
   const createEvent = useCalendarStore((s) => s.createEvent);
@@ -28,9 +26,6 @@ export const CalendarViewer: React.FC = () => {
   const [modalDate, setModalDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
-    // Sequential: calendars first, then events (avoids concurrent osascript contention)
-    // FIXME(calendar-store-refactor): only fetching calendars right now; the
-    // per-month event fetch is disabled until the store gains fetchEventsForMonth.
     fetchCalendars();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
