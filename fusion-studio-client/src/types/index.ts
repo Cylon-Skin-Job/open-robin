@@ -165,7 +165,7 @@ export interface ThemeEntry {
   chromeTint?:    number;   // 0-100 percent accent blended into chrome base
   accentLuminance?: number; // 0-100 black-to-white base for muted accent surfaces
   accentTint?:    number;   // 0-100 percent accent blended into muted accent base
-  chatBubbleChrome?: boolean; // When true, user chat bubble bg uses --chrome-accent
+  chatBubbleChrome?: boolean; // When true, user chat bubble bg uses --chrome-accent (dim structural chrome color)
   themeCode?:        boolean; // When true, syntax palette hues derive from accent instead of fixed rainbow
   tints?: {
     borders?: { chat?: boolean };

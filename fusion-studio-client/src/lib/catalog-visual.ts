@@ -99,12 +99,12 @@ const DEFAULT_VISUAL_STYLE: SegmentVisualStyle = {
   icon: '',
   /* Tool icons and text are chrome-accented so they stand out as actionable
    * UI within the chat stream. */
-  iconColor: 'var(--chrome-accent, var(--text-dim))',
+  iconColor: 'var(--accent-dim, var(--text-dim))',
   iconSize: 16,
-  labelColor: 'var(--chrome-accent, var(--text-dim))',
+  labelColor: 'var(--accent-dim, var(--text-dim))',
   labelStyle: 'normal',
   contentTypography: 'body',
-  contentColor: 'var(--chrome-accent, var(--text-dim))',
+  contentColor: 'var(--accent-dim, var(--text-dim))',
 };
 
 /** Default behavior applied to all segments */
